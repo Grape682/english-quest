@@ -101,6 +101,24 @@ button.chip:hover{border-color:var(--primary)}
 .mcard .tip{font-size:14px;color:var(--muted);border-top:1px dashed var(--line);padding-top:10px;width:100%}
 .memo{display:flex;gap:10px;align-items:flex-start;background:var(--surface-2);border-radius:12px;padding:10px 12px;text-align:left}
 .memo .em{font-size:26px;line-height:1.1;flex:none}
+.wishbar{display:flex;align-items:center;gap:10px;width:100%;border:1px dashed var(--primary);background:var(--surface);color:var(--ink);border-radius:14px;padding:12px 14px;font-size:15px;text-align:left;cursor:pointer}
+.wishbar:hover{background:var(--surface-2)}
+.wish{display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--line);padding:10px 0}.wish:last-child{border-bottom:0}
+.wish .wt{font-size:16px;white-space:pre-wrap;word-break:break-word}.wish .meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+.wish .reply{background:var(--surface-2);border-radius:10px;padding:8px 10px;font-size:14px}
+.st{font-size:12px;font-weight:700;border-radius:999px;padding:2px 8px;background:var(--surface-2)}.st.done{background:var(--good);color:#fff}.st.doing{background:var(--gold);color:#1a1a1a}
+.wall{overflow:hidden;border-radius:12px;background:var(--surface-2);padding:8px 0;font-size:14px}
+.wall .track{display:inline-flex;gap:28px;white-space:nowrap;padding-left:100%;animation:wall var(--dur,30s) linear infinite}
+.wall:hover .track,.wall:focus-within .track{animation-play-state:paused}
+.wall b{font-weight:700}.wall i{font-style:normal;color:var(--muted)}
+@keyframes wall{to{transform:translateX(-100%)}}
+@media (prefers-reduced-motion: reduce){.wall .track{animation:none;padding-left:12px;padding-right:12px;flex-wrap:wrap;white-space:normal;gap:6px 18px}}
+.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tier{border:1px solid var(--line);border-radius:14px;padding:12px 10px;display:flex;flex-direction:column;gap:2px;text-align:center;min-width:0}
+.tier .em{font-size:26px}.tier b{font-size:18px;font-variant-numeric:tabular-nums}.tier span{font-size:13px;color:var(--muted)}
+@media (max-width:420px){.tiers{grid-template-columns:1fr}.tier{flex-direction:row;align-items:center;gap:10px;text-align:left}.tier span{flex:1}}
+.bankbox{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:15px;align-items:center}
+.bankbox dt{color:var(--muted);font-size:13px}.bankbox dd{margin:0;font-weight:700;font-variant-numeric:tabular-nums;word-break:break-all}
 
 /* practice grid */
 .seg{display:inline-flex;background:var(--surface-2);border-radius:12px;padding:3px;gap:2px}
@@ -393,6 +411,7 @@ a.btn{text-decoration:none}
     <div class="row"><button class="btn small" id="mapBtn">看 32 週影集地圖</button><button class="btn small" id="vidBtn">本週片段</button><button class="btn small" id="watchBtn"></button></div>
   </section>
 
+  <button class="wishbar" id="wishBar" hidden><span aria-hidden="true">💬</span><span style="flex:1;min-width:0"><b>許願池</b>　想要什麼新功能？來許個願</span><span class="chip" id="wishCount"></span></button>
   <section class="card flat" aria-label="每日一句">
     <div class="row"><span class="eyebrow">每日一句</span><div class="spacer"></div>
       <button class="btn small" id="dayPlay"></button><button class="btn small" id="daySlow">慢速</button></div>
@@ -409,6 +428,7 @@ a.btn{text-decoration:none}
     <div class="grid" id="modeGrid"></div>
   </section>
 
+  <div class="wall" id="sponsorWall" hidden></div>
   <p class="foot" id="storageNote"></p>
 </main>
 
@@ -524,6 +544,12 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
+let SPONSOR_INFO = {}, SPONSORS = [];
+const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
+const SHOW_SUPPORT = () => HAS_SUPPORT() && (Store.backend !== "sheet" || !!SPONSOR_INFO.show);
+const CAN_WISH = () => Store.backend === "sheet";
+let WISH_COUNT = 0;
+const TIERS = [["☕", 50, "請喝一杯咖啡"], ["🍱", 150, "請吃一個便當"], ["💡", 500, "專屬贊助者，名字放上感謝名單"]];
 function clientId() {
   try { let id = localStorage.getItem("eq-client"); if (!id) { id = (Math.random().toString(36).slice(2) + Date.now().toString(36)).slice(0, 30); localStorage.setItem("eq-client", id); } return id; }
   catch (e) { if (!clientId.mem) clientId.mem = (Math.random().toString(36).slice(2) + Date.now().toString(36)).slice(0, 30); return clientId.mem; }
@@ -637,6 +663,10 @@ function mergeLibrary(lib) {
   state.dict = Object.assign({}, state.dict, lib.dict || {});
   if (lib.videos && typeof lib.videos === "object") LIB_VIDEOS = lib.videos;
   if (lib.cards && typeof lib.cards === "object") state.cards = Object.assign({}, state.cards, lib.cards);
+  if (lib.sponsor && typeof lib.sponsor === "object") { SPONSOR_INFO = lib.sponsor; if (/^https:\/\/[^\s"'<>]+$/.test(lib.sponsor.link || "")) SPONSOR = lib.sponsor.link; }
+  if (Array.isArray(lib.sponsors)) SPONSORS = lib.sponsors.filter(x => x && x.n).slice(-100);
+  if (typeof lib.wishCount === "number") WISH_COUNT = lib.wishCount;
+  if (typeof renderSponsorWall === "function") renderSponsorWall();
 }
 function logEvent(type, data) {
   if (Store.backend === "sheet") gs("logEvent", type, JSON.stringify(data), guestCode()).catch(() => { });
@@ -905,13 +935,13 @@ const AI = {
     }
     if (this.kind !== "gas") throw { code: "no_audio_ai" };
     try { return await gs("aiAudio", prompt, payload.b64, payload.mime); }
-    catch (e) { const m = String((e && e.message) || e); throw { code: m.includes("NOT_OWNER") ? "not_owner" : m.includes("NO_KEY") ? "no_key" : m.includes("BAD_KEY") ? "bad_key" : m.includes("RATE_LIMITED") ? "rate_limited" : m.includes("MODEL_NOT_FOUND") ? "model" : m.includes("AUDIO_UNSUPPORTED") ? "audio_model" : m.includes("TOO_BIG") ? "too_big" : m.includes("BAD_AUDIO") ? "audio_format" : "error", message: m }; }
+    catch (e) { const m = String((e && e.message) || e); throw { code: aiCode(m), message: m }; }
   },
   async json(prompt) {
     if (this.kind === "claude") return SAMPLE.json(prompt, { modelTier: "quick" });
     if (this.kind === "gas") {
       try { return await gs("aiJson", prompt); }
-      catch (e) { const m = String((e && e.message) || e); throw { code: m.includes("NOT_OWNER") ? "not_owner" : m.includes("NO_KEY") ? "no_key" : m.includes("BAD_KEY") ? "bad_key" : m.includes("RATE_LIMITED") ? "rate_limited" : m.includes("MODEL_NOT_FOUND") ? "model" : "error", message: m }; }
+      catch (e) { const m = String((e && e.message) || e); throw { code: aiCode(m), message: m }; }
     }
     const r = await apiFetch("api/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }) });
     const j = await r.json().catch(() => ({}));
@@ -970,6 +1000,11 @@ async function generateAI() {
   }
   renderHome();
 }
+function aiCode(m) {
+  const map = [["NOT_OWNER", "not_owner"], ["NO_KEY", "no_key"], ["BAD_KEY", "bad_key"], ["RATE_LIMITED", "rate_limited"], ["MODEL_NOT_FOUND", "model"], ["AUDIO_UNSUPPORTED", "audio_model"], ["TOO_BIG", "too_big"], ["BAD_AUDIO", "audio_format"], ["OVERLOADED", "overloaded"], ["BAD_JSON", "invalid_json"], ["EMPTY", "invalid_json"], ["BLOCKED", "blocked"], ["TIMEOUT", "timeout"], ["OFFLINE", "offline"], ["BAD_RESPONSE", "offline"]];
+  const hit = map.find(([k]) => m.includes(k));
+  return hit ? hit[1] : "error";
+}
 function aiErrorText(e) {
   const c = e && e.code;
   return ({
@@ -978,7 +1013,11 @@ function aiErrorText(e) {
     bad_key: "API 金鑰無效，請到「我的成就」頁重新設定",
     no_key: "還沒有設定 AI 金鑰，請到「我的成就」頁設定",
     no_credit: "API 帳戶的額度不足",
-    offline: "連不上網路，AI 功能需要網路",
+    offline: "連不上網路或後台，請檢查網路再試一次",
+    overloaded: "Google 的 AI 現在太忙了（不是你的問題），已經自動重試過。等 10～20 秒再按一次",
+    invalid_json: "AI 這次回的內容格式亂掉了，已經自動重試過。再按一次通常就好",
+    blocked: "AI 不願意回答這段內容，換個說法再試試",
+    timeout: "AI 回應太久，請再按一次",
     model: "找不到 AI 模型，請檢查程式開頭的 AI_MODEL 設定",
     audio_model: "AI 這次沒辦法聽這段錄音，請再錄一次；一直失敗的話，可以把程式開頭的 AUDIO_MODEL 改成 'gemini-flash-latest'",
     audio_format: "這個錄音格式不能用，請換成 m4a、mp3 或 wav",
@@ -986,7 +1025,7 @@ function aiErrorText(e) {
     no_audio_ai: GUEST ? "分享版沒有開放錄音評分，可以先聽原音跟讀，自己比較" : "錄音評分需要先設定 Gemini 金鑰",
     guest: "這是分享版：AI 功能只有分享者可以使用",
     not_owner: "這是分享版：AI 功能只有分享者可以使用",
-  })[c] || "AI 這次沒有回應成功，請再試一次";
+  })[c] || "AI 這次沒有回應成功，請再試一次" + (e && e.message ? `（${String(e.message).slice(0, 40)}）` : "");
 }
 const CAN_FEEDBACK = () => Store.backend === "sheet" || Store.backend === "computer";
 async function sendFeedback(text) {
@@ -2839,6 +2878,8 @@ const MODES = {
   reading: { name: "閱讀短文", desc: "AI 用本週單字寫故事，附理解題" },
   writing: { name: "寫作批改", desc: "寫幾句英文，AI 幫你改並解釋" },
   cards: { name: "單字記憶卡", desc: "畫面＋生活情境，一張一張記" },
+  wish: { name: "許願池", desc: "想要什麼新功能？許願、幫別人 +1" },
+  support: { name: "贊助與感謝", desc: "隨喜支持、感謝名單" },
   pic: { name: "看圖選字", desc: "看畫面，選出是哪個字", n: 10, types: ["pic"] },
   mc: { name: "單字選擇", desc: "英翻中、中翻英、看圖選字", n: 10, types: ["mcEn", "mcZh", "pic"] },
   listen: { name: "聽音辨字", desc: "聽發音選出單字", n: 10, types: ["listen"] },
@@ -2908,6 +2949,8 @@ function startPractice(mode) {
   if (mode === "travel") return openTravel();
   if (mode === "map") return openMap();
   if (mode === "cards") return openCards(rangeWords(), 0);
+  if (mode === "wish") return openWishes();
+  if (mode === "support") return openSupport();
   if (mode === "notes") return openNotes();
   if (mode === "rain") return startRain();
   if (mode === "notePractice") {
@@ -3348,7 +3391,7 @@ function renderResult(bonus) {
   const n = Q.items.length || 0, pct = n ? Math.round(100 * Q.correct / n) : 0;
   const missed = [...new Set(Q.missed)].map(e => BY_EN[e]).filter(Boolean);
   const daily = Q.kind === "daily";
-  const askSponsor = daily && SPONSOR && (!state.sponsorAsked || (Date.now() - new Date(state.sponsorAsked).getTime()) > 7 * 864e5);
+  const askSponsor = daily && SHOW_SUPPORT() && (!state.sponsorAsked || (Date.now() - new Date(state.sponsorAsked).getTime()) > 7 * 864e5);
   if (askSponsor) { state.sponsorAsked = today(); Store.save(); }
   $("result").innerHTML = `
     <section class="card">
@@ -3358,11 +3401,12 @@ function renderResult(bonus) {
       ${daily ? `<p style="margin:0">明天會出一組新的題目：今天答錯的字會排進明天的複習，題型也會跟著「${esc(THEMES[(new Date().getDay() + 1) % 7].name)}」改變。</p>` : ""}
     </section>
     ${missed.length ? `<section class="card flat"><h3>這次要再記一下</h3><div class="list">${missed.map((w, k) => `<div class="li"><button class="icon-btn" data-say="${k}" aria-label="播放 ${esc(w.en)}">${ICON.spk}</button><span class="w">${esc(w.en)}</span><span class="z">${esc(w.zh)}</span></div>`).join("")}</div></section>` : ""}
-    ${askSponsor ? `<section class="card flat"><p style="margin:0">如果它剛好幫上了忙，歡迎<a href="${esc(SPONSOR)}" target="_blank" rel="noopener">依自己的心意支持</a>，多少都好。不贊助也能一直免費用，到「我的成就」也可以留一句建議給我。</p></section>` : ""}
+    ${askSponsor ? `<section class="card flat"><p style="margin:0">如果它剛好幫上了忙，歡迎<button class="btn small" id="resSup" style="margin:0 4px">依自己的心意支持</button>多少都好。不贊助也能一直免費用，也可以到許願池留一句建議給我。</p></section>` : ""}
     ${Q.kind === "dialog" && Q.dialog ? `<div class="row"><button class="btn block primary" id="resReplay">${ICON.spk}再聽一次這段</button><button class="btn block" id="resLib">換一段（對話庫）</button></div>` : ""}
     <div class="row"><button class="btn block ${Q.kind === "dialog" ? "" : "primary"}" id="resHome">回首頁</button>${daily || Q.kind === "dialog" ? "" : `<button class="btn block" id="resAgain">再來一輪</button>`}</div>`;
   $("result").querySelectorAll("[data-say]").forEach(b => b.onclick = () => speak(missed[Number(b.dataset.say)].en));
   $("resHome").onclick = () => { show("home"); renderHome(); };
+  if ($("resSup")) $("resSup").onclick = openSupport;
   if ($("resReplay")) { const dd = Q.dialog; $("resReplay").onclick = () => playDialog(dd); $("resLib").onclick = () => openDialog(); }
   const again = $("resAgain"); if (again) again.onclick = () => Q.kind === "blitz" ? startBlitz() : startPractice(Object.keys(MODES).find(k => MODES[k].name === Q.title) || "mc");
   setTimeout(() => $("resHome").focus(), 50);
@@ -3434,13 +3478,120 @@ function renderHome() {
     ["AI 讀寫", [ ["reading", AI.kind ? "" : (state.readings || []).length ? `題庫 ${state.readings.length} 篇` : needAiTag, AI.kind ? "" : (state.readings || []).length ? "從短文庫挑一篇來讀" : needAiDesc], ["writing", needAiTag, needAiDesc]]],
     ["遊戲", [["match"], ["blitz", state.best.blitz ? `紀錄 ${state.best.blitz} 題` : ""], ["rain", state.best.rain ? `紀錄 ${state.best.rain} 個` : "", ""]]],
     ["生活與測驗", [["travel"], ["assess", lastA ? `上次 ${lastA.cefr}` : "", "6 分鐘，看得懂和用得出來都測"]]],
+    ...(CAN_WISH() || SHOW_SUPPORT() ? [["一起讓它變更好", [...(CAN_WISH() ? [["wish", WISH_COUNT ? `${WISH_COUNT} 個願望` : "", ""]] : []), ...(SHOW_SUPPORT() ? [["support"]] : [])]]] : []),
   ];
-  const SKILL = { cards: "讀・記憶", pic: "讀", mc: "讀", listen: "聽", cloze: "讀", build: "寫", spell: "寫", dictation: "聽・寫", match: "讀", blitz: "讀", speak: "說", review: "複習", assess: "測驗", reading: "讀", writing: "寫", chat: "說・寫", notes: "台詞", rain: "寫・遊戲", due: "複習", coach: "說", trans: "寫", mistakes: "寫・複習", ladder: "聽・說", dialog: "聽", diary: "說", subs: "聽・說", pairs: "聽・說", travel: "說", map: "進度" };
+  const SKILL = { wish: "一起變更好", support: "一起變更好", cards: "讀・記憶", pic: "讀", mc: "讀", listen: "聽", cloze: "讀", build: "寫", spell: "寫", dictation: "聽・寫", match: "讀", blitz: "讀", speak: "說", review: "複習", assess: "測驗", reading: "讀", writing: "寫", chat: "說・寫", notes: "台詞", rain: "寫・遊戲", due: "複習", coach: "說", trans: "寫", mistakes: "寫・複習", ladder: "聽・說", dialog: "聽", diary: "說", subs: "聽・說", pairs: "聽・說", travel: "說", map: "進度" };
   $("modeGrid").outerHTML = `<div id="modeGrid" style="display:flex;flex-direction:column;gap:10px">${groups.map(([g, cards]) => `<div class="group-h">${g}</div><div class="grid">${cards.map(([k, tag, desc]) => `<button class="mode" data-m="${k}"><span class="tagline">${esc(SKILL[k] + (tag ? " · " + tag : ""))}</span><b>${esc(MODES[k].name)}</b><small>${esc(desc || MODES[k].desc)}</small></button>`).join("")}</div>`).join("")}</div>`;
   $("modeGrid").querySelectorAll(".mode").forEach(b => b.onclick = () => startPractice(b.dataset.m));
   renderStorage();
 }
+function wallHtml() {
+  const items = SPONSORS.map(s => `<span>${esc(s.t || "💛")} <b>${esc(s.n)}</b>${s.m ? ` <i>${esc(s.m)}</i>` : ""}</span>`).join("");
+  return `<div class="wall" tabindex="0" aria-label="感謝贊助者名單"><div class="track" style="--dur:${Math.max(18, SPONSORS.length * 6)}s">${items}</div></div>`;
+}
+function renderSponsorWall() {
+  const el = $("sponsorWall"); if (!el) return;
+  if (!SPONSORS.length || !SHOW_SUPPORT()) { el.hidden = true; return; }
+  el.hidden = false; el.outerHTML = wallHtml().replace('<div class="wall"', '<div class="wall" id="sponsorWall" title="感謝贊助者"');
+}
+function openSupport() {
+  const I = SPONSOR_INFO || {}, bankOk = !!I.account;
+  openModal(`
+    <div class="row"><h2 style="font-size:22px;flex:1;min-width:0">支持 English Quest</h2><button class="icon-btn" id="spClose" aria-label="關閉">${ICON.x}</button></div>
+    <p style="margin:0">謝謝你願意讓這份心意繼續走下去。贊助純粹隨喜，你覺得值多少都好，金額沒有標準，也不需要勉強；不贊助也能一直免費用。</p>
+    <div class="tiers">${TIERS.map(([e, n, t]) => `<div class="tier"><span class="em" aria-hidden="true">${e}</span><b>NT$${n}</b><span>${esc(t)}</span></div>`).join("")}</div>
+    <p class="muted" style="margin:0;font-size:13px">金額只是參考，自己填多少都可以。</p>
+    ${SPONSOR ? `<a class="btn primary block" href="${esc(SPONSOR)}" target="_blank" rel="noopener">線上贊助（信用卡、超商、ATM）</a>` : ""}
+    ${bankOk ? `<section class="card flat" style="gap:10px"><h3 style="margin:0">銀行轉帳</h3>
+      <dl class="bankbox">${I.bank || I.code ? `<dt>銀行</dt><dd>${esc(I.bank || "")}${I.code ? `（${esc(I.code)}）` : ""}</dd>` : ""}<dt>帳號</dt><dd id="spAcct">${esc(I.account)}</dd>${I.name ? `<dt>戶名</dt><dd>${esc(I.name)}</dd>` : ""}</dl>
+      <div class="row"><button class="btn small" id="spCopy">複製帳號</button><span class="muted" style="font-size:13px">轉帳後填下面的表單，我才知道是你</span></div></section>` : ""}
+    ${Store.backend === "sheet" ? `<section class="card flat" style="gap:8px"><h3 style="margin:0">我贊助了，想上感謝名單</h3>
+      <label class="lbl" for="spNick">暱稱（會顯示在名單上）</label><input class="field" id="spNick" maxlength="20" autocomplete="nickname" placeholder="例如：小葡萄">
+      <div class="row"><div style="flex:1;min-width:0"><label class="lbl" for="spTier">方案</label><select class="field" id="spTier">${TIERS.map(([e, n, t]) => `<option value="${e}">${e} NT$${n}</option>`).join("")}<option value="💛">💛 自己決定的金額</option></select></div>
+      <div style="flex:1;min-width:0"><label class="lbl" for="spLast5">匯款帳號末五碼（選填）</label><input class="field" id="spLast5" inputmode="numeric" maxlength="5" placeholder="12345"></div></div>
+      <label class="lbl" for="spMsg">想說的話（選填）</label><input class="field" id="spMsg" maxlength="60" placeholder="例如：加油！小孩很愛單字雨">
+      <label class="row" style="gap:8px;font-size:14px"><input type="checkbox" id="spAgree" checked> 同意把暱稱和這句話放在感謝名單</label>
+      <div class="row"><button class="btn small primary" id="spSend">送出</button><span class="muted" style="font-size:13px" id="spOut"></span></div>
+      <p class="muted" style="margin:0;font-size:12px">我核對後才會放上名單，可能要等幾天。</p></section>` : ""}
+    <section class="card flat" style="gap:8px"><h3 style="margin:0">許願池</h3>
+      <p style="margin:0;font-size:15px">想要什麼新功能、哪裡不好用，都歡迎告訴我。你的想法會讓這個工具一起長大；覺得好用的話，也歡迎分享給需要的朋友。</p>
+      ${I.wish ? `<a class="btn block" href="${esc(I.wish)}" target="_blank" rel="noopener">打開許願表單</a>` : CAN_WISH() ? `<button class="btn block" id="spWishBoard">去許願池看看大家的願望</button>` : CAN_FEEDBACK() ? `<textarea class="field" id="spWish" maxlength="500" style="min-height:70px" placeholder="我希望可以…"></textarea><div class="row"><button class="btn small" id="spWishGo">許願</button><span class="muted" style="font-size:13px" id="spWishOut"></span></div>` : ""}
+    </section>
+    ${SPONSORS.length ? `<span class="eyebrow">感謝贊助者</span>${wallHtml()}` : ""}`);
+  $("spClose").onclick = closeModal;
+  if ($("spCopy")) $("spCopy").onclick = async () => {
+    const acct = (SPONSOR_INFO.account || "").replace(/-/g, "");
+    try { await navigator.clipboard.writeText(acct); toast("已複製帳號"); }
+    catch (e) { const r = document.createRange(); r.selectNodeContents($("spAcct")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("已選取帳號，請手動複製"); }
+  };
+  if ($("spSend")) $("spSend").onclick = async () => {
+    const note = { nick: $("spNick").value, tier: $("spTier").value, last5: $("spLast5").value, msg: $("spMsg").value, agree: $("spAgree").checked };
+    if (!note.nick.trim() && !note.last5.trim()) { $("spOut").textContent = "請填暱稱或末五碼"; return; }
+    $("spSend").disabled = true; $("spOut").textContent = "送出中…";
+    try { await gs("sendSponsorNote", note, guestCode()); $("spOut").textContent = "收到了，真的很謝謝你！"; }
+    catch (e) { $("spOut").textContent = /TOO_MANY/.test(String(e && e.message || e)) ? "已經收到了，謝謝你！" : "沒有送出，請再試一次"; $("spSend").disabled = false; }
+  };
+  if ($("spWishBoard")) $("spWishBoard").onclick = openWishes;
+  if ($("spWishGo")) $("spWishGo").onclick = async () => {
+    const t = $("spWish").value.trim(); if (!t) { $("spWish").focus(); return; }
+    $("spWishGo").disabled = true; $("spWishOut").textContent = "送出中…";
+    try { await sendFeedback("【許願】" + t); $("spWish").value = ""; $("spWishOut").textContent = "收到你的願望了，謝謝！"; }
+    catch (e) { $("spWishOut").textContent = /TOO_MANY/.test(String(e && e.message || e)) ? "已經收到好幾則了，謝謝你！過一小時再寫吧" : "沒有送出，請再試一次"; }
+    $("spWishGo").disabled = false;
+  };
+}
+function renderWishBar() {
+  const b = $("wishBar"); if (!b) return;
+  b.hidden = !CAN_WISH(); $("wishCount").textContent = WISH_COUNT ? `${WISH_COUNT} 個願望` : "";
+  b.onclick = openWishes;
+}
+let WL = null;
+async function openWishes() {
+  if (!CAN_WISH()) return;
+  WL = WL || { sort: "hot", data: null };
+  openModal(`<div class="row"><h2 style="font-size:22px;flex:1;min-width:0">許願池</h2><button class="icon-btn" id="wsClose" aria-label="關閉">${ICON.x}</button></div><p class="muted" style="margin:0">讀取中…</p>`);
+  $("wsClose").onclick = closeModal;
+  try { WL.data = await gs("listWishes", guestCode()); renderWishes(); }
+  catch (e) { toast("讀取許願池失敗，請再試一次"); closeModal(); }
+}
+function renderWishes() {
+  const D2 = WL.data || { items: [], owner: false }, owner = !!D2.owner;
+  const items = D2.items.slice().sort((a, b) => WL.sort === "hot" ? (b.n - a.n) || (a.d < b.d ? 1 : -1) : (a.d < b.d ? 1 : a.d > b.d ? -1 : 0));
+  const stCls = s => s === "已完成" ? "st done" : s === "製作中" ? "st doing" : "st";
+  openModal(`
+    <div class="row"><h2 style="font-size:22px;flex:1;min-width:0">許願池</h2><button class="icon-btn" id="wsClose" aria-label="關閉">${ICON.x}</button></div>
+    <p style="margin:0">想要什麼新功能、哪裡不好用，都可以許願。看到喜歡的願望按「我也想要」，越多人想要的，我會越先做。</p>
+    <label class="lbl" for="wsText">我的願望</label>
+    <textarea class="field" id="wsText" maxlength="500" style="min-height:70px" placeholder="例如：希望可以加日文、希望單字雨有排行榜…"></textarea>
+    <div class="row" style="flex-wrap:wrap"><label class="row" style="gap:6px;font-size:14px"><input type="checkbox" id="wsPriv"> 只給作者看（不公開）</label><div class="spacer"></div><button class="btn small primary" id="wsSend">許願</button></div>
+    <div class="row"><div class="seg" role="group" aria-label="排序"><button data-ws="hot" aria-pressed="${WL.sort === "hot"}">最多人想要</button><button data-ws="new" aria-pressed="${WL.sort === "new"}">最新</button></div><div class="spacer"></div><span class="muted" style="font-size:13px">${items.length} 個願望</span></div>
+    <div>${items.length ? items.map(w => `<div class="wish" data-id="${esc(w.id)}">
+      <div class="wt">${w.p ? "🔒 " : ""}${esc(w.t)}</div>
+      <div class="meta">${w.s ? `<span class="${stCls(w.s)}">${esc(w.s)}</span>` : ""}<span>${esc(w.d)}</span>${w.mine ? "<span>・我許的</span>" : ""}${owner && w.who ? `<span>・${esc(w.who)}</span>` : ""}<div class="spacer"></div>
+        ${w.p ? "" : `<button class="btn small" data-vote="${esc(w.id)}" ${w.voted || w.mine ? "disabled" : ""}>👍 ${w.voted ? "已 +1" : "我也想要"} ${w.n || ""}</button>`}</div>
+      ${w.r ? `<div class="reply"><b>作者回覆：</b>${esc(w.r)}</div>` : ""}
+      ${owner ? `<div class="row" style="flex-wrap:wrap;gap:6px"><select class="field" data-st="${esc(w.id)}" style="flex:0 0 auto;width:auto;padding:6px 8px">${["", "考慮中", "製作中", "已完成"].map(s => `<option value="${s}" ${s === w.s ? "selected" : ""}>${s || "狀態"}</option>`).join("")}</select><input class="field" data-rp="${esc(w.id)}" value="${esc(w.r || "")}" placeholder="回覆（大家看得到）" style="flex:1 1 140px;min-width:0;padding:6px 8px"><button class="btn small" data-save="${esc(w.id)}">儲存</button><button class="btn small" data-pub="${esc(w.id)}" data-v="${w.p ? 1 : 0}">${w.p ? "公開" : "隱藏"}</button></div>` : ""}
+    </div>`).join("") : `<p class="muted" style="margin:0">還沒有人許願，來當第一個吧！</p>`}</div>`);
+  $("wsClose").onclick = () => { closeModal(); if (!$("home").hidden) renderHome(); };
+  $("gPanel").querySelectorAll("[data-ws]").forEach(b => b.onclick = () => { WL.sort = b.dataset.ws; renderWishes(); });
+  $("wsSend").onclick = async () => {
+    const t = $("wsText").value.trim(); if (!t) { $("wsText").focus(); return; }
+    $("wsSend").disabled = true;
+    try { WL.data = await gs("addWish", t, $("wsPriv").checked, guestCode()); WISH_COUNT = WL.data.items.filter(x => !x.p).length; WL.sort = "new"; toast("願望收到了，謝謝你！"); renderWishes(); }
+    catch (e) { toast(/TOO_MANY/.test(String(e && e.message || e)) ? "這一小時已經許了好幾個願，晚點再來吧" : "沒有送出，請再試一次"); $("wsSend").disabled = false; }
+  };
+  $("gPanel").querySelectorAll("[data-vote]").forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    try { WL.data = await gs("voteWish", b.dataset.vote, guestCode()); renderWishes(); }
+    catch (e) { toast("沒有成功，請再試一次"); b.disabled = false; }
+  });
+  const upd = async (id, patch) => { try { WL.data = await gs("ownerUpdateWish", id, patch); toast("已更新"); renderWishes(); } catch (e) { toast("更新失敗"); } };
+  $("gPanel").querySelectorAll("[data-save]").forEach(b => b.onclick = () => { const id = b.dataset.save; upd(id, { s: $("gPanel").querySelector(`[data-st="${id}"]`).value, r: $("gPanel").querySelector(`[data-rp="${id}"]`).value }); });
+  $("gPanel").querySelectorAll("[data-pub]").forEach(b => b.onclick = () => upd(b.dataset.pub, { pub: b.dataset.v === "1" }));
+}
 function renderStorage() {
+  renderSponsorWall();
+  renderWishBar();
   const map = { sheet: "進度存在你的 Google 試算表。", browser: "進度存在這個瀏覽器裡。", account: "進度存在你的 Claude 帳號，換裝置也找得到。", computer: "進度存在電腦上的 english_quest_web_save.json。" };
   if (GUEST) { $("storageNote").textContent = `分享版：你的進度用學習代碼 ${guestCode()} 存在分享者那邊，換裝置時到「我的成就」輸入代碼就能接著練。AI 功能沒有開放，練習內容來自共用題庫。`; return; }
   $("storageNote").textContent = map[Store.backend] + (AUDIO_AI() ? "" : GAS ? "　設定 Gemini 金鑰後，口說題可以錄音給 AI 評發音。" : CAN_SPEAK ? "" : "　想要錄音評發音，請用 Google 試算表版。");
@@ -3500,14 +3651,20 @@ function renderStats(focus) {
       <input class="field" id="aiKeyIn" type="password" autocomplete="off" placeholder="AIza…">
       <div class="row"><button class="btn primary small" id="aiKeySave">儲存</button>${AI.localKey ? '<button class="btn small" id="aiKeyDel">移除金鑰</button>' : ""}</div>
     </section>` : ""}
-    ${SPONSOR || CAN_FEEDBACK() ? `<section class="card flat" id="thanksCard"><h3>如果它剛好幫上了忙</h3>
+    ${SHOW_SUPPORT() || CAN_FEEDBACK() ? `<section class="card flat" id="thanksCard"><h3>如果它剛好幫上了忙</h3>
       <p style="margin:0">謝謝你願意讓這份心意繼續走下去。</p>
-      <p style="margin:0">如果這個小工具剛好替你省下一點時間、少了一點煩惱，歡迎依自己的心意支持。${SPONSOR ? "贊助純粹隨喜，你覺得值多少都好，金額沒有標準，也不需要勉強。" : ""}</p>
+      <p style="margin:0">如果這個小工具剛好替你省下一點時間、少了一點煩惱，${SHOW_SUPPORT() ? "歡迎依自己的心意支持。贊助純粹隨喜，你覺得值多少都好，金額沒有標準，也不需要勉強。" : "就是最好的回報了。"}</p>
       <p style="margin:0">願意使用、分享給需要的人，或給我一句建議，都是很珍貴的鼓勵。工具會持續整理與調整，遇到不順手的地方，也歡迎告訴我。</p>
-      ${SPONSOR ? `<div class="row"><a class="btn primary small" href="${esc(SPONSOR)}" target="_blank" rel="noopener">隨喜支持</a>${GUEST ? "" : `<span class="muted" style="font-size:13px">朋友打開分享版也會看到這張卡</span>`}</div>` : ""}
-      ${CAN_FEEDBACK() && GUEST ? `<label class="lbl" for="fbText">給我一句建議</label>
+      <div class="row">${CAN_WISH() ? `<button class="btn small primary" id="wishOpen2">去許願池</button>` : ""}${SHOW_SUPPORT() ? `<button class="btn small" id="supOpen">看贊助方式</button>` : ""}</div>
+      ${SHOW_SUPPORT() && SPONSORS.length ? `<span class="eyebrow">感謝贊助者</span>${wallHtml()}` : ""}
+      ${CAN_FEEDBACK() && !CAN_WISH() && GUEST ? `<label class="lbl" for="fbText">給我一句建議</label>
       <textarea class="field" id="fbText" maxlength="500" style="min-height:76px" placeholder="哪裡好用、哪裡卡卡的，或想要什麼新功能，都可以寫"></textarea>
-      <div class="row"><button class="btn small" id="fbSend">送出</button><span class="muted" style="font-size:13px" id="fbMsg"></span></div>` : CAN_FEEDBACK() ? `<p class="muted" style="margin:0;font-size:13px">朋友在這裡寫的建議，會存到${Store.backend === "sheet" ? "試算表的「意見回饋」工作表" : "「學習紀錄」資料夾的 意見回饋.csv"}。</p>` : ""}
+      <div class="row"><button class="btn small" id="fbSend">送出</button><span class="muted" style="font-size:13px" id="fbMsg"></span></div>` : ""}
+    </section>` : ""}
+    ${KEY_MODE() && Store.backend === "sheet" ? `<section class="card flat"><h3>贊助頁（只有你看得到這張卡）</h3>
+      <p style="margin:0">目前：<b>${SPONSOR_INFO.show ? "朋友看得到贊助頁" : "已隱藏，朋友看不到"}</b>。許願池不受影響，一直都在。</p>
+      <div class="row"><button class="btn small ${SPONSOR_INFO.show ? "" : "primary"}" id="supToggle">${SPONSOR_INFO.show ? "先藏起來" : "打開贊助頁"}</button><button class="btn small" id="supPreview">預覽贊助頁</button></div>
+      <p class="muted" style="margin:0;font-size:13px">銀行帳號、贊助連結在試算表的「贊助設定」填寫。</p>
     </section>` : ""}
     <section class="card flat"><h3>程度與難度</h3>
       <p style="margin:0">目前難度：<b>${esc(D().name)}</b>。${esc(D().desc)}</p>
@@ -3560,6 +3717,14 @@ function renderStats(focus) {
     try { await gs("logoutOwner"); } catch (e) { }
     clearTimeout(Store.timer); await Store.flush();
     setOwnerToken(""); toast("已登出，重新載入中…"); setTimeout(() => location.reload(), 600);
+  };
+  if ($("supOpen")) $("supOpen").onclick = openSupport;
+  if ($("wishOpen2")) $("wishOpen2").onclick = openWishes;
+  if ($("supPreview")) $("supPreview").onclick = openSupport;
+  if ($("supToggle")) $("supToggle").onclick = async () => {
+    const on = !SPONSOR_INFO.show; $("supToggle").disabled = true;
+    try { SPONSOR_INFO = await gs("setSponsorVisible", on); const lib = await gs("loadLibrary"); mergeLibrary(lib); toast(on ? "贊助頁已打開，朋友重新整理就看得到" : "贊助頁已藏起來"); renderStats(); }
+    catch (e) { toast("切換失敗，請再試一次"); $("supToggle").disabled = false; }
   };
   if ($("fbSend")) $("fbSend").onclick = async () => {
     const t = $("fbText").value.trim();
