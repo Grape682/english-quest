@@ -3497,7 +3497,6 @@ function openSupport() {
   openModal(`
     <div class="row"><h2 style="font-size:22px;flex:1;min-width:0">支持 English Quest</h2><button class="icon-btn" id="spClose" aria-label="關閉">${ICON.x}</button></div>
     <p style="margin:0">謝謝你願意讓這份心意繼續走下去。若能幫得上忙，表示彼此有份機緣，送給您，一起變得更好。請多多支持，是小葡的動力！</p>
-    <p style="margin:0">贊助純粹隨喜，金額沒有標準，也不需要勉強；不贊助也能一直免費用。</p>
     <div class="tiers">${TIERS.map(([e, n, t]) => `<div class="tier"><span class="em" aria-hidden="true">${e}</span><b>NT$${n}</b><span>${esc(t)}</span></div>`).join("")}</div>
     <p class="muted" style="margin:0;font-size:13px">金額只是參考，自己填多少都可以。</p>
     ${SPONSOR ? `<a class="btn primary block" href="${esc(SPONSOR)}" target="_blank" rel="noopener">線上贊助（信用卡、超商、ATM）</a>` : ""}
@@ -3665,7 +3664,6 @@ function renderStats(focus) {
     </section>` : ""}
     ${SHOW_SUPPORT() || CAN_FEEDBACK() ? `<section class="card flat" id="thanksCard"><h3>如果它剛好幫上了忙</h3>
       <p style="margin:0">謝謝你願意讓這份心意繼續走下去。若能幫得上忙，表示彼此有份機緣，送給您，一起變得更好。請多多支持，是小葡的動力！</p>
-      ${SHOW_SUPPORT() ? `<p style="margin:0">贊助純粹隨喜，金額沒有標準，也不需要勉強。</p>` : ""}
       <p style="margin:0">願意使用、分享給需要的人，或到許願池留一句建議，都是很珍貴的鼓勵。工具會持續整理與調整，遇到不順手的地方，也歡迎告訴我。</p>
       <div class="row">${CAN_WISH() ? `<button class="btn small primary" id="wishOpen2">去許願池</button>` : ""}${SHOW_SUPPORT() ? `<button class="btn small" id="supOpen">看贊助方式</button>` : ""}</div>
       ${SHOW_SUPPORT() && SPONSORS.length ? `<span class="eyebrow">感謝贊助者</span>${wallHtml()}` : ""}
