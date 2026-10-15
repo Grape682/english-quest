@@ -544,7 +544,7 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
-const EQ_BUILD = "1016-0034";
+const EQ_BUILD = "3d8114";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -3393,8 +3393,6 @@ function renderResult(bonus) {
   const n = Q.items.length || 0, pct = n ? Math.round(100 * Q.correct / n) : 0;
   const missed = [...new Set(Q.missed)].map(e => BY_EN[e]).filter(Boolean);
   const daily = Q.kind === "daily";
-  const askSponsor = daily && SHOW_SUPPORT() && (!state.sponsorAsked || (Date.now() - new Date(state.sponsorAsked).getTime()) > 7 * 864e5);
-  if (askSponsor) { state.sponsorAsked = today(); Store.save(); }
   $("result").innerHTML = `
     <section class="card">
       <span class="eyebrow">${daily ? "今日任務完成" : Q.kind === "blitz" ? "60 秒快答" : esc(Q.title)}</span>
@@ -3403,12 +3401,10 @@ function renderResult(bonus) {
       ${daily ? `<p style="margin:0">明天會出一組新的題目：今天答錯的字會排進明天的複習，題型也會跟著「${esc(THEMES[(new Date().getDay() + 1) % 7].name)}」改變。</p>` : ""}
     </section>
     ${missed.length ? `<section class="card flat"><h3>這次要再記一下</h3><div class="list">${missed.map((w, k) => `<div class="li"><button class="icon-btn" data-say="${k}" aria-label="播放 ${esc(w.en)}">${ICON.spk}</button><span class="w">${esc(w.en)}</span><span class="z">${esc(w.zh)}</span></div>`).join("")}</div></section>` : ""}
-    ${askSponsor ? `<section class="card flat"><p style="margin:0">如果它剛好幫上了忙，歡迎<button class="btn small" id="resSup" style="margin:0 4px">依自己的心意支持</button>多少都好。不贊助也能一直免費用，也可以到許願池留一句建議給我。</p></section>` : ""}
     ${Q.kind === "dialog" && Q.dialog ? `<div class="row"><button class="btn block primary" id="resReplay">${ICON.spk}再聽一次這段</button><button class="btn block" id="resLib">換一段（對話庫）</button></div>` : ""}
     <div class="row"><button class="btn block ${Q.kind === "dialog" ? "" : "primary"}" id="resHome">回首頁</button>${daily || Q.kind === "dialog" ? "" : `<button class="btn block" id="resAgain">再來一輪</button>`}</div>`;
   $("result").querySelectorAll("[data-say]").forEach(b => b.onclick = () => speak(missed[Number(b.dataset.say)].en));
   $("resHome").onclick = () => { show("home"); renderHome(); };
-  if ($("resSup")) $("resSup").onclick = openSupport;
   if ($("resReplay")) { const dd = Q.dialog; $("resReplay").onclick = () => playDialog(dd); $("resLib").onclick = () => openDialog(); }
   const again = $("resAgain"); if (again) again.onclick = () => Q.kind === "blitz" ? startBlitz() : startPractice(Object.keys(MODES).find(k => MODES[k].name === Q.title) || "mc");
   setTimeout(() => $("resHome").focus(), 50);
@@ -3500,7 +3496,8 @@ function openSupport() {
   const I = SPONSOR_INFO || {}, bankOk = !!I.account;
   openModal(`
     <div class="row"><h2 style="font-size:22px;flex:1;min-width:0">支持 English Quest</h2><button class="icon-btn" id="spClose" aria-label="關閉">${ICON.x}</button></div>
-    <p style="margin:0">謝謝你願意讓這份心意繼續走下去。贊助純粹隨喜，你覺得值多少都好，金額沒有標準，也不需要勉強；不贊助也能一直免費用。</p>
+    <p style="margin:0">謝謝你願意讓這份心意繼續走下去。若能幫得上忙，表示彼此有份機緣，送給您，一起變得更好。請多多支持，是小葡的動力！</p>
+    <p style="margin:0">贊助純粹隨喜，金額沒有標準，也不需要勉強；不贊助也能一直免費用。</p>
     <div class="tiers">${TIERS.map(([e, n, t]) => `<div class="tier"><span class="em" aria-hidden="true">${e}</span><b>NT$${n}</b><span>${esc(t)}</span></div>`).join("")}</div>
     <p class="muted" style="margin:0;font-size:13px">金額只是參考，自己填多少都可以。</p>
     ${SPONSOR ? `<a class="btn primary block" href="${esc(SPONSOR)}" target="_blank" rel="noopener">線上贊助（信用卡、超商、ATM）</a>` : ""}
@@ -3667,9 +3664,9 @@ function renderStats(focus) {
       <div class="row"><button class="btn primary small" id="aiKeySave">儲存</button>${AI.localKey ? '<button class="btn small" id="aiKeyDel">移除金鑰</button>' : ""}</div>
     </section>` : ""}
     ${SHOW_SUPPORT() || CAN_FEEDBACK() ? `<section class="card flat" id="thanksCard"><h3>如果它剛好幫上了忙</h3>
-      <p style="margin:0">謝謝你願意讓這份心意繼續走下去。</p>
-      <p style="margin:0">如果這個小工具剛好替你省下一點時間、少了一點煩惱，${SHOW_SUPPORT() ? "歡迎依自己的心意支持。贊助純粹隨喜，你覺得值多少都好，金額沒有標準，也不需要勉強。" : "就是最好的回報了。"}</p>
-      <p style="margin:0">願意使用、分享給需要的人，或給我一句建議，都是很珍貴的鼓勵。工具會持續整理與調整，遇到不順手的地方，也歡迎告訴我。</p>
+      <p style="margin:0">謝謝你願意讓這份心意繼續走下去。若能幫得上忙，表示彼此有份機緣，送給您，一起變得更好。請多多支持，是小葡的動力！</p>
+      ${SHOW_SUPPORT() ? `<p style="margin:0">贊助純粹隨喜，金額沒有標準，也不需要勉強。</p>` : ""}
+      <p style="margin:0">願意使用、分享給需要的人，或到許願池留一句建議，都是很珍貴的鼓勵。工具會持續整理與調整，遇到不順手的地方，也歡迎告訴我。</p>
       <div class="row">${CAN_WISH() ? `<button class="btn small primary" id="wishOpen2">去許願池</button>` : ""}${SHOW_SUPPORT() ? `<button class="btn small" id="supOpen">看贊助方式</button>` : ""}</div>
       ${SHOW_SUPPORT() && SPONSORS.length ? `<span class="eyebrow">感謝贊助者</span>${wallHtml()}` : ""}
       ${CAN_FEEDBACK() && !CAN_WISH() && GUEST ? `<label class="lbl" for="fbText">給我一句建議</label>
