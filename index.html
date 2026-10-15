@@ -544,6 +544,8 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
+const EQ_BUILD = "1016-0034";
+let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
 const SHOW_SUPPORT = () => HAS_SUPPORT() && (Store.backend !== "sheet" || !!SPONSOR_INFO.show);
@@ -3546,13 +3548,24 @@ function renderWishBar() {
   b.onclick = openWishes;
 }
 let WL = null;
+/* 後台錯誤翻成白話：最常見的是 Apps Script 還沒部署新版本 */
+function backendError(e) {
+  const m = String((e && e.message) || e || "");
+  if (/UNKNOWN_FN|is not a function|Script function not found/i.test(m)) return KEY_MODE() || !GUEST
+    ? "後台（Code.gs）還是舊版本：請換上新的 Code.gs、存檔，再到「部署 → 管理部署作業」把「所有人」的部署選「新版本」。用 /dev 網址的話，存檔後重新整理就好。"
+    : "作者正在更新系統，晚一點再來試試。";
+  if (/OFFLINE|BAD_RESPONSE|Failed to fetch/.test(m)) return "連不上後台，請檢查網路後再試一次。";
+  if (/TOO_MANY/.test(m)) return "這一小時已經許了好幾個願，晚點再來吧。";
+  return "發生錯誤：" + m.slice(0, 80);
+}
 async function openWishes() {
   if (!CAN_WISH()) return;
   WL = WL || { sort: "hot", data: null };
-  openModal(`<div class="row"><h2 style="font-size:22px;flex:1;min-width:0">許願池</h2><button class="icon-btn" id="wsClose" aria-label="關閉">${ICON.x}</button></div><p class="muted" style="margin:0">讀取中…</p>`);
-  $("wsClose").onclick = closeModal;
-  try { WL.data = await gs("listWishes", guestCode()); renderWishes(); }
-  catch (e) { toast("讀取許願池失敗，請再試一次"); closeModal(); }
+  WL.err = ""; WL.loading = true;
+  renderWishes();
+  try { WL.data = await gs("listWishes", guestCode()); WL.loading = false; }
+  catch (e) { WL.loading = false; WL.err = backendError(e); }
+  if (!$("gModal").hidden && $("wsText")) { const keep = $("wsText").value; renderWishes(); $("wsText").value = keep; }
 }
 function renderWishes() {
   const D2 = WL.data || { items: [], owner: false }, owner = !!D2.owner;
@@ -3564,28 +3577,30 @@ function renderWishes() {
     <label class="lbl" for="wsText">我的願望</label>
     <textarea class="field" id="wsText" maxlength="500" style="min-height:70px" placeholder="例如：希望可以加日文、希望單字雨有排行榜…"></textarea>
     <div class="row" style="flex-wrap:wrap"><label class="row" style="gap:6px;font-size:14px"><input type="checkbox" id="wsPriv"> 只給作者看（不公開）</label><div class="spacer"></div><button class="btn small primary" id="wsSend">許願</button></div>
+    ${WL.err ? `<div class="reply" style="border:1px solid var(--bad)"><b>讀取失敗</b><br>${esc(WL.err)}<div class="row" style="margin-top:6px"><button class="btn small" id="wsRetry">再試一次</button></div></div>` : ""}
     <div class="row"><div class="seg" role="group" aria-label="排序"><button data-ws="hot" aria-pressed="${WL.sort === "hot"}">最多人想要</button><button data-ws="new" aria-pressed="${WL.sort === "new"}">最新</button></div><div class="spacer"></div><span class="muted" style="font-size:13px">${items.length} 個願望</span></div>
-    <div>${items.length ? items.map(w => `<div class="wish" data-id="${esc(w.id)}">
+    <div>${WL.loading ? `<p class="muted" style="margin:0">讀取大家的願望中…</p>` : items.length ? items.map(w => `<div class="wish" data-id="${esc(w.id)}">
       <div class="wt">${w.p ? "🔒 " : ""}${esc(w.t)}</div>
       <div class="meta">${w.s ? `<span class="${stCls(w.s)}">${esc(w.s)}</span>` : ""}<span>${esc(w.d)}</span>${w.mine ? "<span>・我許的</span>" : ""}${owner && w.who ? `<span>・${esc(w.who)}</span>` : ""}<div class="spacer"></div>
         ${w.p ? "" : `<button class="btn small" data-vote="${esc(w.id)}" ${w.voted || w.mine ? "disabled" : ""}>👍 ${w.voted ? "已 +1" : "我也想要"} ${w.n || ""}</button>`}</div>
       ${w.r ? `<div class="reply"><b>作者回覆：</b>${esc(w.r)}</div>` : ""}
       ${owner ? `<div class="row" style="flex-wrap:wrap;gap:6px"><select class="field" data-st="${esc(w.id)}" style="flex:0 0 auto;width:auto;padding:6px 8px">${["", "考慮中", "製作中", "已完成"].map(s => `<option value="${s}" ${s === w.s ? "selected" : ""}>${s || "狀態"}</option>`).join("")}</select><input class="field" data-rp="${esc(w.id)}" value="${esc(w.r || "")}" placeholder="回覆（大家看得到）" style="flex:1 1 140px;min-width:0;padding:6px 8px"><button class="btn small" data-save="${esc(w.id)}">儲存</button><button class="btn small" data-pub="${esc(w.id)}" data-v="${w.p ? 1 : 0}">${w.p ? "公開" : "隱藏"}</button></div>` : ""}
-    </div>`).join("") : `<p class="muted" style="margin:0">還沒有人許願，來當第一個吧！</p>`}</div>`);
+    </div>`).join("") : WL.err ? "" : `<p class="muted" style="margin:0">還沒有人許願，來當第一個吧！</p>`}</div>`);
+  if ($("wsRetry")) $("wsRetry").onclick = openWishes;
   $("wsClose").onclick = () => { closeModal(); if (!$("home").hidden) renderHome(); };
   $("gPanel").querySelectorAll("[data-ws]").forEach(b => b.onclick = () => { WL.sort = b.dataset.ws; renderWishes(); });
   $("wsSend").onclick = async () => {
     const t = $("wsText").value.trim(); if (!t) { $("wsText").focus(); return; }
     $("wsSend").disabled = true;
     try { WL.data = await gs("addWish", t, $("wsPriv").checked, guestCode()); WISH_COUNT = WL.data.items.filter(x => !x.p).length; WL.sort = "new"; toast("願望收到了，謝謝你！"); renderWishes(); }
-    catch (e) { toast(/TOO_MANY/.test(String(e && e.message || e)) ? "這一小時已經許了好幾個願，晚點再來吧" : "沒有送出，請再試一次"); $("wsSend").disabled = false; }
+    catch (e) { WL.err = backendError(e); const keep = $("wsText").value; renderWishes(); $("wsText").value = keep; toast("沒有送出"); }
   };
   $("gPanel").querySelectorAll("[data-vote]").forEach(b => b.onclick = async () => {
     b.disabled = true;
     try { WL.data = await gs("voteWish", b.dataset.vote, guestCode()); renderWishes(); }
-    catch (e) { toast("沒有成功，請再試一次"); b.disabled = false; }
+    catch (e) { WL.err = backendError(e); renderWishes(); }
   });
-  const upd = async (id, patch) => { try { WL.data = await gs("ownerUpdateWish", id, patch); toast("已更新"); renderWishes(); } catch (e) { toast("更新失敗"); } };
+  const upd = async (id, patch) => { try { WL.data = await gs("ownerUpdateWish", id, patch); toast("已更新"); renderWishes(); } catch (e) { toast(backendError(e)); } };
   $("gPanel").querySelectorAll("[data-save]").forEach(b => b.onclick = () => { const id = b.dataset.save; upd(id, { s: $("gPanel").querySelector(`[data-st="${id}"]`).value, r: $("gPanel").querySelector(`[data-rp="${id}"]`).value }); });
   $("gPanel").querySelectorAll("[data-pub]").forEach(b => b.onclick = () => upd(b.dataset.pub, { pub: b.dataset.v === "1" }));
 }
@@ -3699,6 +3714,7 @@ function renderStats(focus) {
     <section class="card flat"><h3>資料</h3><p class="muted" style="margin:0" id="stStore"></p>
       <div class="row"><button class="btn small" id="resetBtn">清除所有進度</button></div></section>`;
   if (OWNER_WHO && !GUEST && $("stStore")) $("stStore").insertAdjacentHTML("beforebegin", `<p style="margin:0">你是擁有者：已用 <b>${esc(OWNER_WHO)}</b> 驗證。</p>`);
+  if (!GUEST && Store.backend === "sheet" && $("stStore")) $("stStore").insertAdjacentHTML("afterend", BACKEND_BUILD === EQ_BUILD ? `<p class="muted" style="margin:0;font-size:12px">網頁和後台都是 ${esc(EQ_BUILD)} 版 ✓</p>` : `<div class="reply" style="border:1px solid var(--bad);padding:8px 10px;border-radius:10px;font-size:14px"><b>後台還是舊版</b>（網頁 ${esc(EQ_BUILD)}・後台 ${esc(BACKEND_BUILD || "?")}）<br>${REMOTE ? "1. Apps Script 換上新的 Code.gs、按存檔<br>2.「部署 → 管理部署作業」→ 點「所有人」的部署 → 鉛筆 → 版本選「新版本」→ 部署<br>3. 回來重新整理這頁" : "Apps Script 換上新的 Code.gs、按存檔，再重新整理這頁"}</div>`);
   $("stStore").textContent = GUEST ? "進度用上面的學習代碼，存在分享者的" + (Store.backend === "sheet" ? "試算表" : "電腦") + "裡，這台瀏覽器也會留一份。" : { sheet: "進度存在你的 Google 試算表（隱藏的「_進度存檔」工作表），學習紀錄、測驗、寫作和 AI 例句也會寫進試算表，可以直接打開來看。", browser: "進度存在這個瀏覽器裡。清除瀏覽器資料會讓進度消失。", account: "進度存在你的 Claude 帳號，只有你看得到。", computer: "進度存在電腦上的 english_quest_web_save.json。" }[Store.backend];
   $("stBack").onclick = () => { show("home"); renderHome(); };
   if ($("ownGo")) $("ownGo").onclick = async () => {
@@ -3724,7 +3740,7 @@ function renderStats(focus) {
   if ($("supToggle")) $("supToggle").onclick = async () => {
     const on = !SPONSOR_INFO.show; $("supToggle").disabled = true;
     try { SPONSOR_INFO = await gs("setSponsorVisible", on); const lib = await gs("loadLibrary"); mergeLibrary(lib); toast(on ? "贊助頁已打開，朋友重新整理就看得到" : "贊助頁已藏起來"); renderStats(); }
-    catch (e) { toast("切換失敗，請再試一次"); $("supToggle").disabled = false; }
+    catch (e) { toast(backendError(e)); $("supToggle").disabled = false; }
   };
   if ($("fbSend")) $("fbSend").onclick = async () => {
     const t = $("fbText").value.trim();
@@ -3882,6 +3898,8 @@ function applyStatus(j) {
   if (!j) return;
   GUEST = j.role === "guest";
   OWNER_WHO = typeof j.who === "string" ? j.who.slice(0, 60) : "";
+  BACKEND_BUILD = typeof j.build === "string" ? j.build : "舊版";
+  if (Store.backend === "sheet" && BACKEND_BUILD !== EQ_BUILD && !GUEST) setTimeout(() => toast("提醒：後台（Code.gs）跟網頁不是同一版，部分新功能會失敗。到「我的成就」看怎麼更新"), 1800);
   SPONSOR = typeof j.sponsor === "string" && /^https:\/\/[^\s"'<>]+$/.test(j.sponsor) ? j.sponsor : "";
   AI.localKey = !!j.available; AI.model = j.model || "";
   AI.kind = j.available ? (Store.backend === "sheet" ? "gas" : "server") : null;
