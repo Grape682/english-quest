@@ -988,6 +988,14 @@ function aiErrorText(e) {
     not_owner: "這是分享版：AI 功能只有分享者可以使用",
   })[c] || "AI 這次沒有回應成功，請再試一次";
 }
+const CAN_FEEDBACK = () => Store.backend === "sheet" || Store.backend === "computer";
+async function sendFeedback(text) {
+  if (Store.backend === "sheet") return gs("sendFeedback", text, guestCode());
+  const r = await apiFetch("api/feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.code || "ERROR");
+  return true;
+}
 const KEY_MODE = () => (Store.backend === "computer" || Store.backend === "sheet") && !GUEST;
 function needAI() {
   if (GUEST) { toast("這是分享版：AI 功能只有分享者可以使用，可以先用題庫裡的內容練習"); return; }
@@ -1591,19 +1599,22 @@ function validDialog(d) {
   return { title: String(d.title || "Conversation").slice(0, 60), speakers, lines, questions };
 }
 async function openDialog(forceNew) {
-  const saved = (state.dialogues || []).filter(r => r.week === state.week && r.lv === state.diff && validDialog(r.data));
+  const all = (state.dialogues || []).filter(r => r && validDialog(r.data)).slice().reverse();
+  const here = all.filter(r => r.week === state.week && r.lv === state.diff), other = all.filter(r => !(r.week === state.week && r.lv === state.diff)).slice(0, 40);
   show("dialog");
-  if (!forceNew && saved.length) {
-    const list = saved.slice().reverse();
+  if (!forceNew && all.length) {
+    const row = (r, k, tag) => `<div class="li"><span class="w" style="flex:1;min-width:0">${esc(r.data.title || "Conversation")}${tag ? `<span class="muted" style="font-size:12px;font-weight:400">　${esc(tag)}</span>` : ""}</span><span class="muted" style="font-size:13px">${esc(r.d || "")}</span><button class="btn small" data-r="${k}">聽這段</button></div>`;
+    const pool = here.concat(other);
     $("dialog").innerHTML = `
       <header class="top"><button class="icon-btn" id="dgBack" aria-label="回首頁">${ICON.x}</button><h2 style="font-size:22px">雙人對話聽力</h2></header>
-      <section class="card flat"><span class="eyebrow">你的對話庫（不用 AI）</span>
-        <p class="muted" style="margin:0">這一週、這個難度已經有 ${saved.length} 段。重聽舊的對話完全不用額度。</p>
-        <div class="list">${list.map((r, k) => `<div class="li"><span class="w" style="flex:1;min-width:0">${esc(r.data.title || "Conversation")}</span><span class="muted" style="font-size:13px">${esc(r.d || "")}</span><button class="btn small" data-r="${k}">聽這段</button></div>`).join("")}</div>
-        <button class="btn primary block" id="dgNew">${AI.kind ? "用 AI 寫一段新的" : "設定 AI 後可以寫新的"}</button></section>`;
+      <section class="card flat"><span class="eyebrow">你的對話庫（重聽不用 AI 額度）</span>
+        ${here.length ? `<p class="muted" style="margin:0">這一週、這個難度有 ${here.length} 段：</p><div class="list">${here.map((r, k) => row(r, k)).join("")}</div>` : `<p class="muted" style="margin:0">這一週、這個難度還沒有對話。</p>`}
+        ${other.length ? `<details${here.length ? "" : " open"}><summary class="muted" style="cursor:pointer">其他週或難度的對話（${other.length} 段）</summary><div class="list" style="margin-top:8px">${other.map((r, k) => row(r, here.length + k, `第 ${r.week} 週・${(DIFF[r.lv] || DIFF[1]).name}`)).join("")}</div></details>` : ""}
+        ${AI.kind ? `<button class="btn primary block" id="dgNew">用 AI 寫一段新的</button>` : `<p class="muted" style="margin:0;font-size:13px">${GUEST ? "分享版可以重聽對話庫裡的對話；寫新的對話只有分享者能用。" : "設定 AI 後可以寫新的對話。"}</p>`}
+      </section>`;
     $("dgBack").onclick = () => { show("home"); renderHome(); };
-    $("dialog").querySelectorAll("[data-r]").forEach(b => b.onclick = () => playDialog(validDialog(list[Number(b.dataset.r)].data)));
-    $("dgNew").onclick = () => openDialog(true);
+    $("dialog").querySelectorAll("[data-r]").forEach(b => b.onclick = () => playDialog(validDialog(pool[Number(b.dataset.r)].data)));
+    if ($("dgNew")) $("dgNew").onclick = () => openDialog(true);
     return;
   }
   if (!AI.kind) { show("home"); renderHome(); return needAI(); }
@@ -1629,7 +1640,7 @@ async function openDialog(forceNew) {
 }
 function playDialog(d) {
   show("dialog");
-  Q = { kind: "dialog", title: "雙人對話聽力", items: d.questions, i: 0, correct: 0, combo: 0, best: 0, gained: 0, missed: [], answered: true };
+  Q = { kind: "dialog", title: "雙人對話聽力", items: d.questions, i: 0, correct: 0, combo: 0, best: 0, gained: 0, missed: [], answered: true, dialog: d };
   let plays = 0, shown = false;
   const sp = d.speakers;
   $("dialog").innerHTML = `
@@ -3347,10 +3358,12 @@ function renderResult(bonus) {
       ${daily ? `<p style="margin:0">明天會出一組新的題目：今天答錯的字會排進明天的複習，題型也會跟著「${esc(THEMES[(new Date().getDay() + 1) % 7].name)}」改變。</p>` : ""}
     </section>
     ${missed.length ? `<section class="card flat"><h3>這次要再記一下</h3><div class="list">${missed.map((w, k) => `<div class="li"><button class="icon-btn" data-say="${k}" aria-label="播放 ${esc(w.en)}">${ICON.spk}</button><span class="w">${esc(w.en)}</span><span class="z">${esc(w.zh)}</span></div>`).join("")}</div></section>` : ""}
-    ${askSponsor ? `<section class="card flat"><p style="margin:0">覺得這個 App 有幫助嗎？可以<a href="${esc(SPONSOR)}" target="_blank" rel="noopener">請作者喝杯飲料</a>，多少都好。不贊助也能一直免費用。</p></section>` : ""}
-    <div class="row"><button class="btn block primary" id="resHome">回首頁</button>${daily ? "" : `<button class="btn block" id="resAgain">再來一輪</button>`}</div>`;
+    ${askSponsor ? `<section class="card flat"><p style="margin:0">如果它剛好幫上了忙，歡迎<a href="${esc(SPONSOR)}" target="_blank" rel="noopener">依自己的心意支持</a>，多少都好。不贊助也能一直免費用，到「我的成就」也可以留一句建議給我。</p></section>` : ""}
+    ${Q.kind === "dialog" && Q.dialog ? `<div class="row"><button class="btn block primary" id="resReplay">${ICON.spk}再聽一次這段</button><button class="btn block" id="resLib">換一段（對話庫）</button></div>` : ""}
+    <div class="row"><button class="btn block ${Q.kind === "dialog" ? "" : "primary"}" id="resHome">回首頁</button>${daily || Q.kind === "dialog" ? "" : `<button class="btn block" id="resAgain">再來一輪</button>`}</div>`;
   $("result").querySelectorAll("[data-say]").forEach(b => b.onclick = () => speak(missed[Number(b.dataset.say)].en));
   $("resHome").onclick = () => { show("home"); renderHome(); };
+  if ($("resReplay")) { const dd = Q.dialog; $("resReplay").onclick = () => playDialog(dd); $("resLib").onclick = () => openDialog(); }
   const again = $("resAgain"); if (again) again.onclick = () => Q.kind === "blitz" ? startBlitz() : startPractice(Object.keys(MODES).find(k => MODES[k].name === Q.title) || "mc");
   setTimeout(() => $("resHome").focus(), 50);
 }
@@ -3487,9 +3500,14 @@ function renderStats(focus) {
       <input class="field" id="aiKeyIn" type="password" autocomplete="off" placeholder="AIza…">
       <div class="row"><button class="btn primary small" id="aiKeySave">儲存</button>${AI.localKey ? '<button class="btn small" id="aiKeyDel">移除金鑰</button>' : ""}</div>
     </section>` : ""}
-    ${SPONSOR ? `<section class="card flat"><h3>支持這個 App</h3>
-      <p style="margin:0">English Quest 是一個人利用下班時間做的，所有功能都免費，以後也不會因為沒贊助就鎖起來。覺得有幫助的話，可以請作者喝杯飲料，多少都好。</p>
-      <div class="row"><a class="btn primary small" href="${esc(SPONSOR)}" target="_blank" rel="noopener">贊助作者</a>${GUEST ? "" : `<span class="muted" style="font-size:13px">朋友打開分享版也會看到這張卡</span>`}</div>
+    ${SPONSOR || CAN_FEEDBACK() ? `<section class="card flat" id="thanksCard"><h3>如果它剛好幫上了忙</h3>
+      <p style="margin:0">謝謝你願意讓這份心意繼續走下去。</p>
+      <p style="margin:0">如果這個小工具剛好替你省下一點時間、少了一點煩惱，歡迎依自己的心意支持。${SPONSOR ? "贊助純粹隨喜，你覺得值多少都好，金額沒有標準，也不需要勉強。" : ""}</p>
+      <p style="margin:0">願意使用、分享給需要的人，或給我一句建議，都是很珍貴的鼓勵。工具會持續整理與調整，遇到不順手的地方，也歡迎告訴我。</p>
+      ${SPONSOR ? `<div class="row"><a class="btn primary small" href="${esc(SPONSOR)}" target="_blank" rel="noopener">隨喜支持</a>${GUEST ? "" : `<span class="muted" style="font-size:13px">朋友打開分享版也會看到這張卡</span>`}</div>` : ""}
+      ${CAN_FEEDBACK() && GUEST ? `<label class="lbl" for="fbText">給我一句建議</label>
+      <textarea class="field" id="fbText" maxlength="500" style="min-height:76px" placeholder="哪裡好用、哪裡卡卡的，或想要什麼新功能，都可以寫"></textarea>
+      <div class="row"><button class="btn small" id="fbSend">送出</button><span class="muted" style="font-size:13px" id="fbMsg"></span></div>` : CAN_FEEDBACK() ? `<p class="muted" style="margin:0;font-size:13px">朋友在這裡寫的建議，會存到${Store.backend === "sheet" ? "試算表的「意見回饋」工作表" : "「學習紀錄」資料夾的 意見回饋.csv"}。</p>` : ""}
     </section>` : ""}
     <section class="card flat"><h3>程度與難度</h3>
       <p style="margin:0">目前難度：<b>${esc(D().name)}</b>。${esc(D().desc)}</p>
@@ -3542,6 +3560,14 @@ function renderStats(focus) {
     try { await gs("logoutOwner"); } catch (e) { }
     clearTimeout(Store.timer); await Store.flush();
     setOwnerToken(""); toast("已登出，重新載入中…"); setTimeout(() => location.reload(), 600);
+  };
+  if ($("fbSend")) $("fbSend").onclick = async () => {
+    const t = $("fbText").value.trim();
+    if (!t) { $("fbText").focus(); return; }
+    $("fbSend").disabled = true; $("fbMsg").textContent = "送出中…";
+    try { await sendFeedback(t); $("fbText").value = ""; $("fbMsg").textContent = "收到了，謝謝你！"; }
+    catch (e) { const m = String(e && e.message || e); $("fbMsg").textContent = /TOO_MANY/.test(m) ? "已經收到好幾則了，謝謝你！過一小時再寫吧" : "沒有送出，請再試一次"; }
+    $("fbSend").disabled = false;
   };
   if ($("svList")) $("svList").onclick = async () => {
     const btn = $("svList"); btn.disabled = true; btn.textContent = "讀取中…";
