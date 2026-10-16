@@ -127,6 +127,23 @@ button.chip:hover{border-color:var(--primary)}
 .wall b{font-weight:700}.wall i{font-style:normal;color:var(--muted)}
 @keyframes wall{to{transform:translateX(-100%)}}
 @media (prefers-reduced-motion: reduce){.wall .track{animation:none;padding-left:12px;padding-right:12px;flex-wrap:wrap;white-space:normal;gap:6px 18px}}
+.blk{display:inline-block;padding:2px 8px;margin:2px 1px;border-radius:8px;line-height:1.5;cursor:pointer}
+.blk.b0{background:rgba(46,84,222,.14)}.blk.b1{background:rgba(60,196,139,.20)}.blk.b2{background:rgba(231,180,76,.24)}.blk.b3{background:rgba(255,123,103,.18)}
+.blk.bfix{background:transparent;padding:2px 2px;cursor:default}
+.bsent{font-size:19px;line-height:1.6}
+.code{background:var(--band);color:#E6EBF3;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.55;border-radius:12px;padding:12px 14px;margin:0;overflow-x:auto;white-space:pre;max-width:100%}
+.ckcard{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.ckcard .big{font-size:19px;font-weight:700}
+.ckopts{display:flex;flex-wrap:wrap;gap:6px}
+.ckopts button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 12px;font-size:15px;cursor:pointer}
+.ckopts button[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);color:var(--primary-ink)}
+.ckpile{display:flex;flex-wrap:wrap;gap:8px}
+.ckpile button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:10px 12px;font-size:16px;font-weight:600;cursor:pointer}
+.ckpile button:disabled{opacity:.3}
+.ckslot{min-height:56px;border:2px dashed var(--line);border-radius:14px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ckslot .blk{font-size:16px;font-weight:600}
+.cktable{width:100%;border-collapse:collapse;font-size:14px}.cktable td,.cktable th{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
+.cktable th{font-size:12px;color:var(--muted)}
 .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .tier{border:1px solid var(--line);border-radius:14px;padding:12px 10px;display:flex;flex-direction:column;gap:2px;text-align:center;min-width:0}
 .tier .em{font-size:26px}.tier b{font-size:18px;font-variant-numeric:tabular-nums}.tier span{font-size:13px;color:var(--muted)}
@@ -474,6 +491,7 @@ a.btn{text-decoration:none}
 <main id="ladder" class="wrap" hidden></main>
 <main id="dialog" class="wrap" hidden></main>
 <main id="baby" class="wrap" hidden></main>
+<main id="chunk" class="wrap" hidden></main>
 <main id="diary" class="wrap" hidden></main>
 <main id="pairs" class="wrap" hidden></main>
 <main id="travel" class="wrap" hidden></main>
@@ -565,7 +583,7 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
-const EQ_BUILD = "62b3ec";
+const EQ_BUILD = "d321ba";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -679,7 +697,7 @@ async function removeVideo(wk, id) {
 }
 function mergeLibrary(lib) {
   if (!lib) return;
-  for (const [w, arr] of Object.entries(lib.aiBank || {})) { const cur = state.aiBank[w] || []; for (const x of arr) if (!cur.some(y => y.s === x.s)) cur.push(x); state.aiBank[w] = cur; }
+  for (const [w, arr] of Object.entries(lib.aiBank || {})) { const cur = state.aiBank[w] || []; for (const x of arr) { const y = cur.find(z => z.s === x.s); if (!y) cur.push(x); else if (x.c && !y.c) y.c = x.c; } state.aiBank[w] = cur; }
   if (Array.isArray(lib.dialogues) && lib.dialogues.length) state.dialogues = lib.dialogues;
   if (Array.isArray(lib.readings) && lib.readings.length) state.readings = lib.readings;
   if (Array.isArray(lib.diary)) { const local = state.diary.filter(e => !lib.diary.some(x => x.d === e.d)); state.diary = lib.diary.concat(local).sort((a, b) => a.d < b.d ? -1 : 1); }
@@ -1222,7 +1240,8 @@ async function generateAI() {
     "For EACH word below, write TWO different, natural, everyday English sentences at that level. " +
     "Each sentence must contain the word exactly as given, or a simple form of it (-s, -ed, -ing). Do not quote any movie or TV show. " +
     "Give each sentence a natural Traditional Chinese (Taiwan) translation.\n" +
-    'Reply with only a JSON array in the same order as the list, like [{"word":"family","sentences":[{"en":"My family eats dinner together.","zh":"我的家人一起吃晚餐。"},{"en":"I miss my family.","zh":"我想念我的家人。"}]}]\n\nWords:\n' +
+    "Also give \"chunks\": the SAME English sentence with \" | \" between natural chunks (multi-word blocks a learner remembers as one unit, like I'm trying to | eat less sugar | these days.), 2 to 5 chunks.\n" +
+    'Reply with only a JSON array in the same order as the list, like [{"word":"family","sentences":[{"en":"My family eats dinner together.","chunks":"My family | eats dinner | together.","zh":"我的家人一起吃晚餐。"},{"en":"I miss my family.","chunks":"I | miss my family.","zh":"我想念我的家人。"}]}]\n\nWords:\n' +
     list.map(w => `- ${w.en} (${w.zh})`).join("\n");
   try {
     const res = await AI.json(prompt);
@@ -1236,8 +1255,9 @@ async function generateAI() {
         if (sen.length > 130 || sen.split(/\s+/).length > 16 || !/^[A-Za-z0-9 ,.'!?;:"-]+$/.test(sen) || !stemRegex(w.en, sen)) continue;
         const arr = (state.aiBank[w.en] = state.aiBank[w.en] || []);
         if (arr.some(y => y.s === sen)) continue;
-        arr.push({ s: sen, zh: typeof x.zh === "string" ? x.zh.slice(0, 80) : "", lv: state.diff, d: today() });
-        added.push({ word: w.en, en: sen, zh: arr[arr.length - 1].zh, level: D().name });
+        const ck = ckValid(x.chunks, sen);
+        arr.push(Object.assign({ s: sen, zh: typeof x.zh === "string" ? x.zh.slice(0, 80) : "", lv: state.diff, d: today() }, ck ? { c: ck } : {}));
+        added.push({ word: w.en, en: sen, zh: arr[arr.length - 1].zh, level: D().name, chunks: ck });
         while (arr.length > (KEY_MODE() ? 40 : 8)) arr.shift();
         n++;
       }
@@ -2491,6 +2511,305 @@ function openTravel(cat) {
   bindLookupToggle($("travel"));
 }
 
+/* ================= 片語積木：像寫程式一樣學英文 ================= */
+const CHUNK = {"lessons": [{"n": "一", "t": "英文句子就像程式碼", "s": "先換個角度看句子", "p": ["我們學中文時，不會把「吃飽了沒」拆成「吃／飽／了／沒」四個字來背，而是整塊記住、整塊說出口。", "英文也一樣。母語者腦中存的不是一個個單字，而是一塊一塊現成的區塊（chunk），說話時把區塊接起來。", "這很像寫程式：沒有人一個字母一個字母打，而是呼叫寫好的函式、把模組組起來。"], "code": "# 中文腦：一個字一個字\nI / am / trying / to / get / better / at / English\n\n# 程式腦：一塊一塊\n[I'm trying to] + [get better at] + [English]", "ex": ["I'm trying to | get better at | English.", "I'm used to | getting up early."]}, {"n": "二", "t": "用程式設計的邏輯拆解英文", "s": "主詞、動作、補充，各自是一個模組", "p": ["一句英文可以看成一行程式：主詞是「誰在做」，動作是「做什麼」，後面接的地點、時間、原因都是「參數」。", "其中最常用的區塊，就像寫好的函式，例如 want to（想要）、be used to（習慣）、so that（為了）。直接呼叫，不用每次重組。"], "code": "say(\n  主詞   = \"I\",\n  動作   = want_to(\"go to the gym\"),\n  時間   = \"after work\",\n  原因   = because(\"I sit all day\")\n)\n\n→ I want to | go to the gym | after work | because I sit all day.", "ex": ["I want to | go to the gym | after work.", "I usually | take the MRT | to work."]}, {"n": "三", "t": "學會一個模組，就能組合很多句子", "s": "這才是真正省力的地方", "p": ["背一個單字，只會一個字；學會一個模組，就能套進很多內容，一次會說很多句。", "例如學會 I'm looking forward to ___（我很期待…），後面換成名詞或 V-ing，就有說不完的句子。"], "code": "function lookingForwardTo(x) {\n  return \"I'm looking forward to \" + x\n}\n\nlookingForwardTo(\"the weekend\")\nlookingForwardTo(\"seeing you again\")\nlookingForwardTo(\"our trip to Tainan\")", "ex": ["I'm looking forward to | the weekend.", "I'm looking forward to | seeing you again.", "I'm looking forward to | our trip to Tainan."]}, {"n": "四", "t": "把整句英文當成一棵語法樹", "s": "長句也只是區塊套區塊", "p": ["程式會把一行指令解析成一棵樹，英文長句也一樣：先找主幹（誰 做了 什麼），再看掛在旁邊的枝葉（時間、地點、原因）。", "聽到長句不用慌，先抓主幹，枝葉之後再補。"], "code": "I stopped by the store because I needed some milk.\n\n句子\n├─ 主幹：I | stopped by | the store\n│   ├─ 主詞：I\n│   ├─ 動作：stopped by（順路去）\n│   └─ 地點：the store\n└─ 原因：because | I needed | some milk\n    ├─ 連接：because\n    └─ 小句子：I needed some milk", "ex": ["I stopped by | the store | because | I needed | some milk."]}, {"n": "五", "t": "幾個日常實用的英文區塊", "s": "先把這些當成你的第一批函式", "p": ["下面這些區塊，每一個都可以接上很多不同的內容。點英文可以聽發音。"], "table": [["I'm trying to ___", "我正在努力…", "I'm trying to | drink more water."], ["I'm used to ___", "我習慣了…", "I'm used to | working late."], ["I'm looking forward to ___", "我很期待…", "I'm looking forward to | the weekend."], ["It depends on ___", "要看…而定", "It depends on | the weather."], ["That's why ___", "這就是為什麼…", "That's why | I left early."], ["Even though ___", "雖然…（但還是）", "Even though | I was tired, | I finished it."], ["As soon as ___", "一…就…", "I'll call you | as soon as | I get home."], ["I'm not sure if ___", "我不確定是否…", "I'm not sure if | he's coming."], ["Do you mind if ___?", "你介意我…嗎？", "Do you mind if | I sit here?"], ["What do you think about ___?", "你覺得…怎麼樣？", "What do you think about | this idea?"]]}, {"n": "六", "t": "做成一套學習系統", "s": "四層架構，就在這個 App 裡", "p": ["第一層・片語模組庫：把常用區塊依用途分類，例如表達想法、原因、轉折、習慣、目標。", "第二層・句型組合器：主詞、動作、補充內容依照英文語法組合，同一個句型產生不同句子。", "第三層・聽力與辨識：聽英文時不再追每個單字，而是辨識熟悉的區塊。", "第四層・情境輸出：遇到工作、生活、打高爾夫球等情境，直接提取熟悉的區塊來表達。", "最重要的是：不是完全不學單字，而是不要把單字當成唯一的學習單位。單字是材料，片語是模組，句型是組合規則，整句話才是你真正想表達的意思。"], "code": "單字   = 材料\n片語   = 模組\n句型   = 組合規則\n整句話 = 你真正想表達的意思"}], "lib": [["表達想法", "💭", [["I think ___", "我覺得…", "一句話", [["I think | it's a good idea.", "我覺得這是個好主意。"], ["I think | we should leave now.", "我覺得我們該走了。"]]], ["In my opinion, ___", "我的看法是…", "一句話", [["In my opinion, | the first plan is better.", "我的看法是第一個方案比較好。"]]], ["I'm not sure if ___", "我不確定是否…", "一句話", [["I'm not sure if | he's coming.", "我不確定他會不會來。"], ["I'm not sure if | this is right.", "我不確定這樣對不對。"]]], ["What do you think about ___?", "你覺得…怎麼樣？", "名詞 / V-ing", [["What do you think about | this idea?", "你覺得這個點子怎麼樣？"], ["What do you think about | eating out tonight?", "你覺得今晚出去吃怎麼樣？"]]], ["It depends on ___", "要看…而定", "名詞", [["It depends on | the weather.", "要看天氣。"], ["It depends on | the price.", "要看價錢。"]]], ["To be honest, ___", "老實說…", "一句話", [["To be honest, | I don't like it.", "老實說，我不喜歡。"]]]]], ["原因", "🔍", [["because ___", "因為…", "一句話", [["I stayed home | because | it was raining.", "因為下雨，我待在家。"]]], ["because of ___", "因為（某件事）", "名詞", [["The game was canceled | because of | the rain.", "比賽因為下雨取消了。"]]], ["That's why ___", "這就是為什麼…", "一句話", [["I was tired. | That's why | I left early.", "我很累，所以才早走。"]]], ["The reason is that ___", "原因是…", "一句話", [["The reason is that | I missed the bus.", "原因是我錯過了公車。"]]], ["so ___", "所以…", "一句話", [["It was late, | so | I took a taxi.", "很晚了，所以我搭計程車。"]]]]], ["轉折", "🔀", [["but ___", "但是…", "一句話", [["I wanted to go, | but | I was too busy.", "我想去，但太忙了。"]]], ["However, ___", "然而…", "一句話", [["The food was great. | However, | the service was slow.", "東西很好吃，不過服務很慢。"]]], ["Even though ___", "雖然…（還是）", "一句話", [["Even though | I was tired, | I finished it.", "雖然很累，我還是做完了。"]]], ["On the other hand, ___", "另一方面…", "一句話", [["It's cheap. | On the other hand, | it's far away.", "它很便宜，但另一方面它很遠。"]]], ["Instead of ___", "與其… / 不…而是", "名詞 / V-ing", [["Instead of | driving, | I took the MRT.", "我沒開車，改搭捷運。"]]]]], ["習慣", "🔁", [["I usually ___", "我通常…", "動作", [["I usually | take the MRT | to work.", "我通常搭捷運上班。"]]], ["I'm used to ___", "我習慣了…", "名詞 / V-ing", [["I'm used to | working late.", "我習慣加班到很晚。"], ["I'm used to | the noise.", "我習慣那個吵雜聲了。"]]], ["I tend to ___", "我往往會…", "動作", [["I tend to | eat too fast.", "我常常吃太快。"]]], ["I used to ___", "我以前常…", "動作", [["I used to | play basketball | every day.", "我以前每天打籃球。"]]], ["Every time ___", "每次…", "一句話", [["Every time | I go there, | I get lost.", "每次去那裡我都會迷路。"]]]]], ["目標", "🎯", [["I'm trying to ___", "我正在努力…", "動作", [["I'm trying to | drink more water.", "我正在努力多喝水。"], ["I'm trying to | get better at | English.", "我正在努力把英文變好。"]]], ["I want to ___", "我想要…", "動作", [["I want to | go to the gym | after work.", "我想下班後去健身房。"]]], ["so that ___", "為了能…", "一句話", [["I save money | so that | I can travel.", "我存錢是為了能去旅行。"]]], ["I'm planning to ___", "我打算…", "動作", [["I'm planning to | visit my parents | this weekend.", "我打算這週末去看爸媽。"]]], ["My goal is to ___", "我的目標是…", "動作", [["My goal is to | finish the race.", "我的目標是跑完全程。"]]]]], ["請求", "🙏", [["Could you ___?", "可以請你…嗎？", "動作", [["Could you | send me | the file?", "可以把檔案寄給我嗎？"]]], ["Do you mind if ___?", "你介意我…嗎？", "一句話", [["Do you mind if | I sit here?", "你介意我坐這裡嗎？"]]], ["Would you like to ___?", "你想要…嗎？", "動作", [["Would you like to | join us?", "你想加入我們嗎？"]]], ["Let me ___", "讓我來…", "動作", [["Let me | help you | with that.", "我來幫你。"]]], ["I was wondering if ___", "不知道能不能…（客氣）", "一句話", [["I was wondering if | you could help me.", "不知道你能不能幫我一下。"]]]]], ["時間", "⏰", [["as soon as ___", "一…就…", "一句話", [["I'll call you | as soon as | I get home.", "我一到家就打給你。"]]], ["by the time ___", "等到…的時候", "一句話", [["By the time | we got there, | the movie had started.", "我們到的時候電影已經開始了。"]]], ["for the first time", "第一次", "放句尾", [["I played golf | for the first time | last week.", "我上週第一次打高爾夫。"]]], ["in a few minutes", "再幾分鐘", "放句尾", [["I'll be there | in a few minutes.", "我幾分鐘後到。"]]], ["It's time to ___", "該…了", "動作", [["It's time to | go to bed.", "該睡覺了。"]]]]], ["感受", "😊", [["I'm looking forward to ___", "我很期待…", "名詞 / V-ing", [["I'm looking forward to | the weekend.", "我很期待週末。"], ["I'm looking forward to | seeing you again.", "很期待再見到你。"]]], ["I'm worried about ___", "我擔心…", "名詞 / V-ing", [["I'm worried about | the test.", "我擔心考試。"]]], ["I can't wait to ___", "我等不及要…", "動作", [["I can't wait to | try it.", "我等不及要試試看。"]]], ["I'm tired of ___", "我受夠了…", "名詞 / V-ing", [["I'm tired of | waiting.", "我等煩了。"]]], ["It makes me ___", "這讓我覺得…", "形容詞", [["It makes me | happy.", "這讓我很開心。"]]]]]], "build": [{"t": "習慣", "code": "habit(主詞, 動作, 時間)", "en": "{S} usually {V} {T}.", "zh": "{S}通常{T}{V}。", "slots": [["S", "主詞", [["I", "我", 0], ["We", "我們", 0], ["My dad", "我爸", 1], ["My sister", "我姊姊", 1]]], ["V", "動作", [["go jogging", "goes jogging", "去慢跑"], ["drink coffee", "drinks coffee", "喝咖啡"], ["take the MRT", "takes the MRT", "搭捷運"], ["play golf", "plays golf", "打高爾夫"]]], ["T", "時間", [["in the morning", "早上"], ["after work", "下班後"], ["on weekends", "週末"], ["before bed", "睡前"]]]]}, {"t": "目標", "code": "goal(努力做的事, 為了什麼)", "en": "I'm trying to {V} so that I can {G}.", "zh": "我正在努力{V}，這樣我就能{G}。", "slots": [["V", "努力做的事", [["eat less sugar", "少吃糖"], ["save more money", "多存點錢"], ["practice English every day", "每天練英文"], ["hit the ball straighter", "把球打直一點"]]], ["G", "為了什麼", [["feel healthier", "更健康"], ["travel to Japan", "去日本玩"], ["talk to my clients", "跟客戶溝通"], ["lower my score", "降低桿數"]]]]}, {"t": "原因", "code": "result(做了什麼) + because(原因)", "en": "I {P} because {R}.", "zh": "我{P}，因為{R}。", "slots": [["P", "做了什麼", [["stayed home", "待在家"], ["left early", "提早走"], ["took a taxi", "搭了計程車"], ["skipped lunch", "沒吃午餐"]]], ["R", "原因", [["it was raining", "在下雨"], ["I was really tired", "我很累"], ["I had a meeting", "我要開會"], ["my son was sick", "我兒子生病"]]]]}, {"t": "轉折", "code": "but(本來想的, 結果)", "en": "{A}, but {B}.", "zh": "{A}，但是{B}。", "slots": [["A", "本來", [["I wanted to go", "我本來想去"], ["The food was great", "東西很好吃"], ["I practiced a lot", "我練了很多"], ["It was cheap", "它很便宜"]]], ["B", "結果", [["I was too busy", "我太忙了"], ["it was a little expensive", "有點貴"], ["I still missed the putt", "推桿還是沒進"], ["it was far away", "它很遠"]]]]}, {"t": "請求", "code": "please(動作)", "en": "Could you {V} for me?", "zh": "可以幫我{V}嗎？", "slots": [["V", "動作", [["take a picture", "拍張照"], ["check this", "看一下這個"], ["call a taxi", "叫計程車"], ["hold my bag", "拿一下包包"]]]]}, {"t": "時間", "code": "asSoonAs(我會做的事, 什麼時候)", "en": "I'll {V} as soon as {E}.", "zh": "{E}，我就{V}。", "slots": [["V", "我會做的事", [["call you", "打給你"], ["send the file", "寄檔案"], ["start dinner", "開始煮晚餐"], ["reply to the email", "回信"]]], ["E", "什麼時候", [["I get home", "我一到家"], ["the meeting ends", "會議一結束"], ["I finish work", "我一下班"], ["the kids fall asleep", "小孩一睡著"]]]]}, {"t": "感受", "code": "lookingForwardTo(事情)", "en": "I'm looking forward to {N}.", "zh": "我很期待{N}。", "slots": [["N", "期待的事", [["the weekend", "週末"], ["seeing you again", "再見到你"], ["playing golf with you", "跟你打球"], ["our trip to Tainan", "我們的台南之旅"]]]]}, {"t": "想法", "code": "think(誰, 應該做什麼)", "en": "I think {S} should {V}.", "zh": "我覺得{S}應該{V}。", "slots": [["S", "誰", [["we", "我們"], ["you", "你"], ["my team", "我的團隊"], ["the kids", "小孩們"]]], ["V", "應該做什麼", [["take a break", "休息一下"], ["try again tomorrow", "明天再試一次"], ["ask for help", "找人幫忙"], ["go to bed early", "早點睡"]]]]}], "scenes": [["工作", "💼", [["跟同事說：會議一結束，我就把檔案寄給你。", "I'll send you the file | as soon as | the meeting ends.", ["because of", "I'm used to"]], ["客氣地問主管：不知道你能不能幫我看一下這份報告。", "I was wondering if | you could | take a look at | this report.", ["I'm tired of", "so that"]], ["說明遲到：原因是我錯過了公車。", "The reason is that | I missed | the bus.", ["even though", "I'm looking forward to"]], ["表達看法：老實說，我覺得第一個方案比較好。", "To be honest, | I think | the first plan | is better.", ["It's time to", "instead of"]]]], ["生活", "🏠", [["跟家人說：我正在努力多喝水。", "I'm trying to | drink | more water.", ["because of", "Could you"]], ["問朋友：你覺得今晚出去吃怎麼樣？", "What do you think about | eating out | tonight?", ["I used to", "as soon as"]], ["說習慣：我習慣早起了。", "I'm used to | getting up | early.", ["I want to", "the reason is"]], ["抱怨：我等煩了。", "I'm tired of | waiting.", ["I'm trying to", "so that"]]]], ["打高爾夫球", "⛳", [["說目標：我正在練習推桿，這樣才能降低桿數。", "I'm practicing my putting | so that | I can lower | my score.", ["because of", "I'm used to"]], ["跟球友說：我上週第一次下場打球。", "I played a round | for the first time | last week.", ["as soon as", "I can't wait to"]], ["邀約：我很期待下週跟你打球。", "I'm looking forward to | playing with you | next week.", ["I'm tired of", "instead of"]], ["說原因：因為風很大，我的球一直往右偏。", "My ball kept going right | because of | the wind.", ["so that", "It's time to"]]]], ["旅行", "✈️", [["請路人：可以幫我拍張照嗎？", "Could you | take a picture | for me?", ["I'm used to", "because"]], ["說計畫：我打算這週末去台南。", "I'm planning to | go to Tainan | this weekend.", ["I'm tired of", "as soon as"]], ["問店員：你介意我坐這裡嗎？", "Do you mind if | I sit | here?", ["I think", "so that"]], ["說感受：我等不及要試試看當地的小吃。", "I can't wait to | try | the local food.", ["because of", "I used to"]]]], ["親子", "👶", [["跟小孩說：該睡覺了。", "It's time to | go to bed.", ["I'm used to", "because of"]], ["跟另一半說：小孩一睡著，我就開始洗碗。", "I'll do the dishes | as soon as | the kids fall asleep.", ["I'm tired of", "so that"]], ["說原因：我兒子生病，所以我今天待在家。", "My son was sick, | so | I stayed home | today.", ["even though", "Could you"]], ["鼓勵小孩：雖然很難，你還是做到了！", "Even though | it was hard, | you did it!", ["instead of", "I want to"]]]]]};
+let CK = null;
+const ckState = () => (state.chunk = state.chunk && typeof state.chunk === "object" ? state.chunk : { read: {}, learned: {} });
+const ckRead = () => Object.keys(ckState().read || {}).length;
+const ckLearned = () => Object.keys(ckState().learned || {}).length;
+const ckPlain = t => String(t).replace(/\s*\|\s*/g, " ").trim();
+const ckParts = t => String(t).split("|").map(x => x.trim()).filter(Boolean);
+function ckBlocks(t, opts = {}) {
+  return `<span class="bsent">${ckParts(t).map((c, k) => `<span class="blk b${k % 4}" data-say="${esc(c)}" title="點一下聽這一塊">${esc(c)}</span>`).join(" ")}</span>${opts.play === false ? "" : ` <button class="icon-btn" data-sayall="${esc(ckPlain(t))}" aria-label="播放整句" style="vertical-align:middle">${ICON.spk}</button>`}`;
+}
+function ckBind(root) {
+  root.querySelectorAll("[data-say]").forEach(b => b.onclick = () => speak(b.dataset.say));
+  root.querySelectorAll("[data-sayall]").forEach(b => b.onclick = () => speak(b.dataset.sayall));
+}
+const CK_TABS = [["learn", "觀念"], ["lib", "模組"], ["build", "組合"], ["listen", "聽力"], ["talk", "情境"]];
+function openChunk(tab) {
+  CK = CK || { tab: "learn", lesson: -1, cat: 0, bp: 0, picks: {}, said: {} };
+  if (tab) { CK.tab = tab; if (tab === "learn") CK.lesson = -1; if (tab === "listen") CK.L = null; if (tab === "talk") CK.T = null; }
+  show("chunk"); renderChunk();
+}
+function renderChunk() {
+  const el = $("chunk"), body = { learn: ckLearnHtml, lib: ckLibHtml, build: ckBuildHtml, listen: ckListenHtml, talk: ckTalkHtml }[CK.tab]();
+  el.innerHTML = `
+    <header class="top"><button class="icon-btn" id="ckBack" aria-label="離開">${ICON.x}</button><h2 style="font-size:22px;flex:1;min-width:0">片語積木</h2></header>
+    <div class="bbthemes" role="tablist">${CK_TABS.map(([k, n]) => `<button class="tchip${CK.tab === k ? " on" : ""}" data-ckt="${k}" role="tab" aria-selected="${CK.tab === k}">${n}</button>`).join("")}</div>
+    <div id="ckBody" style="display:flex;flex-direction:column;gap:14px">${body}</div>`;
+  $("ckBack").onclick = () => { stopSeq(); show("home"); renderHome(); };
+  el.querySelectorAll("[data-ckt]").forEach(b => b.onclick = () => openChunk(b.dataset.ckt));
+  ckBind(el);
+  ({ learn: ckLearnBind, lib: ckLibBind, build: ckBuildBind, listen: ckListenBind, talk: ckTalkBind })[CK.tab]();
+}
+
+/* ---- 觀念課 ---- */
+function ckLearnHtml() {
+  const L = CHUNK.lessons, st = ckState();
+  if (CK.lesson < 0) return `<p class="muted" style="margin:0">先花幾分鐘建立觀念：英文不是一個字一個字拼，而是一塊一塊組起來。</p>` +
+    L.map((x, k) => `<button class="ckcard" data-les="${k}" style="text-align:left;cursor:pointer"><span class="eyebrow">第${x.n}課${st.read[x.n] ? "・讀過 ✓" : ""}</span><span class="big">${esc(x.t)}</span><span class="muted" style="font-size:14px">${esc(x.s)}</span></button>`).join("");
+  const x = L[CK.lesson];
+  return `<div class="card" style="gap:12px">
+    <span class="eyebrow">第${x.n}課・${CK.lesson + 1} / ${L.length}</span><h2 style="margin:0;font-size:22px">${esc(x.t)}</h2>
+    ${x.p.map(t => `<p style="margin:0">${esc(t)}</p>`).join("")}
+    ${x.code ? `<pre class="code">${esc(x.code)}</pre>` : ""}
+    ${x.table ? `<div style="display:flex;flex-direction:column;gap:8px">${x.table.map(r => `<div class="ckcard"><div class="row" style="flex-wrap:wrap;gap:6px 10px"><b class="blk b0" data-say="${esc(r[0].replace(/\s*_+\??/g, "").trim())}">${esc(r[0])}</b><span>${esc(r[1])}</span></div><div><span class="muted" style="font-size:12px">組合範例　</span>${ckBlocks(r[2])}</div></div>`).join("")}</div>` : ""}
+    ${x.ex ? `<div style="display:flex;flex-direction:column;gap:8px"><span class="eyebrow">試著聽：點色塊聽一塊，點喇叭聽整句</span>${x.ex.map(e => `<div>${ckBlocks(e)}</div>`).join("")}</div>` : ""}
+    ${CK.lesson === L.length - 1 ? `<div class="grid">${[["lib", "第一層：片語模組庫"], ["build", "第二層：句型組合器"], ["listen", "第三層：區塊聽力"], ["talk", "第四層：情境輸出"]].map(([k, n]) => `<button class="mode" data-go="${k}"><b>${n}</b></button>`).join("")}</div>` : ""}
+    <div class="row"><button class="btn" id="ckPrev" ${CK.lesson ? "" : "disabled"}>上一課</button><div class="spacer"></div><button class="btn primary" id="ckNext">${CK.lesson === L.length - 1 ? "回課程目錄" : "下一課"}</button></div>
+  </div>`;
+}
+function ckLearnBind() {
+  const L = CHUNK.lessons;
+  $("ckBody").querySelectorAll("[data-les]").forEach(b => b.onclick = () => { CK.lesson = Number(b.dataset.les); renderChunk(); window.scrollTo(0, 0); });
+  $("ckBody").querySelectorAll("[data-go]").forEach(b => b.onclick = () => openChunk(b.dataset.go));
+  if (CK.lesson >= 0) {
+    const st = ckState(), n = L[CK.lesson].n;
+    if (!st.read[n]) { st.read[n] = 1; addXp(5); Store.save(); }
+    $("ckPrev").onclick = () => { CK.lesson--; renderChunk(); window.scrollTo(0, 0); };
+    $("ckNext").onclick = () => { CK.lesson = CK.lesson === L.length - 1 ? -1 : CK.lesson + 1; renderChunk(); window.scrollTo(0, 0); };
+  }
+}
+
+/* ---- 第一層：片語模組庫 ---- */
+function ckLibHtml() {
+  const cats = CHUNK.lib, [name, , mods] = cats[CK.cat], st = ckState(), total = cats.reduce((a, c) => a + c[2].length, 0), ai = ckAiList();
+  return `<p class="muted" style="margin:0">每一個區塊就像一個寫好的函式，___ 的地方換成不同內容，就是不同的句子。會用了就按「我會了」。<b>已經會 ${ckLearned()} / ${total} 個</b></p>
+    <div class="bbthemes">${cats.map(([n, ic, m], k) => `<button class="tchip${k === CK.cat ? " on" : ""}" data-cat="${k}"><span aria-hidden="true">${ic}</span>${esc(n)} <b>${m.filter(x => st.learned[x[0]]).length}/${m.length}</b></button>`).join("")}</div>
+    ${mods.map(([c, zh, slot, exs]) => `<div class="ckcard">
+      <div class="row" style="align-items:flex-start"><div style="flex:1;min-width:0"><span class="big blk b0" data-say="${esc(c.replace(/\s*_+\??/g, "").trim())}">${esc(c)}</span><div style="margin-top:4px">${esc(zh)}<span class="muted" style="font-size:13px">・後面接：${esc(slot)}</span></div></div>
+      <button class="btn small${st.learned[c] ? " primary" : ""}" data-learn="${esc(c)}" aria-pressed="${st.learned[c] ? "true" : "false"}">${st.learned[c] ? "會了 ✓" : "我會了"}</button></div>
+      ${exs.map(([en, z]) => `<div>${ckBlocks(en)}<div class="muted" style="font-size:14px">${esc(z)}</div></div>`).join("")}
+      ${(() => { const h = c.replace(/\s*_+\??/g, "").replace(/[,?]$/, "").trim().toLowerCase(); if (h.split(" ").length < 2) return ""; const hit = ai.filter(x => (" " + ckPlain(x.en).toLowerCase() + " ").includes(" " + h + " ") || ckPlain(x.en).toLowerCase().startsWith(h + " ")).slice(0, 2); return hit.length ? `<span class="eyebrow">在你的 AI 例句裡</span>${hit.map(x => `<div>${ckBlocks(x.en)}<div class="muted" style="font-size:14px">${esc(x.zh)}</div></div>`).join("")}` : ""; })()}
+    </div>`).join("")}`;
+}
+function ckLibBind() {
+  $("ckBody").querySelectorAll("[data-cat]").forEach(b => b.onclick = () => { CK.cat = Number(b.dataset.cat); renderChunk(); });
+  $("ckBody").querySelectorAll("[data-learn]").forEach(b => b.onclick = () => {
+    const st = ckState(), k = b.dataset.learn;
+    if (st.learned[k]) delete st.learned[k]; else { st.learned[k] = today(); addXp(3); }
+    Store.save(); renderChunk();
+  });
+}
+
+/* ---- 第二層：句型組合器 ---- */
+function ckCompose(P, picks) {
+  const sub = {}, zh = {}; let third = false;
+  P.slots.forEach(([key, , opts], k) => {
+    const o = opts[(picks[k] || 0) % opts.length];
+    if (o.length === 3 && typeof o[2] === "number") { sub[key] = o[0]; zh[key] = o[1]; third = !!o[2]; }
+    else if (o.length === 3) { sub[key] = third ? o[1] : o[0]; zh[key] = o[2]; }
+    else { sub[key] = o[0]; zh[key] = o[1]; }
+  });
+  const parts = []; let rest = P.en, k = 0;
+  while (true) { const m = /\{(\w)\}/.exec(rest); if (!m) break; if (m.index) parts.push([rest.slice(0, m.index), -1]); parts.push([sub[m[1]], k++]); rest = rest.slice(m.index + m[0].length); }
+  if (rest) parts.push([rest, -1]);
+  const en = parts.map(x => x[0]).join(""), zhText = P.zh.replace(/\{(\w)\}/g, (_, x) => zh[x] || "");
+  return { en, zh: zhText, parts };
+}
+function ckBuildHtml() {
+  const P = CHUNK.build[CK.bp], picks = CK.picks[CK.bp] = CK.picks[CK.bp] || P.slots.map(() => 0), out = ckCompose(P, picks);
+  const n = P.slots.reduce((a, x) => a * x[2].length, 1);
+  return `<p class="muted" style="margin:0">先選一個句型（就像一個函式），再替每個參數挑內容。同一個句型可以組出很多句。</p>
+    <div class="bbthemes">${CHUNK.build.map((x, k) => `<button class="tchip${k === CK.bp ? " on" : ""}" data-bp="${k}">${esc(x.t)}</button>`).join("")}</div>
+    <pre class="code">${esc(P.code)}\n→ ${esc(P.en.replace(/\{(\w)\}/g, (_, x) => "[" + ((P.slots.find(s2 => s2[0] === x) || [, x])[1]) + "]"))}</pre>
+    ${P.slots.map(([key, label, opts], k) => `<div style="display:flex;flex-direction:column;gap:6px"><span class="eyebrow"><span class="blk b${k % 4}" style="cursor:default">${esc(label)}</span></span><div class="ckopts">${opts.map((o, j) => `<button data-slot="${k}" data-opt="${j}" aria-pressed="${picks[k] === j}">${esc(o[0])}</button>`).join("")}</div></div>`).join("")}
+    <div class="card" style="gap:8px"><span class="eyebrow">組出來的句子</span>
+      <div class="bsent">${out.parts.map(([t, k]) => k < 0 ? `<span class="blk bfix">${esc(t)}</span>` : `<span class="blk b${k % 4}" data-say="${esc(t)}">${esc(t)}</span>`).join("")} <button class="icon-btn" id="ckSay" aria-label="播放整句" style="vertical-align:middle">${ICON.spk}</button></div>
+      <div class="muted">${esc(out.zh)}</div>
+      <div class="row" style="flex-wrap:wrap"><button class="btn small" id="ckRand">🎲 隨機組一句</button><span class="muted" style="font-size:13px">這個句型可以組出 ${n} 句</span></div>
+    </div>`;
+}
+function ckBuildBind() {
+  const P = CHUNK.build[CK.bp];
+  const say = () => { const o = ckCompose(P, CK.picks[CK.bp]); speak(o.en); if (!CK.said[o.en]) { CK.said[o.en] = 1; if (Object.keys(CK.said).length <= 15) { addXp(2); Store.save(); } } };
+  $("ckBody").querySelectorAll("[data-bp]").forEach(b => b.onclick = () => { CK.bp = Number(b.dataset.bp); renderChunk(); });
+  $("ckBody").querySelectorAll("[data-slot]").forEach(b => b.onclick = () => { CK.picks[CK.bp][Number(b.dataset.slot)] = Number(b.dataset.opt); renderChunk(); say(); });
+  $("ckSay").onclick = say;
+  $("ckRand").onclick = () => { CK.picks[CK.bp] = P.slots.map(x => Math.floor(Math.random() * x[2].length)); renderChunk(); say(); };
+}
+
+/* ---- 共用：把區塊排成句子 ---- */
+const ckCard = c => (/^I\b|^I'/.test(c) ? c : c.charAt(0).toLowerCase() + c.slice(1)).replace(/[.,?!]+$/, "");
+function ckPool() {
+  const out = [];
+  CHUNK.lib.forEach(([, , mods]) => mods.forEach(m => m[3].forEach(([en, zh]) => out.push({ en, zh }))));
+  CHUNK.scenes.forEach(([, , tasks]) => tasks.forEach(t => out.push({ en: t[1], zh: t[0].replace(/^[^：]*：/, "") })));
+  return out.filter(x => ckParts(x.en).length >= 2);
+}
+function ckDeck(item, extra) {
+  const right = ckParts(item.en), all = right.map((c, k) => ({ c: ckCard(c), k }));
+  extra.filter(c => !right.some(r => ckCard(r).toLowerCase() === ckCard(c).toLowerCase())).slice(0, 2).forEach(c => all.push({ c: ckCard(c), k: -1 }));
+  return shuffle(all);
+}
+function ckArrangeHtml(R, hint) {
+  return `<div class="ckslot" id="ckSlot" aria-label="你排的句子">${R.picked.length ? R.picked.map((i, k) => `<span class="blk b${k % 4}">${esc(R.deck[i].c)}</span>`).join("") : `<span class="muted" style="font-size:14px">${hint || "依照聽到的順序，點下面的區塊"}</span>`}</div>
+    <div class="ckpile">${R.deck.map((d, i) => `<button data-pick="${i}" ${R.picked.includes(i) || R.done ? "disabled" : ""}>${esc(d.c)}</button>`).join("")}</div>`;
+}
+function ckCheck(R) {
+  const n = ckParts(R.item.en).length;
+  return R.picked.length === n && R.picked.every((i, k) => R.deck[i].k === k);
+}
+
+/* ---- 第三層：區塊聽力 ---- */
+function ckNewListen() {
+  const base = CK.src === "ai" && ckAiList().length >= 4 ? ckAiList() : ckPool();
+  const pool = shuffle(base).slice(0, 6), others = base.concat(ckPool()).flatMap(x => ckParts(x.en));
+  CK.L = { items: pool, i: 0, ok: 0, R: null };
+  ckNextListen(others);
+}
+function ckNextListen(others) {
+  const L = CK.L, item = L.items[L.i];
+  others = others || ckPool().flatMap(x => ckParts(x.en));
+  L.R = { item, deck: ckDeck(item, shuffle(others)), picked: [], done: false, right: false };
+}
+function ckListenHtml() {
+  if (!CK.L) ckNewListen();
+  const L = CK.L, R = L.R;
+  if (L.i >= L.items.length) return `<div class="card" style="text-align:center;gap:10px"><span style="font-size:40px">🎧</span><h2 style="margin:0">聽懂了 ${L.ok} / ${L.items.length} 句</h2><p class="muted" style="margin:0">聽的時候抓「區塊」，不用每個字都聽清楚。</p><button class="btn primary block" id="ckAgain">再來一回</button></div>`;
+  return `<p class="muted" style="margin:0">聽整句，不用追每個單字，只要認出一塊一塊的區塊，依照順序點出來。</p>${ckSrcHtml()}
+    <div class="row"><span class="eyebrow" style="flex:1">第 ${L.i + 1} / ${L.items.length} 句</span><button class="btn small" id="ckReplay">${ICON.spk} 再聽</button><button class="btn small" id="ckSlow">慢速</button></div>
+    ${ckArrangeHtml(R)}
+    ${R.done ? `<div class="reply" style="border:1px solid ${R.right ? "var(--good)" : "var(--bad)"}"><b>${R.right ? "對了！" : "差一點，正確的區塊是："}</b><div style="margin-top:6px">${ckBlocks(R.item.en)}</div><div class="muted">${esc(R.item.zh)}</div></div><button class="btn primary block" id="ckGo">${L.i + 1 < L.items.length ? "下一句" : "看結果"}</button>`
+      : `<div class="row"><button class="btn small" id="ckUndo" ${R.picked.length ? "" : "disabled"}>退一塊</button><div class="spacer"></div><button class="btn primary" id="ckOk" ${R.picked.length ? "" : "disabled"}>對答案</button></div>`}`;
+}
+function ckListenBind() {
+  const L = CK.L;
+  ckSrcBind();
+  if ($("ckAgain")) { $("ckAgain").onclick = () => { ckNewListen(); renderChunk(); }; return; }
+  const R = L.R, plain = ckPlain(R.item.en);
+  $("ckReplay").onclick = () => speak(plain); $("ckSlow").onclick = () => speak(plain, true);
+  $("ckBody").querySelectorAll("[data-pick]").forEach(b => b.onclick = () => { R.picked.push(Number(b.dataset.pick)); renderChunk(); });
+  if ($("ckUndo")) $("ckUndo").onclick = () => { R.picked.pop(); renderChunk(); };
+  if ($("ckOk")) $("ckOk").onclick = () => { R.done = true; R.right = ckCheck(R); if (R.right) { L.ok++; addXp(8); } Store.save(); renderChunk(); speak(plain); };
+  if ($("ckGo")) $("ckGo").onclick = () => { L.i++; if (L.i < L.items.length) { ckNextListen(); renderChunk(); speak(ckPlain(L.R.item.en)); } else { logEvent("片語積木", { title: "區塊聽力", total: L.items.length, correct: L.ok, xp: L.ok * 8 }); renderChunk(); } };
+  if (!R.picked.length && !R.done && !R.spoken) { R.spoken = true; setTimeout(() => speak(plain), 250); }
+}
+
+/* ---- 第四層：情境輸出 ---- */
+function ckTalkScene() {
+  if (CK.src === "ai" && ckAiList().length >= 4) { CK.aiTasks = CK.aiTasks || ckAiTasks(); return ["我的 AI 例句", "🤖", CK.aiTasks]; }
+  return CHUNK.scenes[CK.sc];
+}
+function ckTalkHtml() {
+  CK.sc = CK.sc || 0;
+  const [name, , tasks] = ckTalkScene(), key = CK.src === "ai" ? "ai" : CK.sc;
+  if (!CK.T || CK.T.sc !== key) { CK.T = { sc: key, i: 0, R: null }; }
+  const T = CK.T, t = tasks[T.i];
+  if (!T.R) T.R = { item: { en: t[1], zh: t[0] }, deck: ckDeck({ en: t[1] }, t[2]), picked: [], done: false, right: false };
+  const R = T.R;
+  return `<p class="muted" style="margin:0">遇到這個情境，你想說的話腦中先有中文，接著直接「提取」熟悉的區塊，把它們接起來。</p>
+    ${ckSrcHtml()}
+    ${CK.src === "ai" && ckAiList().length >= 4 ? "" : `<div class="bbthemes">${CHUNK.scenes.map(([n, ic], k) => `<button class="tchip${k === CK.sc ? " on" : ""}" data-sc="${k}"><span aria-hidden="true">${ic}</span>${esc(n)}</button>`).join("")}</div>`}
+    <div class="card" style="gap:10px"><span class="eyebrow">${esc(name)}・${T.i + 1} / ${tasks.length}</span><div style="font-size:18px;font-weight:700">${esc(t[0])}</div>
+    ${ckArrangeHtml(R, "依照你想說的順序，點下面的區塊")}
+    ${R.done ? `<div class="reply" style="border:1px solid ${R.right ? "var(--good)" : "var(--bad)"}"><b>${R.right ? "組對了！" : "參考說法："}</b><div style="margin-top:6px">${ckBlocks(t[1])}</div></div>
+      ${AI.kind ? `<label class="lbl" for="ckOwn">換你自己說一句（可以換掉內容，用上剛剛的區塊）</label><textarea class="field" id="ckOwn" maxlength="200" style="min-height:60px" placeholder="例如：I'll call you as soon as I get to the office."></textarea><div class="row"><button class="btn small" id="ckAsk">請 AI 看看</button><span class="muted" style="font-size:13px" id="ckAiOut"></span></div><div id="ckAiBox"></div>` : ""}
+      <button class="btn primary block" id="ckGo">${T.i + 1 < tasks.length ? "下一題" : CK.src === "ai" ? "再換 8 句" : "換下一個情境"}</button>`
+      : `<div class="row"><button class="btn small" id="ckUndo" ${R.picked.length ? "" : "disabled"}>退一塊</button><div class="spacer"></div><button class="btn primary" id="ckOk" ${R.picked.length ? "" : "disabled"}>完成</button></div>`}
+    </div>`;
+}
+function ckTalkBind() {
+  const T = CK.T, R = T.R, tasks = ckTalkScene()[2];
+  ckSrcBind();
+  $("ckBody").querySelectorAll("[data-sc]").forEach(b => b.onclick = () => { CK.sc = Number(b.dataset.sc); CK.T = null; renderChunk(); });
+  $("ckBody").querySelectorAll("[data-pick]").forEach(b => b.onclick = () => { const i = Number(b.dataset.pick); R.picked.push(i); speak(ckCardSay(R.deck[i].c)); renderChunk(); });
+  if ($("ckUndo")) $("ckUndo").onclick = () => { R.picked.pop(); renderChunk(); };
+  if ($("ckOk")) $("ckOk").onclick = () => { R.done = true; R.right = ckCheck(R); if (R.right) addXp(10); Store.save(); renderChunk(); speak(ckPlain(R.item.en)); };
+  if ($("ckGo")) $("ckGo").onclick = () => {
+    if (T.i + 1 < tasks.length) { T.i++; T.R = null; }
+    else { logEvent("片語積木", { title: "情境輸出・" + ckTalkScene()[0], total: tasks.length }); if (CK.src === "ai") CK.aiTasks = null; else CK.sc = (CK.sc + 1) % CHUNK.scenes.length; CK.T = null; }
+    renderChunk(); window.scrollTo(0, 0);
+  };
+  if ($("ckAsk")) $("ckAsk").onclick = async () => {
+    const own = $("ckOwn").value.trim(); if (!own) { $("ckOwn").focus(); return; }
+    $("ckAsk").disabled = true; $("ckAiOut").textContent = "AI 看一下…";
+    const prompt = "A Taiwanese adult is learning English by chunks (ready-made phrases). Situation (Traditional Chinese): " + tasks[T.i][0] + "\nModel answer: " + ckPlain(tasks[T.i][1]) + "\nLearner's own sentence: " + own +
+      "\nCheck the learner's sentence. Be kind and brief. Reply with only JSON: {\"ok\": true|false, \"better\": \"a natural corrected version (same meaning as the learner's)\", \"chunks\": [\"the useful chunks in the better version\"], \"tip_zh\": \"one short tip in Traditional Chinese, at most 40 characters\"}";
+    try {
+      const j = await AI.json(prompt);
+      const better = String((j && j.better) || "").slice(0, 240), chunks = Array.isArray(j && j.chunks) ? j.chunks.map(String).slice(0, 6) : [];
+      $("ckAiOut").textContent = j && j.ok ? "很好！" : "可以這樣改：";
+      $("ckAiBox").innerHTML = `<div class="reply">${better ? `<div class="bsent">${esc(better)} <button class="icon-btn" data-sayall="${esc(better)}" aria-label="播放" style="vertical-align:middle">${ICON.spk}</button></div>` : ""}${chunks.length ? `<div style="margin-top:4px">${chunks.map((c, k) => `<span class="blk b${k % 4}" data-say="${esc(c)}">${esc(c)}</span>`).join(" ")}</div>` : ""}${j && j.tip_zh ? `<div class="muted" style="margin-top:4px">${esc(String(j.tip_zh).slice(0, 80))}</div>` : ""}</div>`;
+      ckBind($("ckAiBox")); if (j && j.ok) addXp(5); Store.save();
+    } catch (e) { $("ckAiOut").textContent = aiErrorText(e); }
+    $("ckAsk").disabled = false;
+  };
+}
+const ckCardSay = c => c.replace(/^\w/, ch => ch.toUpperCase());
+
+/* ---- 把 AI 例句變成積木：AI 拆好的用 AI 的，沒拆過的先用規則自動拆 ---- */
+const ckNorm = t => String(t || "").replace(/[’‘]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, " ").trim();
+function ckValid(c, sen) {
+  if (typeof c !== "string" || c.indexOf("|") < 0) return "";
+  const parts = c.split("|").map(ckNorm).filter(Boolean);
+  if (parts.length < 2 || parts.length > 6 || ckNorm(parts.join(" ")) !== ckNorm(sen)) return "";
+  return parts.join(" | ");
+}
+const CK_HEADS = (() => CHUNK.lib.flatMap(c => c[2].map(m => m[0].replace(/\s*_+\??/g, "").replace(/[,?]$/, "").trim())).filter(h => h.split(" ").length >= 2).sort((a, b) => b.length - a.length))();
+const CK_BREAK = new Set("because so but when if after before while until with at in on for from into about every last next during without since than".split(" "));
+const CK_SUBJ = new Set("i you he she we they it this that there".split(" "));
+function ckAuto(sen) {
+  const words = ckNorm(sen).split(" "), lw = words.map(w => w.toLowerCase().replace(/[^a-z']/g, ""));
+  const cut = new Set();
+  const low = lw.join(" ");
+  for (const h of CK_HEADS) {
+    const hl = h.toLowerCase().replace(/[^a-z' ]/g, ""), at = (" " + low + " ").indexOf(" " + hl + " ");
+    if (at < 0) continue;
+    const i = low.slice(0, at).split(" ").filter(Boolean).length, n = hl.split(" ").length;
+    if (i > 0) cut.add(i); if (i + n < words.length) cut.add(i + n);
+  }
+  words.forEach((w, i) => { if (i && /,$/.test(words[i - 1])) cut.add(i); if (i > 1 && CK_BREAK.has(lw[i])) cut.add(i); });
+  let parts = [], cur = [];
+  words.forEach((w, i) => { if (cut.has(i) && cur.length) { parts.push(cur); cur = []; } cur.push(w); });
+  if (cur.length) parts.push(cur);
+  if (parts.length === 1 && words.length >= 4) { const k = CK_SUBJ.has(lw[0]) || /^(i'm|i'll|i've|i'd|it's|that's|we're|they're|you're|he's|she's)$/.test(lw[0]) ? 1 : 2; parts = [words.slice(0, k), words.slice(k)]; }
+  for (let i = parts.length - 1; i > 0; i--) if (parts[i].length === 1 && !/^[A-Z]/.test(parts[i][0]) && !/,$/.test(parts[i - 1][parts[i - 1].length - 1])) { parts[i - 1] = parts[i - 1].concat(parts[i]); parts.splice(i, 1); }
+  return parts.map(p => p.join(" ")).join(" | ");
+}
+function ckAiList() {
+  const out = [], seen = new Set();
+  Object.values(state.aiBank || {}).forEach(arr => (Array.isArray(arr) ? arr : []).forEach(x => {
+    if (!x || typeof x.s !== "string" || seen.has(x.s) || x.s.length > 130) return; seen.add(x.s);
+    const en = x.c && ckValid(x.c, x.s) ? x.c : ckAuto(x.s), n = ckParts(en).length;
+    if (n >= 2 && n <= 6) out.push({ en, zh: x.zh || "", auto: !x.c, ref: x });
+  }));
+  return out;
+}
+function ckSrcHtml(kind) {
+  const list = ckAiList(); if (list.length < 4) return "";
+  const auto = list.filter(x => x.auto).length;
+  return `<div class="row" style="flex-wrap:wrap;gap:8px"><div class="seg" role="group" aria-label="題目來源"><button data-src="built" aria-pressed="${CK.src !== "ai"}">內建題目</button><button data-src="ai" aria-pressed="${CK.src === "ai"}">我的 AI 例句（${list.length}）</button></div>
+    ${CK.src === "ai" && auto && KEY_MODE() && AI.kind ? `<button class="btn small" id="ckAiChunk">用 AI 拆得更準（${auto} 句）</button><span class="muted" style="font-size:13px" id="ckAiChunkOut"></span>` : CK.src === "ai" && auto ? `<span class="muted" style="font-size:13px">有 ${auto} 句是自動拆的，可能不太準</span>` : ""}</div>`;
+}
+function ckSrcBind() {
+  $("ckBody").querySelectorAll("[data-src]").forEach(b => b.onclick = () => { CK.src = b.dataset.src; CK.L = null; CK.T = null; CK.aiTasks = null; renderChunk(); });
+  if ($("ckAiChunk")) $("ckAiChunk").onclick = ckAiChunk;
+}
+async function ckAiChunk() {
+  const todo = ckAiList().filter(x => x.auto).slice(0, 60);
+  const btn = $("ckAiChunk"), out = $("ckAiChunkOut"); btn.disabled = true;
+  let done = 0; const saved = [];
+  for (let i = 0; i < todo.length; i += 20) {
+    const part = todo.slice(i, i + 20);
+    out.textContent = `AI 拆區塊中… ${done} / ${todo.length}`;
+    const prompt = "Split each English sentence into natural chunks (multi-word blocks a learner remembers as one unit), 2 to 5 chunks, by putting \" | \" between chunks. Do not change any word or punctuation.\n" +
+      'Reply with only a JSON array like [{"i":0,"c":"I\'m trying to | eat less sugar | these days."}]\n\n' + part.map((x, k) => `${k}. ${x.ref.s}`).join("\n");
+    let res; try { res = await AI.json(prompt); } catch (e) { out.textContent = aiErrorText(e); break; }
+    (Array.isArray(res) ? res : []).forEach(r => { const x = r && part[Number(r.i)]; const c = x && ckValid(r.c, x.ref.s); if (c) { x.ref.c = c; saved.push([x.ref.s, c]); } });
+    done += part.length;
+  }
+  Store.save(true);
+  if (saved.length && Store.backend === "sheet") gs("saveChunks", saved).catch(() => { });
+  toast(saved.length ? `AI 拆好了 ${saved.length} 句` : "這次沒有拆成功，請再試一次");
+  CK.L = null; CK.T = null; CK.aiTasks = null; renderChunk();
+}
+function ckAiTasks() {
+  const list = shuffle(ckAiList()), others = list.flatMap(x => ckParts(x.en));
+  return list.slice(0, 8).map(x => [x.zh ? "說出：" + x.zh : "把這句排出來", x.en, shuffle(others).filter(c => !ckParts(x.en).includes(c)).slice(0, 2)]);
+}
+
 /* ================= 寶寶聽力（1–3 歲） ================= */
 const BABY = [["動物", "🐾", [["dog", "🐶", "Woof woof! A dog."], ["cat", "🐱", "Meow! A cat."], ["cow", "🐮", "Moo! A cow."], ["duck", "🦆", "Quack quack! A duck."], ["pig", "🐷", "Oink oink! A pig."], ["sheep", "🐑", "Baa! A sheep."], ["bird", "🐦", "Tweet tweet! A bird."], ["fish", "🐟", "A fish. Swim, swim!"], ["rabbit", "🐰", "Hop hop! A rabbit."], ["elephant", "🐘", "A big elephant!"]]], ["吃東西", "🍎", [["apple", "🍎", "Yummy! An apple."], ["banana", "🍌", "A yellow banana."], ["milk", "🥛", "Drink your milk."], ["water", "💧", "Some water, please."], ["bread", "🍞", "Yummy bread."], ["egg", "🥚", "An egg."], ["rice", "🍚", "Eat your rice."], ["cookie", "🍪", "A cookie for you!"]]], ["身體", "👀", [["eyes", "👀", "Where are your eyes?"], ["nose", "👃", "Touch your nose."], ["mouth", "👄", "Open your mouth. Ahh!"], ["ears", "👂", "Where are your ears?"], ["hands", "👏", "Clap your hands!"], ["feet", "🦶", "Stomp your feet!"], ["teeth", "🦷", "Brush your teeth."], ["hair", "💇", "Brush your hair."]]], ["顏色", "🎨", [["red", "🔴", "Red! It is red."], ["blue", "🔵", "Blue! It is blue."], ["yellow", "🟡", "Yellow! It is yellow."], ["green", "🟢", "Green! It is green."], ["orange", "🟠", "Orange! It is orange."], ["purple", "🟣", "Purple! It is purple."], ["black", "⚫", "Black! It is black."], ["white", "⚪", "White! It is white."]]], ["家人", "👪", [["mommy", "👩", "Hi, Mommy!"], ["daddy", "👨", "Hi, Daddy!"], ["baby", "👶", "A happy baby."], ["grandma", "👵", "Hi, Grandma!"], ["grandpa", "👴", "Hi, Grandpa!"], ["brother", "👦", "My big brother."], ["sister", "👧", "My big sister."], ["family", "👨‍👩‍👧", "I love my family."]]], ["玩具東西", "🧸", [["ball", "⚽", "Roll the ball!"], ["teddy bear", "🧸", "Hug the teddy bear."], ["book", "📖", "Let's read a book."], ["car", "🚗", "Beep beep! A car."], ["bus", "🚌", "The bus goes round and round."], ["shoes", "👟", "Put on your shoes."], ["hat", "👒", "Put on your hat."], ["cup", "🥤", "A cup of water."]]], ["每一天", "☀️", [["hello", "👋", "Hello! Good morning."], ["bye-bye", "👋", "Bye-bye! See you soon."], ["eat", "🥣", "It's time to eat."], ["bath", "🛁", "Bath time! Splash splash."], ["sleep", "😴", "Time to sleep. Good night."], ["walk", "🚶", "Let's go for a walk."], ["hug", "🤗", "Give me a hug!"], ["kiss", "😘", "A big kiss for you!"]]], ["大自然", "🌈", [["sun", "☀️", "The sun is up!"], ["moon", "🌙", "Hello, moon! Good night."], ["star", "⭐", "A little star."], ["rain", "🌧️", "Rain, rain. Pitter patter."], ["flower", "🌸", "Smell the flower."], ["tree", "🌳", "A big green tree."], ["cloud", "☁️", "A white cloud."], ["rainbow", "🌈", "Look! A rainbow!"]]]];
 let BB = null;
@@ -3211,6 +3530,11 @@ const MODES = {
   writing: { name: "寫作批改", desc: "寫幾句英文，AI 幫你改並解釋" },
   cards: { name: "單字記憶卡", desc: "畫面＋生活情境，一張一張記" },
   baby: { name: "寶寶聽力", desc: "給 1–3 歲：大圖＋真人發音，只要聽" },
+  ckLearn: { name: "觀念課", desc: "6 堂短課：英文句子就像程式碼" },
+  ckLib: { name: "片語模組庫", desc: "表達想法、原因、轉折、習慣、目標…分類好的區塊" },
+  ckBuild: { name: "句型組合器", desc: "主詞＋動作＋補充，一個句型組出很多句" },
+  ckListen: { name: "區塊聽力", desc: "聽整句，認出一塊一塊的區塊" },
+  ckTalk: { name: "情境輸出", desc: "工作、生活、打球：挑區塊說出想說的話" },
   wish: { name: "許願池", desc: "想要什麼新功能？許願、幫別人 +1" },
   support: { name: "贊助與感謝", desc: "隨喜支持、感謝名單" },
   pic: { name: "看圖選字", desc: "看畫面，選出是哪個字", n: 10, types: ["pic"] },
@@ -3284,6 +3608,7 @@ function startPractice(mode) {
   if (mode === "cards") return openCards(rangeWords(), 0);
   if (mode === "wish") return openWishes();
   if (mode === "baby") return openBaby();
+  if (/^ck/.test(mode)) return openChunk({ ckLearn: "learn", ckLib: "lib", ckBuild: "build", ckListen: "listen", ckTalk: "talk" }[mode]);
   if (mode === "support") return openSupport();
   if (mode === "notes") return openNotes();
   if (mode === "rain") return startRain();
@@ -3300,7 +3625,7 @@ function startPractice(mode) {
 function openQuiz() { show("quiz"); try { preloadQuiz(Q.items); } catch (e) { } renderItem(); }
 function show(view) { if (rainState && view !== "rain") stopRain();
   if (DI && DI.on && view !== "diary") diaryStop();
-  for (const v of ["home", "quiz", "result", "stats", "assess", "chat", "notes", "rain", "subs", "pairs", "travel", "map", "mis", "ladder", "dialog", "diary", "coach", "baby"]) $(v).hidden = v !== view;
+  for (const v of ["home", "quiz", "result", "stats", "assess", "chat", "notes", "rain", "subs", "pairs", "travel", "map", "mis", "ladder", "dialog", "diary", "coach", "baby", "chunk"]) $(v).hidden = v !== view;
   if (view !== "baby" && typeof BB !== "undefined" && BB) { BB.tok++; BB.auto = false; } closeSheet(); window.scrollTo(0, 0); }
 
 function renderHeader() {
@@ -3804,6 +4129,7 @@ function renderHome() {
   $("guestNote").hidden = !GUEST;
   const groups = [
     ...(CAN_WISH() || SHOW_SUPPORT() ? [["一起讓它變更好", [...(CAN_WISH() ? [["wish", WISH_COUNT ? `${WISH_COUNT} 個願望` : "", ""]] : []), ...(SHOW_SUPPORT() ? [["support"]] : [])]]] : []),
+    ["片語積木・像寫程式一樣學英文", [["ckLearn", ckRead() ? `${ckRead()} / 6 堂` : "從這裡開始", ""], ["ckLib", ckLearned() ? `會了 ${ckLearned()} 個` : "", ""], ["ckBuild"], ["ckListen"], ["ckTalk"]]],
     ["親子", [["baby", "", "給 1–3 歲：看大圖、聽真人發音，不用讀寫"]]],
     ["每天練", [["due", dueN ? `${dueN} 個到期` : "", dueN ? "" : "今天沒有到期的，很好"], ["cards", "", ""], ["trans", AI.kind ? "AI 批改" : "", ""], ["mistakes", (state.mistakes || []).length ? `${state.mistakes.length} 句` : "", (state.mistakes || []).length ? "" : "被改過的句子會自動收進來"], ["mc"], ["listen"], ["cloze"], ["build"], ["spell"], ["dictation"], ["review", weak ? `${weak} 個字` : "", weak ? "答錯過的字，答對兩次就畢業" : "目前沒有錯題"]]],
     ["口說練習", [["coach", AUDIO_AI() ? "AI 聽發音" : needAiTag, AUDIO_AI() ? "" : GUEST ? "分享版沒有開放" : "設定 Gemini 金鑰後可以用"], ["speak", "", AUDIO_AI() ? "跟讀句子，AI 聽你的發音" : CAN_SPEAK ? "錄音、辨識、打分數" : "跟讀自評（設定 AI 後可錄音評分）"], ["diary", (state.diary || []).some(e => e.d === today()) ? "今天完成" : GUEST ? "" : needAiTag, AUDIO_AI() ? "說 1 分鐘，AI 改文法和發音" : GUEST ? "用打字寫，沒有 AI 批改" : CAN_SPEAK ? "" : "先用打字寫"], ["chat", needAiTag, AUDIO_AI() ? "可以用說的回覆" : needAiDesc]]],
@@ -3813,7 +4139,7 @@ function renderHome() {
     ["遊戲", [["match"], ["blitz", state.best.blitz ? `紀錄 ${state.best.blitz} 題` : ""], ["rain", state.best.rain ? `紀錄 ${state.best.rain} 個` : "", ""]]],
     ["生活與測驗", [["travel"], ["assess", lastA ? `上次 ${lastA.cefr}` : "", "6 分鐘，看得懂和用得出來都測"]]],
   ];
-  const SKILL = { baby: "聽・親子", wish: "一起變更好", support: "一起變更好", cards: "讀・記憶", pic: "讀", mc: "讀", listen: "聽", cloze: "讀", build: "寫", spell: "寫", dictation: "聽・寫", match: "讀", blitz: "讀", speak: "說", review: "複習", assess: "測驗", reading: "讀", writing: "寫", chat: "說・寫", notes: "台詞", rain: "寫・遊戲", due: "複習", coach: "說", trans: "寫", mistakes: "寫・複習", ladder: "聽・說", dialog: "聽", diary: "說", subs: "聽・說", pairs: "聽・說", travel: "說", map: "進度" };
+  const SKILL = { ckLearn: "觀念", ckLib: "模組", ckBuild: "組合", ckListen: "聽", ckTalk: "說・寫", baby: "聽・親子", wish: "一起變更好", support: "一起變更好", cards: "讀・記憶", pic: "讀", mc: "讀", listen: "聽", cloze: "讀", build: "寫", spell: "寫", dictation: "聽・寫", match: "讀", blitz: "讀", speak: "說", review: "複習", assess: "測驗", reading: "讀", writing: "寫", chat: "說・寫", notes: "台詞", rain: "寫・遊戲", due: "複習", coach: "說", trans: "寫", mistakes: "寫・複習", ladder: "聽・說", dialog: "聽", diary: "說", subs: "聽・說", pairs: "聽・說", travel: "說", map: "進度" };
   $("modeGrid").outerHTML = `<div id="modeGrid" style="display:flex;flex-direction:column;gap:10px">${groups.map(([g, cards]) => `<div class="group-h">${g}</div><div class="grid">${cards.map(([k, tag, desc]) => `<button class="mode" data-m="${k}"><span class="tagline">${esc(SKILL[k] + (tag ? " · " + tag : ""))}</span><b>${esc(MODES[k].name)}</b><small>${esc(desc || MODES[k].desc)}</small></button>`).join("")}</div>`).join("")}</div>`;
   $("modeGrid").querySelectorAll(".mode").forEach(b => b.onclick = () => startPractice(b.dataset.m));
   renderStorage();
@@ -4051,7 +4377,10 @@ function renderStats(focus) {
     <section class="card flat"><h3>資料</h3><p class="muted" style="margin:0" id="stStore"></p>
       <div class="row"><button class="btn small" id="resetBtn">清除所有進度</button></div></section>`;
   if (OWNER_WHO && !GUEST && $("stStore")) $("stStore").insertAdjacentHTML("beforebegin", `<p style="margin:0">你是擁有者：已用 <b>${esc(OWNER_WHO)}</b> 驗證。</p>`);
-  if (!GUEST && Store.backend === "sheet" && $("stStore")) $("stStore").insertAdjacentHTML("afterend", BACKEND_BUILD === EQ_BUILD ? `<p class="muted" style="margin:0;font-size:12px">網頁和後台都是 ${esc(EQ_BUILD)} 版 ✓</p>` : `<div class="reply" style="border:1px solid var(--bad);padding:8px 10px;border-radius:10px;font-size:14px"><b>後台還是舊版</b>（網頁 ${esc(EQ_BUILD)}・後台 ${esc(BACKEND_BUILD || "?")}）<br>${REMOTE ? "1. Apps Script 換上新的 Code.gs、按存檔<br>2.「部署 → 管理部署作業」→ 點「所有人」的部署 → 鉛筆 → 版本選「新版本」→ 部署<br>3. 回來重新整理這頁" : "Apps Script 換上新的 Code.gs、按存檔，再重新整理這頁"}</div>`);
+  if (!GUEST && Store.backend === "sheet" && $("stStore")) $("stStore").insertAdjacentHTML("afterend", BACKEND_BUILD === EQ_BUILD ? `<p class="muted" style="margin:0;font-size:12px">網頁和後台都是 ${esc(EQ_BUILD)} 版 ✓</p>`
+    : !BACKEND_BUILD ? `<div class="reply" style="padding:8px 10px;border-radius:10px;font-size:14px" id="bkWait"><b>${STATUS_CHK.busy ? "正在確認後台版本…" : "這次沒連上後台，還不知道後台版本"}</b>（網頁 ${esc(EQ_BUILD)}）<br><span class="muted" style="font-size:13px">這不代表後台是舊版，通常是 Google 剛睡醒或網路慢一下。</span>${STATUS_CHK.busy ? "" : `<div class="row" style="margin-top:6px"><button class="btn small" id="bkRetry">再檢查一次</button></div>`}</div>`
+    : `<div class="reply" style="border:1px solid var(--bad);padding:8px 10px;border-radius:10px;font-size:14px"><b>後台還是舊版</b>（網頁 ${esc(EQ_BUILD)}・後台 ${esc(BACKEND_BUILD)}）<br>${REMOTE ? "1. Apps Script 換上新的 Code.gs、按存檔<br>2.「部署 → 管理部署作業」→ 點「所有人」的部署 → 鉛筆 → 版本選「新版本」→ 部署<br>3. 回來重新整理這頁" : "Apps Script 換上新的 Code.gs、按存檔，再重新整理這頁"}</div>`);
+  if ($("bkRetry")) $("bkRetry").onclick = () => checkStatus(1).then(() => { if (!$("stats").hidden) renderStats(); });
   $("stStore").textContent = GUEST ? "進度用上面的學習代碼，存在分享者的" + (Store.backend === "sheet" ? "試算表" : "電腦") + "裡，這台瀏覽器也會留一份。" : { sheet: "進度存在你的 Google 試算表（隱藏的「_進度存檔」工作表），學習紀錄、測驗、寫作和 AI 例句也會寫進試算表，可以直接打開來看。", browser: "進度存在這個瀏覽器裡。清除瀏覽器資料會讓進度消失。", account: "進度存在你的 Claude 帳號，只有你看得到。", computer: "進度存在電腦上的 english_quest_web_save.json。" }[Store.backend];
   $("stBack").onclick = () => { show("home"); renderHome(); };
   if ($("ownGo")) $("ownGo").onclick = async () => {
@@ -4217,7 +4546,7 @@ async function boot() {
   $("gModal").onclick = e => { if (e.target === $("gModal")) closeModal(); };
   if (Store.backend === "sheet") {
     gs("loadLibrary").then(lib => { mergeLibrary(lib); if (!$("home").hidden) renderHome(); }).catch(() => { });
-    try { applyStatus(await gs("aiStatus")); } catch (e) { }
+    await checkStatus(3);
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") { clearTimeout(Store.timer); Store.flush(); } });
     renderHome();
     return;
@@ -4233,6 +4562,17 @@ async function boot() {
     window.claude.use("permissions").then(pm => { PERM = pm || null; if (!$("home").hidden) renderHome(); }).catch(() => { });
     Store.connectAccount();
   });
+}
+/* 問後台版本：Google 偶爾會慢或剛睡醒，失敗就隔幾秒再試，不要一失敗就說後台是舊版 */
+const STATUS_CHK = { busy: false };
+async function checkStatus(tries) {
+  STATUS_CHK.busy = true;
+  for (let k = 0; k < tries; k++) {
+    try { applyStatus(await gs("aiStatus")); break; }
+    catch (e) { if (/UNKNOWN_FN|is not a function/.test(String((e && e.message) || e))) { BACKEND_BUILD = "舊版"; break; } if (k + 1 < tries) await new Promise(r => setTimeout(r, 2000 * (k + 1))); }
+  }
+  STATUS_CHK.busy = false;
+  if (!BACKEND_BUILD && Store.backend === "sheet" && (STATUS_CHK.again = (STATUS_CHK.again || 0) + 1) <= 3) setTimeout(() => { if (!BACKEND_BUILD) checkStatus(2).then(() => { if (!$("stats").hidden) renderStats(); }); }, 15000);
 }
 function applyStatus(j) {
   if (!j) return;
