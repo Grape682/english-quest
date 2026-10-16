@@ -101,6 +101,10 @@ button.chip:hover{border-color:var(--primary)}
 .mcard .tip{font-size:14px;color:var(--muted);border-top:1px dashed var(--line);padding-top:10px;width:100%}
 .memo{display:flex;gap:10px;align-items:flex-start;background:var(--surface-2);border-radius:12px;padding:10px 12px;text-align:left}
 .memo .em{font-size:26px;line-height:1.1;flex:none}
+.togetherbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:-4px}
+.togetherbar .tlabel{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--muted);width:100%}
+.tchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--primary);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 14px;font-size:15px;font-weight:700;cursor:pointer}
+.tchip:hover{background:var(--surface-2)}.tchip b{font-size:12px;font-weight:700;color:var(--primary)}
 .wishbar{display:flex;align-items:center;gap:10px;width:100%;border:1px dashed var(--primary);background:var(--surface);color:var(--ink);border-radius:14px;padding:12px 14px;font-size:15px;text-align:left;cursor:pointer}
 .wishbar:hover{background:var(--surface-2)}
 .wish{display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--line);padding:10px 0}.wish:last-child{border-bottom:0}
@@ -363,6 +367,11 @@ a.btn{text-decoration:none}
     <button class="chip" id="streakChip" title="連續練習天數"></button>
     <button class="chip" id="lvChip" title="我的成就"></button>
   </header>
+  <nav class="togetherbar" id="togetherBar" aria-label="一起讓它變更好" hidden>
+    <span class="tlabel">一起讓它變更好</span>
+    <button class="tchip" id="tbWish"><span aria-hidden="true">💬</span>許願池<b id="tbWishN"></b></button>
+    <button class="tchip" id="tbSup" hidden><span aria-hidden="true">💛</span>贊助與感謝</button>
+  </nav>
 
   <section class="card" id="assessCard" hidden>
     <span class="eyebrow">第一次來嗎？</span>
@@ -411,7 +420,6 @@ a.btn{text-decoration:none}
     <div class="row"><button class="btn small" id="mapBtn">看 32 週影集地圖</button><button class="btn small" id="vidBtn">本週片段</button><button class="btn small" id="watchBtn"></button></div>
   </section>
 
-  <button class="wishbar" id="wishBar" hidden><span aria-hidden="true">💬</span><span style="flex:1;min-width:0"><b>許願池</b>　想要什麼新功能？來許個願</span><span class="chip" id="wishCount"></span></button>
   <section class="card flat" aria-label="每日一句">
     <div class="row"><span class="eyebrow">每日一句</span><div class="spacer"></div>
       <button class="btn small" id="dayPlay"></button><button class="btn small" id="daySlow">慢速</button></div>
@@ -3469,6 +3477,7 @@ function renderHome() {
   const needAiTag = AI.kind ? "" : GUEST ? "分享者限定" : "需要 AI", needAiDesc = AI.kind ? "" : GUEST ? "分享版沒有開放" : "設定 AI 後可以用";
   $("guestNote").hidden = !GUEST;
   const groups = [
+    ...(CAN_WISH() || SHOW_SUPPORT() ? [["一起讓它變更好", [...(CAN_WISH() ? [["wish", WISH_COUNT ? `${WISH_COUNT} 個願望` : "", ""]] : []), ...(SHOW_SUPPORT() ? [["support"]] : [])]]] : []),
     ["每天練", [["due", dueN ? `${dueN} 個到期` : "", dueN ? "" : "今天沒有到期的，很好"], ["cards", "", ""], ["trans", AI.kind ? "AI 批改" : "", ""], ["mistakes", (state.mistakes || []).length ? `${state.mistakes.length} 句` : "", (state.mistakes || []).length ? "" : "被改過的句子會自動收進來"], ["mc"], ["listen"], ["cloze"], ["build"], ["spell"], ["dictation"], ["review", weak ? `${weak} 個字` : "", weak ? "答錯過的字，答對兩次就畢業" : "目前沒有錯題"]]],
     ["口說練習", [["coach", AUDIO_AI() ? "AI 聽發音" : needAiTag, AUDIO_AI() ? "" : GUEST ? "分享版沒有開放" : "設定 Gemini 金鑰後可以用"], ["speak", "", AUDIO_AI() ? "跟讀句子，AI 聽你的發音" : CAN_SPEAK ? "錄音、辨識、打分數" : "跟讀自評（設定 AI 後可錄音評分）"], ["diary", (state.diary || []).some(e => e.d === today()) ? "今天完成" : GUEST ? "" : needAiTag, AUDIO_AI() ? "說 1 分鐘，AI 改文法和發音" : GUEST ? "用打字寫，沒有 AI 批改" : CAN_SPEAK ? "" : "先用打字寫"], ["chat", needAiTag, AUDIO_AI() ? "可以用說的回覆" : needAiDesc]]],
     ["聽力加強", [["ladder"], ["dialog", AI.kind ? "" : (state.dialogues || []).length ? `題庫 ${state.dialogues.length} 段` : needAiTag, AI.kind ? "" : (state.dialogues || []).length ? "從對話庫挑一段來聽" : needAiDesc], ["pairs"]]],
@@ -3476,7 +3485,6 @@ function renderHome() {
     ["AI 讀寫", [ ["reading", AI.kind ? "" : (state.readings || []).length ? `題庫 ${state.readings.length} 篇` : needAiTag, AI.kind ? "" : (state.readings || []).length ? "從短文庫挑一篇來讀" : needAiDesc], ["writing", needAiTag, needAiDesc]]],
     ["遊戲", [["match"], ["blitz", state.best.blitz ? `紀錄 ${state.best.blitz} 題` : ""], ["rain", state.best.rain ? `紀錄 ${state.best.rain} 個` : "", ""]]],
     ["生活與測驗", [["travel"], ["assess", lastA ? `上次 ${lastA.cefr}` : "", "6 分鐘，看得懂和用得出來都測"]]],
-    ...(CAN_WISH() || SHOW_SUPPORT() ? [["一起讓它變更好", [...(CAN_WISH() ? [["wish", WISH_COUNT ? `${WISH_COUNT} 個願望` : "", ""]] : []), ...(SHOW_SUPPORT() ? [["support"]] : [])]]] : []),
   ];
   const SKILL = { wish: "一起變更好", support: "一起變更好", cards: "讀・記憶", pic: "讀", mc: "讀", listen: "聽", cloze: "讀", build: "寫", spell: "寫", dictation: "聽・寫", match: "讀", blitz: "讀", speak: "說", review: "複習", assess: "測驗", reading: "讀", writing: "寫", chat: "說・寫", notes: "台詞", rain: "寫・遊戲", due: "複習", coach: "說", trans: "寫", mistakes: "寫・複習", ladder: "聽・說", dialog: "聽", diary: "說", subs: "聽・說", pairs: "聽・說", travel: "說", map: "進度" };
   $("modeGrid").outerHTML = `<div id="modeGrid" style="display:flex;flex-direction:column;gap:10px">${groups.map(([g, cards]) => `<div class="group-h">${g}</div><div class="grid">${cards.map(([k, tag, desc]) => `<button class="mode" data-m="${k}"><span class="tagline">${esc(SKILL[k] + (tag ? " · " + tag : ""))}</span><b>${esc(MODES[k].name)}</b><small>${esc(desc || MODES[k].desc)}</small></button>`).join("")}</div>`).join("")}</div>`;
@@ -3539,9 +3547,12 @@ function openSupport() {
   };
 }
 function renderWishBar() {
-  const b = $("wishBar"); if (!b) return;
-  b.hidden = !CAN_WISH(); $("wishCount").textContent = WISH_COUNT ? `${WISH_COUNT} 個願望` : "";
-  b.onclick = openWishes;
+  const bar = $("togetherBar"); if (!bar) return;
+  const w = CAN_WISH(), sp = SHOW_SUPPORT();
+  bar.hidden = !w && !sp;
+  $("tbWish").hidden = !w; $("tbWishN").textContent = WISH_COUNT ? String(WISH_COUNT) : "";
+  $("tbSup").hidden = !sp;
+  $("tbWish").onclick = openWishes; $("tbSup").onclick = openSupport;
 }
 let WL = null;
 /* 後台錯誤翻成白話：最常見的是 Apps Script 還沒部署新版本 */
