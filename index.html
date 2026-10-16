@@ -565,7 +565,7 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
-const EQ_BUILD = "9c4096";
+const EQ_BUILD = "62b3ec";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -689,6 +689,7 @@ function mergeLibrary(lib) {
   if (lib.sponsor && typeof lib.sponsor === "object") { SPONSOR_INFO = lib.sponsor; if (/^https:\/\/[^\s"'<>]+$/.test(lib.sponsor.link || "")) SPONSOR = lib.sponsor.link; }
   if (Array.isArray(lib.sponsors)) SPONSORS = lib.sponsors.filter(x => x && x.n).slice(-100);
   if (typeof lib.wishCount === "number") WISH_COUNT = lib.wishCount;
+  if (lib.voices && typeof lib.voices === "object") mergeVoices(lib.voices);
   if (typeof renderSponsorWall === "function") renderSponsorWall();
 }
 function logEvent(type, data) {
@@ -989,7 +990,89 @@ const splitSents = t => (String(t || "").replace(/\s+/g, " ").match(/[^.!?]+[.!?
 function prefetchSents(texts) {
   if (state.human === false || state.humanSent === false || (Store.backend !== "sheet" && Store.backend !== "computer")) return;
   const keys = [...new Set(texts.flatMap(splitSents).filter(canHumanSent).map(normSent))].filter(k => sentCached(k) === undefined);
-  for (let i = 0; i < keys.length && i < 24; i += 8) setTimeout(() => fetchSents(keys.slice(i, i + 8)), 400 * (i / 8));
+  for (let i = 0; i < keys.length && i < 48; i += 8) setTimeout(() => fetchSents(keys.slice(i, i + 8)), 400 * (i / 8));
+}
+/* 後台掃描好的結果（大家共用）：T 開頭＝Tatoeba 錄音編號，D 開頭＝字典錄音檔名 */
+function longVoiceUrl(u) {
+  u = String(u || "");
+  if (/^T\d+$/.test(u)) return TATOEBA + "/en/audio/download/" + u.slice(1);
+  if (/^D[\w.%-]+$/.test(u)) return "https:\/\/api.dictionaryapi.dev/media/pronunciations/en/" + u.slice(1);
+  return /^https:\/\/[^\s"'<>]+$/.test(u) ? u : "";
+}
+const VOICE_SRV = { w: new Set() };
+function mergeVoices(V) {
+  for (const [k, v] of Object.entries(V.s || {})) { const u = v ? longVoiceUrl(v[0]) : ""; if (u) HS.mem[k] = { u, a: String(v[1] || ""), t: String(v[2] || "") }; else if (!(k in HS.mem)) HS.mem[k] = null; }
+  for (const [w, v] of Object.entries(V.w || {})) { VOICE_SRV.w.add(w); const u = v ? longVoiceUrl(v) : ""; if (u) HUMAN.mem[w] = u; else if (!(w in HUMAN.mem)) HUMAN.mem[w] = ""; }
+}
+const wordTodo = w => Store.backend === "sheet" ? !VOICE_SRV.w.has(w) : !(w in HUMAN.mem);
+function saveWordVoice(k, url) { HUMAN.mem[k] = url; try { const c = JSON.parse(localStorage.getItem("eq-human") || "{}"); if (url) c[k] = url; else c["@" + k] = Date.now(); localStorage.setItem("eq-human", JSON.stringify(c)); } catch (e) { } }
+/* 開始一回練習時，先把這回會用到的錄音下載好，按下去就馬上有聲音 */
+function preloadQuiz(items) {
+  if (state.human === false) return;
+  const sents = [];
+  items.slice(0, 15).forEach(it => {
+    let w = null; try { w = (it.note || it.line || it.phrase || it.mis) ? pseudoWord(it) : it.w ? BY_EN[it.w] : null; } catch (e) { }
+    if (!w) return;
+    if (w.en && canHuman(w.en)) { const u = HUMAN.mem[w.en.trim().toLowerCase()]; if (u) preloadAudio(u); }
+    let S = null; try { S = sentenceOf(w); } catch (e) { }
+    if (S && S.s) splitSents(S.s).forEach(x => { if (!canHumanSent(x)) return; const v = sentCached(normSent(x)); if (v && v.u) preloadAudio(v.u); else if (v === undefined) sents.push(x); });
+  });
+  if (sents.length) prefetchSents(sents);
+}
+/* 一次掃描全部：課程單字、例句、AI 例句、記憶卡、急救包、寶寶聽力、閱讀短文、字幕、台詞本 */
+function voiceInventory() {
+  const words = new Set(), sents = new Set();
+  const addW = w => { if (canHuman(w)) words.add(String(w).trim().toLowerCase()); };
+  const addS = t => splitSents(t).forEach(x => { if (canHumanSent(x)) sents.add(normSent(x)); });
+  WORDS.forEach(w => { addW(w.en); addS(w.ex); const c = cardOf(w.en); if (c) addS(c.s); });
+  Object.values(state.aiBank || {}).forEach(a => (Array.isArray(a) ? a : []).forEach(x => x && addS(x.s)));
+  Object.values(state.cards || {}).forEach(c => c && addS(c.s));
+  Object.values(TRAVEL).forEach(c => c.items.forEach(x => addS(x[0])));
+  BABY.forEach(t => t[2].forEach(([w, , ph]) => { addW(w); addS(ph); }));
+  (state.readings || []).forEach(r => ((r && r.data && r.data.sentences) || []).forEach(x => x && addS(x.en)));
+  (state.episodes || []).forEach(ep => ((ep && ep.lines) || []).forEach(L => L && addS(L.en)));
+  (state.notes || []).forEach(n => n && addS(n.en));
+  return { words: [...words], sents: [...sents] };
+}
+let SCAN = { on: false };
+function scanSummary() {
+  const inv = voiceInventory();
+  const wHit = inv.words.filter(w => HUMAN.mem[w]).length, sHit = inv.sents.filter(k => { const v = sentCached(k); return v && v.u; }).length;
+  const wTodo = inv.words.filter(wordTodo).length, sTodo = inv.sents.filter(k => sentCached(k) === undefined).length;
+  return { inv, wHit, sHit, wTodo, sTodo };
+}
+function scanUi(msg) {
+  const el = $("scanOut"), btn = $("scanBtn"); if (!el) return;
+  const S2 = scanSummary();
+  el.innerHTML = (msg ? esc(msg) + "<br>" : "") + `真人單字 <b>${S2.wHit}</b> / ${S2.inv.words.length}・真人句子 <b>${S2.sHit}</b> / ${S2.inv.sents.length}` + (S2.wTodo + S2.sTodo ? `・還沒查 ${S2.wTodo + S2.sTodo} 個` : "・全部查過了 ✓");
+  if (btn) btn.textContent = SCAN.on ? "停止掃描" : (S2.wTodo + S2.sTodo ? "一次掃描全部" : "重新整理數字");
+}
+async function scanVoices() {
+  if (SCAN.on) { SCAN.on = false; scanUi("已停止，下次會從沒查過的接著查"); return; }
+  const { inv } = scanSummary();
+  const ws = inv.words.filter(wordTodo), ss = inv.sents.filter(k => sentCached(k) === undefined);
+  const total = ws.length + ss.length; let done = 0, fail = 0;
+  if (!total) { scanUi(""); return; }
+  SCAN = { on: true }; scanUi("掃描中…");
+  const tick = () => scanUi(`掃描中… ${done} / ${total}（請先不要關掉這頁）`);
+  for (let i = 0; i < ws.length && SCAN.on; i += 12) {
+    const b = ws.slice(i, i + 12); let viaServer = false;
+    if (Store.backend === "sheet") {
+      try { const m = (await gs("findWords", b)) || {}; viaServer = true; b.forEach(w => { if (w in m) { VOICE_SRV.w.add(w); saveWordVoice(w, m[w] ? longVoiceUrl(m[w]) : ""); } else fail++; }); }
+      catch (e) { if (!/UNKNOWN_FN|is not a function/.test(String((e && e.message) || e))) { fail += b.length; } }
+    }
+    if (!viaServer) for (const w of b) { if (!SCAN.on) break; await humanUrl(w); await waitMs(250); }
+    done += b.length; tick(); await waitMs(300);
+  }
+  for (let i = 0; i < ss.length && SCAN.on; i += 8) {
+    const b = ss.slice(i, i + 8);
+    await fetchSents(b);
+    fail += b.filter(k => sentCached(k) === undefined).length;
+    done += b.length; tick(); await waitMs(500);
+    if (fail > 40) break;
+  }
+  const stopped = !SCAN.on; SCAN.on = false;
+  scanUi(stopped ? "已停止" : fail ? `完成，但有 ${fail} 個這次沒查到（可能是網路太忙，等一下再按一次會接著查）` : "掃描完成！之後播放會直接用存好的結果，不會再等");
 }
 const raceMs = (p, ms) => Promise.race([p, new Promise(r => setTimeout(() => r(undefined), ms))]);
 function prefetchHuman(words) { if (state.human === false) return; words.filter(canHuman).slice(0, 12).forEach((w, k) => setTimeout(() => humanUrl(w), 300 * k)); }
@@ -1160,7 +1243,7 @@ async function generateAI() {
       }
     }
     if (!n) throw { code: "empty" };
-    Store.save(true); logEvent("AI例句", { rows: added });
+    Store.save(true); logEvent("AI例句", { rows: added }); prefetchSents(added.map(x => x.en));
     toast(`新增 ${n} 句 AI 例句，接下來幾天的題目都會輪流用到`);
   } catch (e) {
     toast(e && e.code === "empty" ? "這次沒有產生新例句，題目會繼續使用課程例句" : aiErrorText(e));
@@ -1241,7 +1324,7 @@ async function startReading(forceNew) {
   if (!sents.length || !qs.length) { toast("AI 回傳的短文格式不完整，請再試一次"); show("home"); renderHome(); return; }
   const rec = { id: Date.now().toString(36), week: wk, lv: state.diff, d: today(), data };
   state.readings = (state.readings || []).concat(rec).slice(KEY_MODE() ? -200 : -12);
-  Store.save(); logEvent("閱讀短文", { week: wk, lv: state.diff, level: D().name, title: data.title || "Short Story", json: JSON.stringify(data) });
+  Store.save(); logEvent("閱讀短文", { week: wk, lv: state.diff, level: D().name, title: data.title || "Short Story", json: JSON.stringify(data) }); prefetchSents(sents.map(x => x.en));
   renderReading(data);
 }
 function chooseReading(saved) {
@@ -2553,7 +2636,7 @@ async function aiCards(words) {
     rows.push(Object.assign({ word: w.en }, c));
   }
   if (!rows.length) throw { code: "empty" };
-  Store.save(true); logEvent("記憶卡", { rows });
+  Store.save(true); logEvent("記憶卡", { rows }); prefetchSents(rows.map(x => x.s));
   return rows.length;
 }
 
@@ -3214,7 +3297,7 @@ function startPractice(mode) {
   Q = { kind: "practice", title: MODES[mode].name, items: buildPractice(mode), i: 0, correct: 0, combo: 0, best: 0, gained: 0, missed: [] };
   openQuiz();
 }
-function openQuiz() { show("quiz"); renderItem(); }
+function openQuiz() { show("quiz"); try { preloadQuiz(Q.items); } catch (e) { } renderItem(); }
 function show(view) { if (rainState && view !== "rain") stopRain();
   if (DI && DI.on && view !== "diary") diaryStop();
   for (const v of ["home", "quiz", "result", "stats", "assess", "chat", "notes", "rain", "subs", "pairs", "travel", "map", "mis", "ladder", "dialog", "diary", "coach", "baby"]) $(v).hidden = v !== view;
@@ -3904,8 +3987,9 @@ function renderStats(focus) {
       <div class="row"><div class="seg" id="goalSeg">${[[30, "輕鬆 30"], [50, "一般 50"], [100, "認真 100"]].map(([g, l]) => `<button data-g="${g}" aria-pressed="${state.goal === g}">${l}</button>`).join("")}</div><span class="muted" style="font-size:14px">XP／天</span></div>
     </section>
     <section class="card flat"><h3>聲音設定</h3>
-      <label class="row" style="gap:8px;font-size:15px"><input type="checkbox" id="humanOn" ${state.human !== false ? "checked" : ""}> 單字用<b>真人錄音</b>發音（找不到才用電腦語音）</label>
-      <label class="row" style="gap:8px;font-size:15px"><input type="checkbox" id="humanSentOn" ${state.human !== false && state.humanSent !== false ? "checked" : ""} ${state.human === false ? "disabled" : ""}> 句子也先找<b>真人錄音</b>（一模一樣的句子才有）</label>
+      <label class="row" style="gap:8px;font-size:15px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="humanOn" style="margin-top:4px" ${state.human !== false ? "checked" : ""}><span>單字用<b>真人錄音</b>發音（找不到才用電腦語音）</span></label>
+      <label class="row" style="gap:8px;font-size:15px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="humanSentOn" style="margin-top:4px" ${state.human !== false && state.humanSent !== false ? "checked" : ""} ${state.human === false ? "disabled" : ""}><span>句子也先找<b>真人錄音</b>（同一句才有，縮寫也算）</span></label>
+      ${KEY_MODE() ? `<div class="reply" style="display:flex;flex-direction:column;gap:6px"><b>先把錄音全部查好（播放就不會卡）</b><span class="muted" style="font-size:13px">一次查完所有單字和句子，結果存在後台大家共用，朋友打開也直接有真人聲音。之後 AI 新產生的句子會自動查。</span><div class="row" style="flex-wrap:wrap"><button class="btn small primary" id="scanBtn">一次掃描全部</button><span style="font-size:13px" id="scanOut"></span></div></div>` : ""}
       <p class="muted" style="margin:0;font-size:12px">單字真人錄音來自 Wiktionary 志工（CC BY-SA，透過 Free Dictionary API）；句子真人錄音來自 Tatoeba 志工（例如 CK），依各錄音者的 CC 授權使用。找不到的句子才用下面選的語音；Edge 的「Natural」聲音、iPhone 下載的「增強版」聲音最接近真人。</p>
       <label class="lbl" for="voiceSel">朗讀的聲音</label>
       <select class="field" id="voiceSel"><option value="">自動選擇美式英文</option>${vOpts}</select>
@@ -4069,6 +4153,7 @@ function renderStats(focus) {
   $("rateSeg").querySelectorAll("button").forEach(b => b.onclick = () => { state.rate = Number(b.dataset.r); Store.save(); renderStats(); speak("This is my family."); });
   $("testVoice").onclick = () => speak("Hello! Let's learn English together.");
   $("humanOn").onchange = e => { state.human = e.target.checked; Store.save(); const hs = $("humanSentOn"); if (hs) { hs.disabled = !state.human; hs.checked = state.human && state.humanSent !== false; } speak("family"); };
+  if ($("scanBtn")) { $("scanBtn").onclick = scanVoices; scanUi(SCAN.on ? "掃描中…" : ""); }
   $("humanSentOn").onchange = e => { state.humanSent = e.target.checked; Store.save(); speak("Give me a hug."); };
   let armed = false;
   $("resetBtn").onclick = e => {
