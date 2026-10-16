@@ -101,6 +101,16 @@ button.chip:hover{border-color:var(--primary)}
 .mcard .tip{font-size:14px;color:var(--muted);border-top:1px dashed var(--line);padding-top:10px;width:100%}
 .memo{display:flex;gap:10px;align-items:flex-start;background:var(--surface-2);border-radius:12px;padding:10px 12px;text-align:left}
 .memo .em{font-size:26px;line-height:1.1;flex:none}
+.bbthemes{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.bbthemes .tchip{flex:0 0 auto;white-space:nowrap}
+.tchip.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.bbcard{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;min-height:50vh;border:0;border-radius:28px;background:var(--surface);box-shadow:0 10px 30px -18px rgba(0,0,0,.35);cursor:pointer;color:var(--ink)}
+.bbem{font-size:min(44vw,210px);line-height:1.05}
+.bbw{font-size:clamp(34px,9vw,52px);font-weight:800;font-family:var(--f-display);letter-spacing:-.01em}
+.bbcard.pop .bbem{animation:bbpop .6s ease}
+@keyframes bbpop{35%{transform:scale(1.16) rotate(-4deg)}70%{transform:scale(.97)}}
+.bbctl{justify-content:center}
+.bbdark{position:fixed;inset:0;z-index:60;border:0;background:#000;color:#666;font-size:15px}
+@media (prefers-reduced-motion: reduce){.bbcard.pop .bbem{animation:none}}
 .togetherbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:-4px}
 .togetherbar .tlabel{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--muted);width:100%}
 .tchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--primary);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 14px;font-size:15px;font-weight:700;cursor:pointer}
@@ -461,6 +471,7 @@ a.btn{text-decoration:none}
 <main id="coach" class="wrap" hidden></main>
 <main id="ladder" class="wrap" hidden></main>
 <main id="dialog" class="wrap" hidden></main>
+<main id="baby" class="wrap" hidden></main>
 <main id="diary" class="wrap" hidden></main>
 <main id="pairs" class="wrap" hidden></main>
 <main id="travel" class="wrap" hidden></main>
@@ -552,7 +563,7 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
-const EQ_BUILD = "3d8114";
+const EQ_BUILD = "da5d5f";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -859,8 +870,131 @@ function pickVoice() {
   if (state.voice) { const v = voices.find(v => v.name === state.voice); if (v) return v; }
   return voices.find(v => /en-US/i.test(v.lang) && /Google|Samantha|Aria|Jenny|Natural/i.test(v.name)) || voices.find(v => /en-US/i.test(v.lang)) || voices[0] || null;
 }
+/* 真人發音：單字先找 Wiktionary 的真人錄音（透過 Free Dictionary API，CC BY-SA），找不到再用瀏覽器語音 */
+const HUMAN = { mem: {}, audio: null };
+const canHuman = t => state.human !== false && /^[a-z]+(?:[- ][a-z]+)?$/i.test(String(t || "").trim());
+async function humanUrl(word) {
+  const k = String(word || "").trim().toLowerCase();
+  if (k in HUMAN.mem) return HUMAN.mem[k];
+  let cache = {}; try { cache = JSON.parse(localStorage.getItem("eq-human") || "{}"); } catch (e) { }
+  if (cache[k] || (("@" + k) in cache && Date.now() - cache["@" + k] < 7 * 864e5)) return (HUMAN.mem[k] = cache[k] || "");
+  let url = "";
+  try {
+    const r = await fetch("https:\/\/api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(k));
+    if (r.ok) {
+      const j = await r.json(), all = [];
+      (Array.isArray(j) ? j : []).forEach(e => (e.phonetics || []).forEach(p => { if (p && typeof p.audio === "string" && p.audio) all.push(p.audio); }));
+      url = all.find(a => /-us\.mp3$/i.test(a)) || all.find(a => /\.mp3$/i.test(a)) || all[0] || "";
+      if (url.slice(0, 2) === "\/\/") url = "https:" + url;
+      if (!/^https:\/\/[^\s"'<>]+$/.test(url)) url = "";
+    } else if (r.status !== 404) return "";
+  } catch (e) { return ""; }
+  HUMAN.mem[k] = url;
+  try { const c = JSON.parse(localStorage.getItem("eq-human") || "{}"); if (url) c[k] = url; else c["@" + k] = Date.now(); localStorage.setItem("eq-human", JSON.stringify(c)); } catch (e) { }
+  return url;
+}
+function stopHuman() { if (HUMAN.audio) { try { HUMAN.audio.pause(); } catch (e) { } HUMAN.audio = null; } }
+async function playHuman(word, rate) {
+  const url = await humanUrl(word);
+  if (!url) return false;
+  return playUrl(url, rate);
+}
+function playUrl(url, rate) {
+  stopHuman(); if (TTS) speechSynthesis.cancel();
+  const a = new Audio(url); HUMAN.audio = a;
+  a.playbackRate = rate || 1; try { a.preservesPitch = true; } catch (e) { }
+  return new Promise(res => {
+    const done = ok => { a.onended = a.onerror = null; res(ok); };
+    a.onended = () => done(true); a.onerror = () => done(false);
+    a.play().catch(() => done(false));
+  });
+}
+/* 句子真人錄音：Tatoeba 志工錄的整句（整句完全一樣才用），找不到就用電腦語音。查過的結果記起來，不重複查 */
+const HS = { mem: {}, wait: {} };
+const normSent = t => String(t || "").toLowerCase().replace(/[\u2018\u2019`\u00b4]/g, "'").replace(/[^a-z0-9' ]+/g, " ").split(" ").map(w => w.replace(/^'+|'+$/g, "")).filter(Boolean).join(" ");
+const canHumanSent = t => { t = String(t || "").trim(); if (state.human === false || state.humanSent === false || canHuman(t) || t.length > 140 || !/[a-z]/i.test(t) || /[^\x20-\x7E\u2018\u2019\u201c\u201d\u2014\u2013\u2026]/.test(t)) return false; const n = normSent(t).split(" ").length; return n >= 2 && n <= 16; };
+function hsCache() { try { return JSON.parse(localStorage.getItem("eq-human-s") || "{}"); } catch (e) { return {}; } }
+function hsSave(k, v) { try { const c = hsCache(); c[k] = v; const ks = Object.keys(c); if (ks.length > 800) ks.slice(0, ks.length - 800).forEach(x => delete c[x]); localStorage.setItem("eq-human-s", JSON.stringify(c)); } catch (e) { } }
+const TATOEBA = "https:\/\/tatoeba.org";
+function tatoebaPick(j, k) {
+  const list = (j && (j.results || j.data)) || [];
+  for (const r of list) {
+    if (!r || normSent(r.text) !== k) continue;
+    const a = (r.audios || [])[0]; if (!a) continue;
+    let u = String(a.download_url || "");
+    if (u.charAt(0) === "/") u = TATOEBA + u;
+    if (!u && a.id) u = TATOEBA + "/en/audio/download/" + a.id;
+    if (/^https:\/\/[^\s"'<>]+$/.test(u)) return { u, a: String(a.author || "").slice(0, 40) };
+  }
+  return null;
+}
+/* 回傳 {句子: {u,a} 或 null}；沒回傳的句子代表這次查不到（網路或後台問題），下次再查 */
+async function lookupSents(keys) {
+  if (Store.backend === "sheet") {
+    try { return (await gs("findVoice", keys)) || {}; }
+    catch (e) { if (!/UNKNOWN_FN|is not a function/.test(String((e && e.message) || e))) return {}; }
+  } else if (Store.backend === "computer") {
+    try { const r = await apiFetch("api/voice", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ texts: keys }) }); if (r.ok) return (await r.json()) || {}; } catch (e) { }
+    return {};
+  }
+  const out = {};
+  for (const k of keys.slice(0, 3)) {
+    try { const r = await fetch(TATOEBA + "/en/api_v0/search?from=eng&has_audio=yes&query=" + encodeURIComponent('="' + k + '"')); if (r.ok) out[k] = tatoebaPick(await r.json(), k); } catch (e) { break; }
+  }
+  return out;
+}
+function sentCached(k) {
+  if (k in HS.mem) return HS.mem[k];
+  const c = hsCache()[k];
+  if (c && c.u) return (HS.mem[k] = c);
+  if (typeof c === "number" && Date.now() - c < 14 * 864e5) return (HS.mem[k] = null);
+  return undefined;
+}
+function sentVoice(text) {
+  const k = normSent(text), c = sentCached(k);
+  if (c !== undefined) return Promise.resolve(c);
+  return HS.wait[k] || fetchSents([k]).then(() => HS.mem[k] || null);
+}
+function fetchSents(keys) {
+  keys = keys.filter(k => sentCached(k) === undefined && !HS.wait[k]).slice(0, 8);
+  if (!keys.length) return Promise.resolve();
+  const p = lookupSents(keys).then(m => {
+    keys.forEach(k => { delete HS.wait[k]; if (!m || !(k in m)) return; const v = m[k] && m[k].u ? { u: String(m[k].u), a: String(m[k].a || "") } : null; HS.mem[k] = v; hsSave(k, v || Date.now()); });
+  }, () => keys.forEach(k => delete HS.wait[k]));
+  keys.forEach(k => HS.wait[k] = p);
+  return p;
+}
+const splitSents = t => (String(t || "").replace(/\s+/g, " ").match(/[^.!?]+[.!?]*/g) || []).map(x => x.trim()).filter(Boolean);
+/* 先在背景查好（只有接後台時才批次查，避免一次打太多次 Tatoeba） */
+function prefetchSents(texts) {
+  if (state.human === false || state.humanSent === false || (Store.backend !== "sheet" && Store.backend !== "computer")) return;
+  const keys = [...new Set(texts.flatMap(splitSents).filter(canHumanSent).map(normSent))].filter(k => sentCached(k) === undefined);
+  for (let i = 0; i < keys.length && i < 24; i += 8) setTimeout(() => fetchSents(keys.slice(i, i + 8)), 400 * (i / 8));
+}
+const raceMs = (p, ms) => Promise.race([p, new Promise(r => setTimeout(() => r(undefined), ms))]);
+function prefetchHuman(words) { if (state.human === false) return; words.filter(canHuman).slice(0, 12).forEach((w, k) => setTimeout(() => humanUrl(w), 300 * k)); }
 function speak(text, slow, fixedRate) {
+  const tok = (speak.t = (speak.t || 0) + 1);
+  const rate = fixedRate ? Math.max(0.6, Math.min(1.2, fixedRate)) : slow ? 0.75 : 1;
+  if (canHuman(text)) {
+    if (TTS) speechSynthesis.cancel();
+    playHuman(text, rate).then(ok => { if (!ok && tok === speak.t) speakTTS(text, slow, fixedRate); });
+    return;
+  }
+  if (canHumanSent(text)) {
+    stopHuman(); if (TTS) speechSynthesis.cancel();
+    raceMs(sentVoice(text), 2500).then(v => {
+      if (tok !== speak.t) return;
+      if (v && v.u) playUrl(v.u, rate).then(ok => { if (!ok && tok === speak.t) speakTTS(text, slow, fixedRate); });
+      else speakTTS(text, slow, fixedRate);
+    });
+    return;
+  }
+  speakTTS(text, slow, fixedRate);
+}
+function speakTTS(text, slow, fixedRate) {
   if (!TTS) { toast("這個瀏覽器不支援朗讀，建議使用 Chrome 或 Edge"); return; }
+  stopHuman();
   speechSynthesis.cancel();
   setTimeout(() => {
     const u = new SpeechSynthesisUtterance(text);
@@ -1637,7 +1771,7 @@ function speakSeq(lines, opts) {
     });
   }, 60);
 }
-function stopSeq() { speakSeq.t = (speakSeq.t || 0) + 1; if (TTS) speechSynthesis.cancel(); }
+function stopSeq() { speakSeq.t = (speakSeq.t || 0) + 1; speak.t = (speak.t || 0) + 1; stopHuman(); if (TTS) speechSynthesis.cancel(); }
 function validDialog(d) {
   if (!d || !Array.isArray(d.lines) || !Array.isArray(d.questions)) return null;
   const sp = Array.isArray(d.speakers) && d.speakers.length >= 2 ? d.speakers.slice(0, 2) : [{ name: "Amy", gender: "female" }, { name: "Ben", gender: "male" }];
@@ -2249,6 +2383,72 @@ function openTravel(cat) {
     openQuiz();
   };
   bindLookupToggle($("travel"));
+}
+
+/* ================= 寶寶聽力（1–3 歲） ================= */
+const BABY = [["動物", "🐾", [["dog", "🐶", "Woof woof! A dog."], ["cat", "🐱", "Meow! A cat."], ["cow", "🐮", "Moo! A cow."], ["duck", "🦆", "Quack quack! A duck."], ["pig", "🐷", "Oink oink! A pig."], ["sheep", "🐑", "Baa! A sheep."], ["bird", "🐦", "Tweet tweet! A bird."], ["fish", "🐟", "A fish. Swim, swim!"], ["rabbit", "🐰", "Hop hop! A rabbit."], ["elephant", "🐘", "A big elephant!"]]], ["吃東西", "🍎", [["apple", "🍎", "Yummy! An apple."], ["banana", "🍌", "A yellow banana."], ["milk", "🥛", "Drink your milk."], ["water", "💧", "Some water, please."], ["bread", "🍞", "Yummy bread."], ["egg", "🥚", "An egg."], ["rice", "🍚", "Eat your rice."], ["cookie", "🍪", "A cookie for you!"]]], ["身體", "👀", [["eyes", "👀", "Where are your eyes?"], ["nose", "👃", "Touch your nose."], ["mouth", "👄", "Open your mouth. Ahh!"], ["ears", "👂", "Where are your ears?"], ["hands", "👏", "Clap your hands!"], ["feet", "🦶", "Stomp your feet!"], ["teeth", "🦷", "Brush your teeth."], ["hair", "💇", "Brush your hair."]]], ["顏色", "🎨", [["red", "🔴", "Red! It is red."], ["blue", "🔵", "Blue! It is blue."], ["yellow", "🟡", "Yellow! It is yellow."], ["green", "🟢", "Green! It is green."], ["orange", "🟠", "Orange! It is orange."], ["purple", "🟣", "Purple! It is purple."], ["black", "⚫", "Black! It is black."], ["white", "⚪", "White! It is white."]]], ["家人", "👪", [["mommy", "👩", "Hi, Mommy!"], ["daddy", "👨", "Hi, Daddy!"], ["baby", "👶", "A happy baby."], ["grandma", "👵", "Hi, Grandma!"], ["grandpa", "👴", "Hi, Grandpa!"], ["brother", "👦", "My big brother."], ["sister", "👧", "My big sister."], ["family", "👨‍👩‍👧", "I love my family."]]], ["玩具東西", "🧸", [["ball", "⚽", "Roll the ball!"], ["teddy bear", "🧸", "Hug the teddy bear."], ["book", "📖", "Let's read a book."], ["car", "🚗", "Beep beep! A car."], ["bus", "🚌", "The bus goes round and round."], ["shoes", "👟", "Put on your shoes."], ["hat", "👒", "Put on your hat."], ["cup", "🥤", "A cup of water."]]], ["每一天", "☀️", [["hello", "👋", "Hello! Good morning."], ["bye-bye", "👋", "Bye-bye! See you soon."], ["eat", "🥣", "It's time to eat."], ["bath", "🛁", "Bath time! Splash splash."], ["sleep", "😴", "Time to sleep. Good night."], ["walk", "🚶", "Let's go for a walk."], ["hug", "🤗", "Give me a hug!"], ["kiss", "😘", "A big kiss for you!"]]], ["大自然", "🌈", [["sun", "☀️", "The sun is up!"], ["moon", "🌙", "Hello, moon! Good night."], ["star", "⭐", "A little star."], ["rain", "🌧️", "Rain, rain. Pitter patter."], ["flower", "🌸", "Smell the flower."], ["tree", "🌳", "A big green tree."], ["cloud", "☁️", "A white cloud."], ["rainbow", "🌈", "Look! A rainbow!"]]]];
+let BB = null;
+const waitMs = ms => new Promise(r => setTimeout(r, ms));
+function sayTTS(text, rate) {
+  return new Promise(res => {
+    if (!TTS) return res();
+    stopHuman(); speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    const v = pickVoice(); if (v) u.voice = v; u.lang = (v && v.lang) || "en-US"; u.rate = rate || 0.8; u.pitch = 1.1;
+    let fin = false; const end = () => { if (!fin) { fin = true; res(); } };
+    u.onend = end; u.onerror = end; setTimeout(end, 9000);
+    setTimeout(() => speechSynthesis.speak(u), 60);
+  });
+}
+async function sayBabyPhrase(ph, tok) {
+  for (const sn of splitSents(ph)) {
+    if (tok !== BB.tok) return;
+    const v = canHumanSent(sn) ? await raceMs(sentVoice(sn), 3000) : null;
+    if (tok !== BB.tok) return;
+    if (!(v && v.u && await playUrl(v.u, 0.9))) await sayTTS(sn, 0.8);
+  }
+}
+async function sayBabyWord(w) { if (!(canHuman(w) && await playHuman(w, 0.9))) await sayTTS(w, 0.75); }
+function openBaby(t) {
+  show("baby");
+  BB = BB || { t: 0, i: 0, auto: false, dark: false, tok: 0, started: 0 };
+  if (t != null) { BB.t = t; BB.i = 0; }
+  prefetchHuman(BABY[BB.t][2].map(x => x[0])); prefetchSents(BABY[BB.t][2].map(x => x[2]));
+  renderBaby(true);
+}
+function renderBaby(say) {
+  const [, , items] = BABY[BB.t], [w, e] = items[BB.i];
+  $("baby").innerHTML = `
+    <header class="top"><button class="icon-btn" id="bbBack" aria-label="離開">${ICON.x}</button><h2 style="font-size:22px;flex:1;min-width:0">寶寶聽力</h2><span class="muted" style="font-size:14px">${BB.i + 1} / ${items.length}</span></header>
+    <div class="bbthemes">${BABY.map(([n, ic], k) => `<button class="tchip${k === BB.t ? " on" : ""}" data-bt="${k}"><span aria-hidden="true">${ic}</span>${esc(n)}</button>`).join("")}</div>
+    <button class="bbcard" id="bbCard" aria-label="再聽一次 ${esc(w)}"><span class="bbem" aria-hidden="true">${e}</span><span class="bbw">${esc(w)}</span></button>
+    <div class="row bbctl"><button class="btn" id="bbPrev" aria-label="上一個">◀</button><button class="btn primary" id="bbAuto">${BB.auto ? "⏸ 暫停" : "▶ 自動播放"}</button><button class="btn" id="bbNext" aria-label="下一個">▶</button></div>
+    <div class="row bbctl"><button class="btn small" id="bbDark">只放聲音（螢幕變暗）</button></div>
+    <p class="muted" style="margin:0;font-size:13px;text-align:center">點大圖可以再聽一次。建議爸媽陪著一起聽、跟著唸、指給寶寶看；自動播放 10 分鐘會自己停下來休息。</p>
+    ${BB.dark ? `<button class="bbdark" id="bbLight">聲音播放中・點一下回到畫面</button>` : ""}`;
+  $("bbBack").onclick = () => { BB.tok++; BB.auto = false; BB.dark = false; stopHuman(); if (TTS) speechSynthesis.cancel(); show("home"); renderHome(); };
+  $("baby").querySelectorAll("[data-bt]").forEach(b => b.onclick = () => { BB.t = Number(b.dataset.bt); BB.i = 0; prefetchHuman(BABY[BB.t][2].map(x => x[0])); prefetchSents(BABY[BB.t][2].map(x => x[2])); renderBaby(true); });
+  $("bbCard").onclick = () => sayCard();
+  $("bbPrev").onclick = () => { BB.i = (BB.i - 1 + items.length) % items.length; renderBaby(true); };
+  $("bbNext").onclick = () => { BB.i = (BB.i + 1) % items.length; renderBaby(true); };
+  $("bbAuto").onclick = () => { BB.auto = !BB.auto; if (BB.auto) BB.started = Date.now(); renderBaby(BB.auto); if (!BB.auto) { BB.tok++; stopHuman(); if (TTS) speechSynthesis.cancel(); } };
+  $("bbDark").onclick = () => { BB.dark = true; if (!BB.auto) { BB.auto = true; BB.started = Date.now(); renderBaby(true); } else renderBaby(false); };
+  if ($("bbLight")) $("bbLight").onclick = () => { BB.dark = false; renderBaby(false); };
+  if (say) sayCard();
+}
+async function sayCard() {
+  const tok = ++BB.tok, [, , items] = BABY[BB.t], [w, , ph] = items[BB.i];
+  const card = $("bbCard"); if (card) { card.classList.remove("pop"); void card.offsetWidth; card.classList.add("pop"); }
+  await sayBabyWord(w); if (tok !== BB.tok) return;
+  await waitMs(700); if (tok !== BB.tok) return;
+  await sayBabyPhrase(ph, tok); if (tok !== BB.tok) return;
+  await waitMs(800); if (tok !== BB.tok) return;
+  await sayBabyWord(w); if (tok !== BB.tok) return;
+  if (!BB.auto) return;
+  if (Date.now() - BB.started > 10 * 60e3) { BB.auto = false; BB.dark = false; toast("聽了 10 分鐘了，休息一下吧！"); renderBaby(false); return; }
+  await waitMs(2500); if (tok !== BB.tok || !BB.auto) return;
+  BB.i = (BB.i + 1) % items.length;
+  renderBaby(true);
 }
 
 /* ================= memory cards ================= */
@@ -2888,6 +3088,7 @@ const MODES = {
   reading: { name: "閱讀短文", desc: "AI 用本週單字寫故事，附理解題" },
   writing: { name: "寫作批改", desc: "寫幾句英文，AI 幫你改並解釋" },
   cards: { name: "單字記憶卡", desc: "畫面＋生活情境，一張一張記" },
+  baby: { name: "寶寶聽力", desc: "給 1–3 歲：大圖＋真人發音，只要聽" },
   wish: { name: "許願池", desc: "想要什麼新功能？許願、幫別人 +1" },
   support: { name: "贊助與感謝", desc: "隨喜支持、感謝名單" },
   pic: { name: "看圖選字", desc: "看畫面，選出是哪個字", n: 10, types: ["pic"] },
@@ -2960,6 +3161,7 @@ function startPractice(mode) {
   if (mode === "map") return openMap();
   if (mode === "cards") return openCards(rangeWords(), 0);
   if (mode === "wish") return openWishes();
+  if (mode === "baby") return openBaby();
   if (mode === "support") return openSupport();
   if (mode === "notes") return openNotes();
   if (mode === "rain") return startRain();
@@ -2976,7 +3178,8 @@ function startPractice(mode) {
 function openQuiz() { show("quiz"); renderItem(); }
 function show(view) { if (rainState && view !== "rain") stopRain();
   if (DI && DI.on && view !== "diary") diaryStop();
-  for (const v of ["home", "quiz", "result", "stats", "assess", "chat", "notes", "rain", "subs", "pairs", "travel", "map", "mis", "ladder", "dialog", "diary", "coach"]) $(v).hidden = v !== view; closeSheet(); window.scrollTo(0, 0); }
+  for (const v of ["home", "quiz", "result", "stats", "assess", "chat", "notes", "rain", "subs", "pairs", "travel", "map", "mis", "ladder", "dialog", "diary", "coach", "baby"]) $(v).hidden = v !== view;
+  if (view !== "baby" && typeof BB !== "undefined" && BB) { BB.tok++; BB.auto = false; } closeSheet(); window.scrollTo(0, 0); }
 
 function renderHeader() {
   const n = Q.items.length;
@@ -3420,6 +3623,7 @@ function renderResult(bonus) {
 
 /* ================= home ================= */
 function renderHome() {
+  try { prefetchHuman(WORDS.filter(w => w.week === state.week).map(w => w.en)); } catch (e) { }
   const d = ensureDaily(), th = themeToday(), lv = levelInfo(state.xp), st = streak();
   const wd = ["日", "一", "二", "三", "四", "五", "六"][new Date().getDay()];
   $("streakChip").innerHTML = `<span class="flame">${ICON.flame}</span>${st} 天`;
@@ -3478,6 +3682,7 @@ function renderHome() {
   $("guestNote").hidden = !GUEST;
   const groups = [
     ...(CAN_WISH() || SHOW_SUPPORT() ? [["一起讓它變更好", [...(CAN_WISH() ? [["wish", WISH_COUNT ? `${WISH_COUNT} 個願望` : "", ""]] : []), ...(SHOW_SUPPORT() ? [["support"]] : [])]]] : []),
+    ["親子", [["baby", "", "給 1–3 歲：看大圖、聽真人發音，不用讀寫"]]],
     ["每天練", [["due", dueN ? `${dueN} 個到期` : "", dueN ? "" : "今天沒有到期的，很好"], ["cards", "", ""], ["trans", AI.kind ? "AI 批改" : "", ""], ["mistakes", (state.mistakes || []).length ? `${state.mistakes.length} 句` : "", (state.mistakes || []).length ? "" : "被改過的句子會自動收進來"], ["mc"], ["listen"], ["cloze"], ["build"], ["spell"], ["dictation"], ["review", weak ? `${weak} 個字` : "", weak ? "答錯過的字，答對兩次就畢業" : "目前沒有錯題"]]],
     ["口說練習", [["coach", AUDIO_AI() ? "AI 聽發音" : needAiTag, AUDIO_AI() ? "" : GUEST ? "分享版沒有開放" : "設定 Gemini 金鑰後可以用"], ["speak", "", AUDIO_AI() ? "跟讀句子，AI 聽你的發音" : CAN_SPEAK ? "錄音、辨識、打分數" : "跟讀自評（設定 AI 後可錄音評分）"], ["diary", (state.diary || []).some(e => e.d === today()) ? "今天完成" : GUEST ? "" : needAiTag, AUDIO_AI() ? "說 1 分鐘，AI 改文法和發音" : GUEST ? "用打字寫，沒有 AI 批改" : CAN_SPEAK ? "" : "先用打字寫"], ["chat", needAiTag, AUDIO_AI() ? "可以用說的回覆" : needAiDesc]]],
     ["聽力加強", [["ladder"], ["dialog", AI.kind ? "" : (state.dialogues || []).length ? `題庫 ${state.dialogues.length} 段` : needAiTag, AI.kind ? "" : (state.dialogues || []).length ? "從對話庫挑一段來聽" : needAiDesc], ["pairs"]]],
@@ -3486,7 +3691,7 @@ function renderHome() {
     ["遊戲", [["match"], ["blitz", state.best.blitz ? `紀錄 ${state.best.blitz} 題` : ""], ["rain", state.best.rain ? `紀錄 ${state.best.rain} 個` : "", ""]]],
     ["生活與測驗", [["travel"], ["assess", lastA ? `上次 ${lastA.cefr}` : "", "6 分鐘，看得懂和用得出來都測"]]],
   ];
-  const SKILL = { wish: "一起變更好", support: "一起變更好", cards: "讀・記憶", pic: "讀", mc: "讀", listen: "聽", cloze: "讀", build: "寫", spell: "寫", dictation: "聽・寫", match: "讀", blitz: "讀", speak: "說", review: "複習", assess: "測驗", reading: "讀", writing: "寫", chat: "說・寫", notes: "台詞", rain: "寫・遊戲", due: "複習", coach: "說", trans: "寫", mistakes: "寫・複習", ladder: "聽・說", dialog: "聽", diary: "說", subs: "聽・說", pairs: "聽・說", travel: "說", map: "進度" };
+  const SKILL = { baby: "聽・親子", wish: "一起變更好", support: "一起變更好", cards: "讀・記憶", pic: "讀", mc: "讀", listen: "聽", cloze: "讀", build: "寫", spell: "寫", dictation: "聽・寫", match: "讀", blitz: "讀", speak: "說", review: "複習", assess: "測驗", reading: "讀", writing: "寫", chat: "說・寫", notes: "台詞", rain: "寫・遊戲", due: "複習", coach: "說", trans: "寫", mistakes: "寫・複習", ladder: "聽・說", dialog: "聽", diary: "說", subs: "聽・說", pairs: "聽・說", travel: "說", map: "進度" };
   $("modeGrid").outerHTML = `<div id="modeGrid" style="display:flex;flex-direction:column;gap:10px">${groups.map(([g, cards]) => `<div class="group-h">${g}</div><div class="grid">${cards.map(([k, tag, desc]) => `<button class="mode" data-m="${k}"><span class="tagline">${esc(SKILL[k] + (tag ? " · " + tag : ""))}</span><b>${esc(MODES[k].name)}</b><small>${esc(desc || MODES[k].desc)}</small></button>`).join("")}</div>`).join("")}</div>`;
   $("modeGrid").querySelectorAll(".mode").forEach(b => b.onclick = () => startPractice(b.dataset.m));
   renderStorage();
@@ -3660,6 +3865,9 @@ function renderStats(focus) {
       <div class="row"><div class="seg" id="goalSeg">${[[30, "輕鬆 30"], [50, "一般 50"], [100, "認真 100"]].map(([g, l]) => `<button data-g="${g}" aria-pressed="${state.goal === g}">${l}</button>`).join("")}</div><span class="muted" style="font-size:14px">XP／天</span></div>
     </section>
     <section class="card flat"><h3>聲音設定</h3>
+      <label class="row" style="gap:8px;font-size:15px"><input type="checkbox" id="humanOn" ${state.human !== false ? "checked" : ""}> 單字用<b>真人錄音</b>發音（找不到才用電腦語音）</label>
+      <label class="row" style="gap:8px;font-size:15px"><input type="checkbox" id="humanSentOn" ${state.human !== false && state.humanSent !== false ? "checked" : ""} ${state.human === false ? "disabled" : ""}> 句子也先找<b>真人錄音</b>（一模一樣的句子才有）</label>
+      <p class="muted" style="margin:0;font-size:12px">單字真人錄音來自 Wiktionary 志工（CC BY-SA，透過 Free Dictionary API）；句子真人錄音來自 Tatoeba 志工（例如 CK），依各錄音者的 CC 授權使用。找不到的句子才用下面選的語音；Edge 的「Natural」聲音、iPhone 下載的「增強版」聲音最接近真人。</p>
       <label class="lbl" for="voiceSel">朗讀的聲音</label>
       <select class="field" id="voiceSel"><option value="">自動選擇美式英文</option>${vOpts}</select>
       <div class="row"><span class="lbl">語速</span><div class="seg" id="rateSeg">${[[0.8, "慢"], [1, "正常"], [1.15, "快"]].map(([r, l]) => `<button data-r="${r}" aria-pressed="${state.rate === r}">${l}</button>`).join("")}</div><div class="spacer"></div><button class="btn small" id="testVoice">${ICON.spk}試聽</button></div>
@@ -3821,6 +4029,8 @@ function renderStats(focus) {
   $("voiceSel").onchange = e => { state.voice = e.target.value; Store.save(); speak("Hello! Let's learn English."); };
   $("rateSeg").querySelectorAll("button").forEach(b => b.onclick = () => { state.rate = Number(b.dataset.r); Store.save(); renderStats(); speak("This is my family."); });
   $("testVoice").onclick = () => speak("Hello! Let's learn English together.");
+  $("humanOn").onchange = e => { state.human = e.target.checked; Store.save(); const hs = $("humanSentOn"); if (hs) { hs.disabled = !state.human; hs.checked = state.human && state.humanSent !== false; } speak("family"); };
+  $("humanSentOn").onchange = e => { state.humanSent = e.target.checked; Store.save(); speak("Give me a hug."); };
   let armed = false;
   $("resetBtn").onclick = e => {
     if (!armed) { armed = true; e.target.textContent = "確定要清除？再按一次"; e.target.style.background = "var(--bad)"; e.target.style.color = "#fff"; return; }
