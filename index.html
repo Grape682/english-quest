@@ -131,7 +131,8 @@ button.chip:hover{border-color:var(--primary)}
 .blk.b0{background:rgba(46,84,222,.14)}.blk.b1{background:rgba(60,196,139,.20)}.blk.b2{background:rgba(231,180,76,.24)}.blk.b3{background:rgba(255,123,103,.18)}
 .blk.bfix{background:transparent;padding:2px 2px;cursor:default}
 .bsent{font-size:19px;line-height:1.6}
-.code{background:var(--band);color:#E6EBF3;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.55;border-radius:12px;padding:12px 14px;margin:0;overflow-x:auto;white-space:pre;max-width:100%}
+.code{background:var(--band);color:#E6EBF3;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.55;border-radius:12px;padding:12px 14px;margin:0;overflow-x:auto;white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%}
+#chunk .reply{border-radius:12px;padding:10px 12px}
 .ckcard{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
 .ckcard .big{font-size:19px;font-weight:700}
 .ckopts{display:flex;flex-wrap:wrap;gap:6px}
@@ -142,6 +143,12 @@ button.chip:hover{border-color:var(--primary)}
 .ckpile button:disabled{opacity:.3}
 .ckslot{min-height:56px;border:2px dashed var(--line);border-radius:14px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .ckslot .blk{font-size:16px;font-weight:600}
+.gq{font-size:20px;line-height:1.5;font-weight:600}
+.gq .gap{display:inline-block;min-width:64px;border-bottom:3px solid var(--primary);text-align:center;margin:0 2px}
+.gopts{display:flex;flex-direction:column;gap:8px}
+.gopts button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:12px 14px;font-size:17px;font-weight:600;text-align:left;cursor:pointer}
+.gopts button.right{border-color:var(--good);background:var(--good-soft)}.gopts button.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.badline{display:flex;flex-direction:column;gap:2px;font-size:15px}.badline s{color:var(--bad)}.badline b{color:var(--good)}
 .cktable{width:100%;border-collapse:collapse;font-size:14px}.cktable td,.cktable th{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
 .cktable th{font-size:12px;color:var(--muted)}
 .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -427,6 +434,7 @@ a.btn{text-decoration:none}
     <p class="muted" id="themeDesc" style="margin:0"></p>
     <div class="dots" id="dailyDots" aria-hidden="true"></div>
     <button class="btn primary block" id="dailyBtn"></button>
+    <button class="btn block" id="ckDayBtn"></button>
     <button class="btn block" id="dueBtn" hidden></button>
     <div class="ai-row" id="aiRow" hidden>
       <span class="muted" id="aiText">想要不一樣的例句？讓 AI 用今天的單字寫全新的句子。</span>
@@ -2526,14 +2534,14 @@ function ckBind(root) {
   root.querySelectorAll("[data-say]").forEach(b => b.onclick = () => speak(b.dataset.say));
   root.querySelectorAll("[data-sayall]").forEach(b => b.onclick = () => speak(b.dataset.sayall));
 }
-const CK_TABS = [["learn", "觀念"], ["lib", "模組"], ["build", "組合"], ["listen", "聽力"], ["talk", "情境"]];
+const CK_TABS = [["daily", "今日"], ["learn", "觀念"], ["lib", "模組"], ["build", "組合"], ["gram", "文法"], ["listen", "聽力"], ["talk", "情境"]];
 function openChunk(tab) {
-  CK = CK || { tab: "learn", lesson: -1, cat: 0, bp: 0, picks: {}, said: {} };
-  if (tab) { CK.tab = tab; if (tab === "learn") CK.lesson = -1; if (tab === "listen") CK.L = null; if (tab === "talk") CK.T = null; }
+  CK = CK || { tab: "daily", lesson: -1, cat: 0, bp: 0, picks: {}, said: {} };
+  if (tab) { CK.tab = tab; if (tab === "learn") CK.lesson = -1; if (tab === "gram") CK.g = null; if (tab === "listen") CK.L = null; if (tab === "talk") CK.T = null; }
   show("chunk"); renderChunk();
 }
 function renderChunk() {
-  const el = $("chunk"), body = { learn: ckLearnHtml, lib: ckLibHtml, build: ckBuildHtml, listen: ckListenHtml, talk: ckTalkHtml }[CK.tab]();
+  const el = $("chunk"), body = { daily: ckDailyHtml, learn: ckLearnHtml, lib: ckLibHtml, build: ckBuildHtml, gram: ckGramHtml, listen: ckListenHtml, talk: ckTalkHtml }[CK.tab]();
   el.innerHTML = `
     <header class="top"><button class="icon-btn" id="ckBack" aria-label="離開">${ICON.x}</button><h2 style="font-size:22px;flex:1;min-width:0">片語積木</h2></header>
     <div class="bbthemes" role="tablist">${CK_TABS.map(([k, n]) => `<button class="tchip${CK.tab === k ? " on" : ""}" data-ckt="${k}" role="tab" aria-selected="${CK.tab === k}">${n}</button>`).join("")}</div>
@@ -2541,7 +2549,7 @@ function renderChunk() {
   $("ckBack").onclick = () => { stopSeq(); show("home"); renderHome(); };
   el.querySelectorAll("[data-ckt]").forEach(b => b.onclick = () => openChunk(b.dataset.ckt));
   ckBind(el);
-  ({ learn: ckLearnBind, lib: ckLibBind, build: ckBuildBind, listen: ckListenBind, talk: ckTalkBind })[CK.tab]();
+  ({ daily: ckDailyBind, learn: ckLearnBind, lib: ckLibBind, build: ckBuildBind, gram: ckGramBind, listen: ckListenBind, talk: ckTalkBind })[CK.tab]();
 }
 
 /* ---- 觀念課 ---- */
@@ -2738,6 +2746,172 @@ function ckTalkBind() {
   };
 }
 const ckCardSay = c => c.replace(/^\w/, ch => ch.toUpperCase());
+
+/* ---- 今日積木：每天固定 9 步（1 個新區塊 → 3 句區塊聽力 → 3 題文法 → 2 個情境），大約 5 分鐘 ---- */
+const ckDayNo = d => Math.floor(Date.parse(d + "T00:00:00Z") / 864e5);
+function ckStreak() {
+  const days = ckState().days || {}; let n = 0, d = today();
+  if (!days[d]) d = addDays(d, -1);
+  while (days[d]) { n++; d = addDays(d, -1); }
+  return n;
+}
+const ckDailyTag = () => { const st = ckState(), t = st.today; if ((st.days || {})[today()]) return "今天完成 ✓"; if (t && t.date === today() && t.i > 0) return `今天做到 ${t.i} / ${t.steps.length}`; return ckStreak() ? `連續 ${ckStreak()} 天` : "今天還沒練"; };
+const ckDailyDesc = () => (ckState().days || {})[today()] ? `連續 ${ckStreak()} 天，明天見！` : "";
+function ckDailyPlan(date) {
+  const st = ckState(), rng = seeded("ck|" + date), dn = ckDayNo(date), pick = arr => arr[Math.floor(rng() * arr.length)];
+  const mods = CHUNK.lib.flatMap(c => c[2]), fresh = mods.filter(m => !st.learned[m[0]]);
+  const m = fresh.length ? fresh[0] : mods[dn % mods.length];
+  const head = m[0].replace(/\s*_+\??/g, "").replace(/[,?]$/, "").trim().toLowerCase();
+  const steps = [{ t: "mod", c: m[0], zh: m[1], slot: m[2], ex: m[3] }];
+  const ai = ckAiList().map(x => ({ en: x.en, zh: x.zh })), pool = ckPool().concat(ai);
+  const withHead = pool.filter(x => ckPlain(x.en).toLowerCase().includes(head)), used = new Set(m[3].map(e => e[0]));
+  const listen = [];
+  shuffle(withHead, rng).concat(shuffle(pool, rng)).forEach(x => { if (listen.length < 3 && !used.has(x.en)) { used.add(x.en); listen.push(x); } });
+  listen.forEach(x => steps.push({ t: "listen", en: x.en, zh: x.zh }));
+  const weak = GRAM.map((g, gi) => [gi, (st.gram || {})[g.id]]).filter(([, b]) => b != null && b < 5).map(([gi]) => gi);
+  const gi = weak.length && rng() < 0.5 ? pick(weak) : dn % GRAM.length;
+  shuffle(GRAM[gi].q.slice(), rng).slice(0, 3).forEach(q => steps.push({ t: "gram", gi, q }));
+  const useAi = ai.length >= 4 && dn % 2 === 1;
+  const tasks = useAi ? ckAiTasks().slice(0, 2) : shuffle(CHUNK.scenes[dn % CHUNK.scenes.length][2].slice(), rng).slice(0, 2);
+  tasks.forEach(t => steps.push({ t: "talk", zh: t[0], en: t[1], extra: t[2] }));
+  return { date, steps, i: 0, ok: 0, n: 0 };
+}
+function ckToday() {
+  const st = ckState();
+  if (!st.today || st.today.date !== today() || !Array.isArray(st.today.steps)) { st.today = ckDailyPlan(today()); Store.save(); }
+  return st.today;
+}
+function ckDailyR(k, step) {
+  CK.DR = CK.DR && CK.DR.date === today() ? CK.DR : { date: today() };
+  if (!CK.DR[k]) {
+    const others = shuffle(ckPool().flatMap(x => ckParts(x.en)));
+    CK.DR[k] = { item: { en: step.en, zh: step.zh }, deck: ckDeck({ en: step.en }, step.t === "talk" ? (step.extra || []).concat(others) : others), picked: [], done: false, right: false };
+  }
+  return CK.DR[k];
+}
+function ckDailyHtml() {
+  const T = ckToday(), N = T.steps.length, st = ckState();
+  const bar = `<div class="row" style="gap:10px"><div class="bar"><i style="width:${Math.round(100 * Math.min(T.i, N) / N)}%"></i></div><span class="muted" style="font-size:13px;white-space:nowrap">${Math.min(T.i + 1, N)} / ${N}</span></div>`;
+  if (T.i >= N) return `<div class="card" style="gap:10px;text-align:center"><span style="font-size:44px">🧱</span><h2 style="margin:0">今日積木完成！</h2>
+    <p style="margin:0">練習題答對 ${T.ok} / ${T.n}・連續 <b>${ckStreak()}</b> 天</p>
+    <p class="muted" style="margin:0;font-size:14px">每天 5 分鐘，區塊會一塊一塊累積成你的「函式庫」。明天會換新的區塊。</p>
+    <div class="grid">${[["lib", "看模組庫"], ["build", "玩組合器"], ["gram", "多練文法"], ["talk", "多練情境"]].map(([k, n]) => `<button class="mode" data-go="${k}"><b>${n}</b></button>`).join("")}</div></div>`;
+  const step = T.steps[T.i];
+  const head = `<p class="muted" style="margin:0">每天固定 9 步、大約 5 分鐘：1 個新區塊 → 聽 3 句 → 文法 3 題 → 情境 2 題。${ckStreak() ? `已經連續 ${ckStreak()} 天。` : ""}</p>${bar}`;
+  if (step.t === "mod") return head + `<div class="ckcard" style="gap:10px"><span class="eyebrow">第 1 步・今天的新區塊</span>
+    <span class="big blk b0" style="font-size:24px;align-self:flex-start" data-say="${esc(step.c.replace(/\s*_+\??/g, "").trim())}">${esc(step.c)}</span>
+    <div>${esc(step.zh)}<span class="muted" style="font-size:13px">・後面接：${esc(step.slot)}</span></div>
+    ${step.ex.map(([en, zh]) => `<div>${ckBlocks(en)}<div class="muted" style="font-size:14px">${esc(zh)}</div></div>`).join("")}
+    <p class="muted" style="margin:0;font-size:14px">點色塊聽，跟著唸兩次，把它當成一整塊記住。</p>
+    <button class="btn primary block" id="dNext">記住了，下一步</button></div>`;
+  if (step.t === "listen" || step.t === "talk") {
+    const R = ckDailyR(T.i, step), isL = step.t === "listen";
+    return head + `<div class="card" style="gap:10px"><div class="row"><span class="eyebrow" style="flex:1">${isL ? "區塊聽力" : "情境輸出"}</span>${isL ? `<button class="btn small" id="dReplay">${ICON.spk} 再聽</button><button class="btn small" id="dSlow">慢速</button>` : ""}</div>
+      ${isL ? "" : `<div style="font-size:18px;font-weight:700">${esc(step.zh)}</div>`}
+      ${ckArrangeHtml(R, isL ? "" : "依照你想說的順序，點下面的區塊")}
+      ${R.done ? `<div class="reply" style="border:1px solid ${R.right ? "var(--good)" : "var(--bad)"}"><b>${R.right ? "對了！" : "正確的區塊是："}</b><div style="margin-top:6px">${ckBlocks(step.en)}</div>${isL && step.zh ? `<div class="muted">${esc(step.zh)}</div>` : ""}</div><button class="btn primary block" id="dNext">下一步</button>`
+        : `<div class="row"><button class="btn small" id="ckUndo" ${R.picked.length ? "" : "disabled"}>退一塊</button><div class="spacer"></div><button class="btn primary" id="dCheck" ${R.picked.length ? "" : "disabled"}>對答案</button></div>`}</div>`;
+  }
+  const q = step.q, a = CK.DG && CK.DG.d === today() && CK.DG.k === T.i ? CK.DG.a : null, done = a != null, full = gFill(q[0], q[1][q[2]]);
+  return head + `<div class="card" style="gap:12px"><span class="eyebrow">生活文法・${esc(GRAM[step.gi].t)}</span>
+    <div class="gq">${done ? esc(full) : esc(q[0]).replace("___", '<span class="gap">&nbsp;</span>')}</div>
+    <div class="gopts">${q[1].map((o, j) => `<button data-da="${j}" ${done ? "disabled" : ""} class="${done && j === q[2] ? "right" : done && j === a ? "wrong" : ""}">${esc(o)}</button>`).join("")}</div>
+    ${done ? `<div class="reply" style="border:1px solid ${a === q[2] ? "var(--good)" : "var(--bad)"}"><b>${a === q[2] ? "答對了！" : "正確答案：" + esc(q[1][q[2]])}</b><div style="margin-top:4px">${esc(q[3])}</div></div><button class="btn primary block" id="dNext">下一步</button>` : ""}</div>`;
+}
+function ckDailyBind() {
+  const T = ckToday(), st = ckState(), B = $("ckBody");
+  B.querySelectorAll("[data-go]").forEach(b => b.onclick = () => openChunk(b.dataset.go));
+  if (T.i >= T.steps.length) return;
+  const step = T.steps[T.i];
+  const next = () => {
+    if (step.t === "mod" && !st.learned[step.c]) { st.learned[step.c] = today(); addXp(3); }
+    T.i++;
+    if (T.i >= T.steps.length) { st.days = st.days || {}; st.days[today()] = T.ok || 1; addXp(10); toast(`今日積木完成！連續 ${ckStreak()} 天`); logEvent("片語積木", { title: "今日積木", total: T.n, correct: T.ok, xp: T.ok * 5 + 10 }); }
+    Store.save(); renderChunk(); window.scrollTo(0, 0);
+    const nx = T.steps[T.i]; if (nx && nx.t === "listen") setTimeout(() => speak(ckPlain(nx.en)), 250);
+  };
+  if ($("dNext")) $("dNext").onclick = next;
+  if (step.t === "listen" || step.t === "talk") {
+    const R = ckDailyR(T.i, step), plain = ckPlain(step.en);
+    if ($("dReplay")) { $("dReplay").onclick = () => speak(plain); $("dSlow").onclick = () => speak(plain, true); }
+    B.querySelectorAll("[data-pick]").forEach(b => b.onclick = () => { const i = Number(b.dataset.pick); R.picked.push(i); if (step.t === "talk") speak(ckCardSay(R.deck[i].c)); renderChunk(); });
+    if ($("ckUndo")) $("ckUndo").onclick = () => { R.picked.pop(); renderChunk(); };
+    if ($("dCheck")) $("dCheck").onclick = () => { R.done = true; R.right = ckCheck(R); T.n++; if (R.right) { T.ok++; addXp(5); } Store.save(); renderChunk(); speak(plain); };
+    if (step.t === "listen" && !R.done && !R.picked.length && !R.spoken) { R.spoken = true; setTimeout(() => speak(plain), 250); }
+  }
+  if (step.t === "gram") B.querySelectorAll("[data-da]").forEach(b => b.onclick = () => {
+    const j = Number(b.dataset.da), q = step.q; CK.DG = { d: today(), k: T.i, a: j }; T.n++;
+    if (j === q[2]) { T.ok++; addXp(5); }
+    Store.save(); renderChunk(); speak(gFill(q[0], q[1][q[2]]));
+  });
+}
+
+/* ---- 生活文法：看規則（像程式）→ 例句 → 常見錯誤 → 5 題練習 ---- */
+const GRAM = [{"id": "simple-vs-ing", "t": "通常 vs 正在", "s": "I work / I'm working", "c": "說習慣、每天都會做的事，用原形動詞；說「現在正在做」，用 be + V-ing。", "code": "if (習慣 / 每天 / 事實)  → I work\nif (此時此刻正在做)     → I'm working\n\n常跟著出現：\n  usually, every day  → 原形\n  now, right now      → be + V-ing", "ex": [["I usually | drink coffee | in the morning.", "我早上通常喝咖啡。"], ["I'm drinking coffee | right now.", "我現在正在喝咖啡。"]], "bad": ["I am usually drink coffee.", "I usually drink coffee."], "q": [["I ___ to work by MRT every day.", ["go", "am going", "going"], 0, "every day 是習慣，用原形 go。"], ["Shh! The baby ___ right now.", ["sleeps", "is sleeping", "sleep"], 1, "right now 是此刻正在發生，用 is sleeping。"], ["We usually ___ dinner at seven.", ["are eating", "eat", "eating"], 1, "usually 是習慣，用原形 eat。"], ["Look! It ___.", ["rains", "is raining", "rain"], 1, "Look! 表示眼前正在發生，用 is raining。"], ["What ___ you doing now?", ["do", "are", "is"], 1, "正在做什麼：What are you doing?"]]}, {"id": "third-s", "t": "他／她 + s", "s": "She works / He doesn't", "c": "主詞是 he、she、it 或一個人（my mom、Tom）時，現在式的動詞要加 s；否定和問句改用 does / doesn't，動詞回到原形。", "code": "if (主詞 == he / she / it / 一個人)\n    動詞 + s        # She works.\n    doesn't + 原形  # She doesn't work.\n    Does ... + 原形?  # Does she work?\nelse\n    原形            # I / you / we / they work.", "ex": [["My mom | cooks dinner | every night.", "我媽每天晚上煮晚餐。"], ["He doesn't | like | coffee.", "他不喜歡咖啡。"]], "bad": ["She don't like it.", "She doesn't like it."], "q": [["My dad ___ golf on Sundays.", ["play", "plays", "playing"], 1, "My dad 是一個人，動詞加 s。"], ["She ___ eat meat.", ["don't", "doesn't", "isn't"], 1, "She 的否定用 doesn't。"], ["___ your son like school?", ["Do", "Does", "Is"], 1, "your son 是一個人，問句用 Does。"], ["My kids ___ cartoons after dinner.", ["watch", "watches", "watching"], 0, "My kids 是複數，用原形 watch。"], ["He doesn't ___ to wait.", ["wants", "want", "wanting"], 1, "doesn't 後面的動詞回到原形 want。"]]}, {"id": "past", "t": "過去發生的事", "s": "I went / I didn't go", "c": "已經發生、結束的事用過去式。常用的動詞很多是不規則變化，要整塊記：go→went、eat→ate、buy→bought。否定和問句用 didn't / Did + 原形。", "code": "if (yesterday / last week / ago / 已經結束)\n    過去式            # I went to Tainan.\n    didn't + 原形     # I didn't go.\n    Did ... + 原形?   # Did you go?\n\n常見不規則：\n  go→went  eat→ate  buy→bought  see→saw\n  have→had  take→took  get→got  make→made", "ex": [["I went to | the night market | last night.", "我昨晚去了夜市。"], ["We didn't | have time | yesterday.", "我們昨天沒時間。"]], "bad": ["I didn't went there.", "I didn't go there."], "q": [["I ___ a new phone last week.", ["buy", "bought", "buyed"], 1, "last week 已經過去，buy 的過去式是 bought。"], ["We ___ hot pot yesterday.", ["eat", "ate", "eated"], 1, "eat 的過去式是 ate。"], ["I didn't ___ him at the party.", ["saw", "see", "seen"], 1, "didn't 後面用原形 see。"], ["___ you sleep well last night?", ["Do", "Did", "Were"], 1, "問過去的事：Did you…?"], ["She ___ the bus to work this morning.", ["takes", "took", "taked"], 1, "this morning 已經過去，take 的過去式是 took。"]]}, {"id": "future", "t": "未來：will / be going to", "s": "I'll call you / I'm going to visit", "c": "當下臨時決定、答應別人，用 will（常縮成 I'll）；早就計畫好的事，用 be going to。", "code": "if (現在才決定 / 答應 / 幫忙)  → I'll + 原形\nif (之前就計畫好)            → I'm going to + 原形\n\n例：電話響了 → I'll get it!\n    下週要搬家 → We're going to move next week.", "ex": [["I'll | call you | later.", "我晚點打給你。"], ["We're going to | visit Japan | next month.", "我們下個月要去日本。"]], "bad": ["I will to call you.", "I'll call you."], "q": [["The phone is ringing. I ___ get it!", ["'ll", "am going to", "going to"], 0, "當下臨時決定，用 I'll。"], ["We bought the tickets. We ___ see the movie tonight.", ["will", "are going to", "go to"], 1, "票已經買了，是計畫好的事，用 are going to。"], ["Don't worry, I ___ help you.", ["'ll", "am going", "helping"], 0, "答應幫忙，用 I'll。"], ["She ___ have a baby in May.", ["is going to", "will to", "going"], 0, "已經確定、計畫中的事，用 is going to。"], ["I think it ___ rain tomorrow.", ["will", "is", "rains"], 0, "I think 加上對未來的猜測，常用 will。"]]}, {"id": "perfect", "t": "有沒有過、已經、剛剛", "s": "Have you ever…? / I've just…", "c": "說「到現在為止的經驗」或「已經／剛剛做完」，用 have / has + 過去分詞。生活最常用的三個：ever（曾經）、already（已經）、just（剛剛）。", "code": "經驗   → Have you ever + 過去分詞?   # Have you ever been to Japan?\n已經   → I've already + 過去分詞    # I've already eaten.\n剛剛   → I've just + 過去分詞       # I've just arrived.\n\n注意：有明確過去時間（yesterday）就改用過去式", "ex": [["Have you ever | been to | Japan?", "你去過日本嗎？"], ["I've already | eaten | lunch.", "我已經吃過午餐了。"]], "bad": ["I have eaten lunch yesterday.", "I ate lunch yesterday."], "q": [["Have you ever ___ sushi?", ["eat", "ate", "eaten"], 2, "Have you ever 後面用過去分詞 eaten。"], ["I've ___ finished my homework.", ["already", "yet", "ever"], 0, "已經做完：I've already finished。"], ["She ___ just left the office.", ["have", "has", "is"], 1, "She 用 has。"], ["I ___ him yesterday.", ["have seen", "saw", "seen"], 1, "有 yesterday 這個明確時間，用過去式 saw。"], ["We have never ___ to Europe.", ["went", "go", "been"], 2, "去過哪裡：have been to。"]]}, {"id": "questions", "t": "問句怎麼問", "s": "Do you…? / Where did you…?", "c": "一般動詞的問句，前面放 Do / Does / Did，後面的動詞用原形；想問細節，再把 what、where、when 放最前面。", "code": "是不是  → Do / Does / Did + 主詞 + 原形?\n問細節  → What / Where / When / Why + do/does/did + 主詞 + 原形?\n\n  Do you like it?\n  Where did you go?\n  What time does it start?", "ex": [["Where | did you | buy | that bag?", "那個包包你在哪裡買的？"], ["What time | does the store | open?", "店幾點開？"]], "bad": ["Where you went?", "Where did you go?"], "q": [["___ you like spicy food?", ["Do", "Are", "Does"], 0, "you 的問句用 Do。"], ["Where ___ you go last weekend?", ["do", "did", "were"], 1, "last weekend 是過去，用 did。"], ["What time ___ the movie start?", ["do", "does", "is"], 1, "the movie 是單數，用 does。"], ["Did she ___ the email?", ["sent", "send", "sends"], 1, "Did 後面用原形 send。"], ["Why ___ you late this morning?", ["did", "were", "do"], 1, "late 是形容詞，問句用 be 動詞：Why were you late?"]]}, {"id": "modals", "t": "can / should / have to", "s": "能、應該、必須", "c": "can 表示會、可以；should 是建議；have to 是不得不、必須。三個後面都接原形動詞。", "code": "can + 原形      → 能力、許可   # I can swim. / Can I sit here?\nshould + 原形   → 建議         # You should rest.\nhave to + 原形  → 必須         # I have to work tomorrow.\n\n  he / she → has to\n  不用 → don't have to（不是 mustn't）", "ex": [["You should | drink | more water.", "你應該多喝水。"], ["I have to | pick up my son | at five.", "我五點得去接兒子。"]], "bad": ["I can to swim.", "I can swim."], "q": [["You look tired. You ___ go to bed early.", ["should", "can", "have"], 0, "給建議用 should。"], ["___ I use your phone?", ["Should", "Can", "Have"], 1, "請求許可：Can I…?"], ["My wife ___ work on Saturday.", ["have to", "has to", "should to"], 1, "My wife 是一個人，用 has to。"], ["It's a holiday. You don't ___ get up early.", ["have to", "must", "should to"], 0, "不用做某事：don't have to。"], ["She can ___ three languages.", ["speaks", "speak", "speaking"], 1, "can 後面用原形 speak。"]]}, {"id": "in-on-at", "t": "時間的 in / on / at", "s": "in May / on Monday / at 7", "c": "範圍由大到小：月份、年、早上下午用 in；星期幾、日期用 on；幾點幾分、晚上用 at。", "code": "in  → 月、年、季節、早上下午   # in May, in 2025, in the morning\non  → 星期、日期、特定的一天    # on Monday, on May 5th, on my birthday\nat  → 幾點、某個時刻          # at 7, at noon, at night\n\n大  in  >  on  >  at  小", "ex": [["See you | on Monday!", "星期一見！"], ["The meeting | starts | at 9.", "會議九點開始。"]], "bad": ["See you in Monday.", "See you on Monday."], "q": [["My birthday is ___ June.", ["in", "on", "at"], 0, "月份用 in。"], ["The class starts ___ 8:30.", ["in", "on", "at"], 2, "幾點幾分用 at。"], ["We have a party ___ Friday.", ["in", "on", "at"], 1, "星期幾用 on。"], ["I usually exercise ___ the morning.", ["in", "on", "at"], 0, "早上：in the morning。"], ["I can't sleep ___ night.", ["in", "on", "at"], 2, "晚上：at night。"]]}, {"id": "much-many", "t": "much / many / a lot of", "s": "數得出來 vs 數不出來", "c": "數得出來的東西（apples、people）用 many；數不出來的（water、time、money）用 much；a lot of 兩種都可以，最口語。", "code": "if (數得出來：apples, friends)   → many / a few\nif (數不出來：water, time, money) → much / a little\na lot of → 兩種都能用（口語最常用）\n\n  How many people?\n  How much time?", "ex": [["I don't have | much time | today.", "我今天沒什麼時間。"], ["How many people | are coming?", "有幾個人要來？"]], "bad": ["How many money do you have?", "How much money do you have?"], "q": [["How ___ water do you drink a day?", ["many", "much", "lot"], 1, "water 數不出來，用 much。"], ["How ___ kids do you have?", ["many", "much", "lot"], 0, "kids 數得出來，用 many。"], ["There are ___ people here today.", ["a lot of", "much", "a little"], 0, "people 很多，口語用 a lot of。"], ["I only have ___ money left.", ["a few", "a little", "many"], 1, "money 數不出來，一點點用 a little。"], ["I have ___ friends in Taipei.", ["a few", "a little", "much"], 0, "friends 數得出來，幾個用 a few。"]]}, {"id": "compare", "t": "比較：比較大、最大", "s": "bigger than / the biggest", "c": "短的形容詞加 -er / -est；長的形容詞前面加 more / the most。比較兩個東西，後面接 than。", "code": "短字 → 加 -er than / the -est\n  cheap → cheaper → the cheapest\n  big   → bigger  → the biggest\n長字 → more ... than / the most ...\n  expensive → more expensive → the most expensive\n不規則：good → better → the best", "ex": [["This one | is cheaper | than that one.", "這個比那個便宜。"], ["It's the best | beef noodle soup | in town.", "這是這一帶最好吃的牛肉麵。"]], "bad": ["It's more cheap.", "It's cheaper."], "q": [["The MRT is ___ than the bus.", ["fast", "faster", "fastest"], 1, "比較兩個，用 faster than。"], ["This hotel is ___ than that one.", ["expensiver", "more expensive", "most expensive"], 1, "expensive 是長字，用 more expensive。"], ["She is the ___ student in her class.", ["tall", "taller", "tallest"], 2, "全班最高，用 the tallest。"], ["Today is ___ than yesterday.", ["better", "gooder", "best"], 0, "good 的比較級是 better。"], ["This is the ___ movie I've ever seen.", ["bad", "worse", "worst"], 2, "最糟：the worst。"]]}, {"id": "ing-to", "t": "enjoy V-ing / want to V", "s": "動詞後面接什麼", "c": "有些動詞後面固定接 V-ing（enjoy、finish、mind），有些固定接 to + 原形（want、need、decide）。直接把整塊記起來最快。", "code": "後面接 V-ing：enjoy, finish, mind, keep, stop\n  I enjoy cooking.\n後面接 to + 原形：want, need, decide, plan, hope\n  I want to cook.\n\n# 整塊記：enjoy cooking、want to cook", "ex": [["I enjoy | walking | after dinner.", "我喜歡晚餐後散步。"], ["I need to | finish | this report.", "我得把這份報告做完。"]], "bad": ["I enjoy to cook.", "I enjoy cooking."], "q": [["I enjoy ___ with my kids.", ["play", "to play", "playing"], 2, "enjoy 後面接 V-ing。"], ["We decided ___ a car.", ["buying", "to buy", "buy"], 1, "decide 後面接 to + 原形。"], ["Do you mind ___ the window?", ["opening", "to open", "open"], 0, "mind 後面接 V-ing。"], ["I want ___ English every day.", ["practicing", "to practice", "practice"], 1, "want 後面接 to + 原形。"], ["He finally finished ___ the house.", ["cleaning", "to clean", "clean"], 0, "finish 後面接 V-ing。"]]}, {"id": "there-is", "t": "There is / There are", "s": "某處有…", "c": "說「某個地方有什麼」用 There is（單數、數不出來）／There are（複數）。不要用 have 來說「某處有」。", "code": "There is  + 單數 / 數不出來   # There is a park near my house.\nThere are + 複數             # There are many people.\n問句：Is there ...? / Are there ...?\n\n# 中文「這裡有…」→ There is…（不是 Here has…）", "ex": [["There's a 7-Eleven | near | my house.", "我家附近有一間 7-Eleven。"], ["Are there | any seats | left?", "還有位子嗎？"]], "bad": ["Here has a park.", "There is a park here."], "q": [["___ a bank near here?", ["Is there", "Are there", "Has"], 0, "a bank 是單數，用 Is there。"], ["There ___ three people in my family.", ["is", "are", "has"], 1, "three people 是複數，用 are。"], ["There ___ some milk in the fridge.", ["is", "are", "have"], 0, "milk 數不出來，用 is。"], ["___ any good restaurants around here?", ["Is there", "Are there", "Have"], 1, "restaurants 是複數，用 Are there。"], ["There ___ a lot of traffic this morning.", ["was", "were", "had"], 0, "traffic 數不出來，過去式用 was。"]]}];
+const ckGramDone = () => Object.keys(ckState().gram || {}).length;
+const gFill = (q, opt) => q.replace(/( ?)___/, (m, sp) => (opt.charAt(0) === "'" ? "" : sp) + opt);
+function ckGramHtml() {
+  const st = ckState(); st.gram = st.gram || {};
+  if (!CK.g) return `<p class="muted" style="margin:0">只挑生活最常用的文法。每個觀念先看規則（像程式的 if / else），再做 5 題。文法就是把區塊組起來的「規則」。</p>
+    <button class="btn primary block" id="gMix">隨機 10 題（混合複習）</button>
+    ${GRAM.map((x, k) => { const b = st.gram[x.id]; return `<button class="ckcard" data-g="${k}" style="text-align:left;cursor:pointer"><div class="row"><span class="big" style="flex:1;min-width:0">${esc(x.t)}</span>${b != null ? `<span class="chip">${b} / 5${b === 5 ? " ✓" : ""}</span>` : ""}</div><span class="muted" style="font-size:14px">${esc(x.s)}</span></button>`; }).join("")}`;
+  const G = CK.g;
+  if (G.mode === "learn") {
+    const x = GRAM[G.k];
+    return `<div class="card" style="gap:12px">
+      <span class="eyebrow">生活文法・${G.k + 1} / ${GRAM.length}</span><h2 style="margin:0;font-size:22px">${esc(x.t)}</h2>
+      <p style="margin:0">${esc(x.c)}</p>
+      <pre class="code">${esc(x.code.replace(/(\S) {2,}(→|#)/g, "$1 $2"))}</pre>
+      <div style="display:flex;flex-direction:column;gap:8px"><span class="eyebrow">例句</span>${x.ex.map(([en, zh]) => `<div>${ckBlocks(en)}<div class="muted" style="font-size:14px">${esc(zh)}</div></div>`).join("")}</div>
+      <div class="reply badline"><span class="eyebrow">常見錯誤</span><s>✗ ${esc(x.bad[0])}</s><b>✓ ${esc(x.bad[1])}</b></div>
+      <div class="row"><button class="btn" id="gList">回列表</button><div class="spacer"></div><button class="btn primary" id="gStart">開始練習 5 題</button></div>
+    </div>`;
+  }
+  if (G.i >= G.qs.length) {
+    const wrong = G.qs.filter((q, i) => G.ans[i] !== q[2]);
+    return `<div class="card" style="gap:10px;text-align:center"><span style="font-size:40px">${G.ok === G.qs.length ? "🎉" : "📘"}</span><h2 style="margin:0">答對 ${G.ok} / ${G.qs.length}</h2>
+      ${wrong.length ? `<div style="text-align:left;display:flex;flex-direction:column;gap:8px"><span class="eyebrow">再看一次答錯的</span>${wrong.map(q => `<div class="reply"><b>${esc(gFill(q[0], q[1][q[2]]))}</b><div class="muted" style="font-size:14px">${esc(q[3])}</div></div>`).join("")}</div>` : `<p class="muted" style="margin:0">全對！這個觀念你已經會用了。</p>`}
+      <div class="row"><button class="btn" id="gList">回列表</button><div class="spacer"></div><button class="btn primary" id="gAgain">${G.mix ? "再來 10 題" : "再練一次"}</button></div></div>`;
+  }
+  const q = G.qs[G.i], a = G.ans[G.i], done = a != null, x = GRAM[G.src[G.i]];
+  const full = gFill(q[0], q[1][q[2]]);
+  return `<div class="card" style="gap:12px">
+    <div class="row"><span class="eyebrow" style="flex:1">${esc(x.t)}・第 ${G.i + 1} / ${G.qs.length} 題</span><span class="muted" style="font-size:13px">答對 ${G.ok}</span></div>
+    <div class="gq">${done ? esc(full) : esc(q[0]).replace("___", '<span class="gap">&nbsp;</span>')}</div>
+    <div class="gopts">${q[1].map((o, j) => `<button data-ga="${j}" ${done ? "disabled" : ""} class="${done && j === q[2] ? "right" : done && j === a ? "wrong" : ""}">${esc(o)}</button>`).join("")}</div>
+    ${done ? `<div class="reply" style="border:1px solid ${a === q[2] ? "var(--good)" : "var(--bad)"}"><b>${a === q[2] ? "答對了！" : "正確答案：" + esc(q[1][q[2]])}</b><div style="margin-top:4px">${esc(q[3])}</div><div class="row" style="margin-top:6px"><button class="btn small" data-sayall="${esc(full)}">${ICON.spk} 聽整句</button></div></div>
+      <button class="btn primary block" id="gNext">${G.i + 1 < G.qs.length ? "下一題" : "看結果"}</button>` : ""}
+    <button class="btn small" id="gList" style="align-self:flex-start">回列表</button>
+  </div>`;
+}
+function ckGramStart(k, mix) {
+  let qs = [], src = [];
+  if (mix) { const all = []; GRAM.forEach((x, gi) => x.q.forEach(q => all.push([q, gi]))); shuffle(all).slice(0, 10).forEach(([q, gi]) => { qs.push(q); src.push(gi); }); }
+  else { qs = shuffle(GRAM[k].q.slice()); src = qs.map(() => k); }
+  CK.g = { mode: "quiz", k, mix: !!mix, qs, src, ans: [], i: 0, ok: 0 };
+}
+function ckGramBind() {
+  const B = $("ckBody");
+  B.querySelectorAll("[data-g]").forEach(b => b.onclick = () => { CK.g = { mode: "learn", k: Number(b.dataset.g) }; renderChunk(); window.scrollTo(0, 0); });
+  if ($("gMix")) $("gMix").onclick = () => { ckGramStart(0, true); renderChunk(); };
+  if ($("gList")) $("gList").onclick = () => { CK.g = null; renderChunk(); window.scrollTo(0, 0); };
+  if ($("gStart")) $("gStart").onclick = () => { ckGramStart(CK.g.k, false); renderChunk(); window.scrollTo(0, 0); };
+  if ($("gAgain")) $("gAgain").onclick = () => { ckGramStart(CK.g.k, CK.g.mix); renderChunk(); window.scrollTo(0, 0); };
+  B.querySelectorAll("[data-ga]").forEach(b => b.onclick = () => {
+    const G = CK.g, q = G.qs[G.i], j = Number(b.dataset.ga);
+    G.ans[G.i] = j;
+    if (j === q[2]) { G.ok++; addXp(4); }
+    renderChunk(); speak(gFill(q[0], q[1][q[2]]));
+  });
+  if ($("gNext")) $("gNext").onclick = () => {
+    const G = CK.g; G.i++;
+    if (G.i >= G.qs.length) {
+      if (!G.mix) { const st = ckState(); st.gram = st.gram || {}; st.gram[GRAM[G.k].id] = Math.max(st.gram[GRAM[G.k].id] || 0, G.ok); if (G.ok === G.qs.length) addXp(5); }
+      Store.save(); logEvent("片語積木", { title: "生活文法・" + (G.mix ? "隨機複習" : GRAM[G.k].t), total: G.qs.length, correct: G.ok, xp: G.ok * 4 });
+    }
+    renderChunk();
+  };
+}
 
 /* ---- 把 AI 例句變成積木：AI 拆好的用 AI 的，沒拆過的先用規則自動拆 ---- */
 const ckNorm = t => String(t || "").replace(/[’‘]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, " ").trim();
@@ -3530,11 +3704,13 @@ const MODES = {
   writing: { name: "寫作批改", desc: "寫幾句英文，AI 幫你改並解釋" },
   cards: { name: "單字記憶卡", desc: "畫面＋生活情境，一張一張記" },
   baby: { name: "寶寶聽力", desc: "給 1–3 歲：大圖＋真人發音，只要聽" },
+  ckDaily: { name: "今日積木", desc: "每天 5 分鐘：1 個新區塊＋聽力＋文法＋情境" },
   ckLearn: { name: "觀念課", desc: "6 堂短課：英文句子就像程式碼" },
   ckLib: { name: "片語模組庫", desc: "表達想法、原因、轉折、習慣、目標…分類好的區塊" },
   ckBuild: { name: "句型組合器", desc: "主詞＋動作＋補充，一個句型組出很多句" },
   ckListen: { name: "區塊聽力", desc: "聽整句，認出一塊一塊的區塊" },
   ckTalk: { name: "情境輸出", desc: "工作、生活、打球：挑區塊說出想說的話" },
+  ckGram: { name: "生活文法", desc: "12 個最常用的文法觀念：看規則、做練習" },
   wish: { name: "許願池", desc: "想要什麼新功能？許願、幫別人 +1" },
   support: { name: "贊助與感謝", desc: "隨喜支持、感謝名單" },
   pic: { name: "看圖選字", desc: "看畫面，選出是哪個字", n: 10, types: ["pic"] },
@@ -3608,7 +3784,7 @@ function startPractice(mode) {
   if (mode === "cards") return openCards(rangeWords(), 0);
   if (mode === "wish") return openWishes();
   if (mode === "baby") return openBaby();
-  if (/^ck/.test(mode)) return openChunk({ ckLearn: "learn", ckLib: "lib", ckBuild: "build", ckListen: "listen", ckTalk: "talk" }[mode]);
+  if (/^ck/.test(mode)) return openChunk({ ckDaily: "daily", ckLearn: "learn", ckLib: "lib", ckBuild: "build", ckGram: "gram", ckListen: "listen", ckTalk: "talk" }[mode]);
   if (mode === "support") return openSupport();
   if (mode === "notes") return openNotes();
   if (mode === "rain") return startRain();
@@ -4082,6 +4258,9 @@ function renderHome() {
   const btn = $("dailyBtn");
   if (d.done) { btn.textContent = `完成了，答對 ${d.correct} / ${d.plan.length}。明天見！`; btn.disabled = true; }
   else { btn.disabled = false; btn.textContent = d.idx ? `繼續任務（${d.idx} / ${d.plan.length}）` : `開始今日任務・${d.plan.length} 題`; }
+  { const done = !!(ckState().days || {})[today()], t = ckState().today, mid = t && t.date === today() && t.i > 0 && !done;
+    $("ckDayBtn").textContent = done ? `🧱 今日積木完成 ✓・連續 ${ckStreak()} 天` : mid ? `🧱 繼續今日積木（${t.i} / ${t.steps.length}）` : `🧱 今日積木・5 分鐘${ckStreak() ? `（已連續 ${ckStreak()} 天）` : ""}`;
+    $("ckDayBtn").onclick = () => openChunk("daily"); }
   const dueN = dueItems().length;
   $("dueBtn").hidden = !dueN; $("dueBtn").textContent = `今日複習：${dueN} 個字句到期了`;
   $("watchBtn").textContent = state.watched[state.week] ? "這集看完了 ✓" : "這集我看完了";
@@ -4129,7 +4308,7 @@ function renderHome() {
   $("guestNote").hidden = !GUEST;
   const groups = [
     ...(CAN_WISH() || SHOW_SUPPORT() ? [["一起讓它變更好", [...(CAN_WISH() ? [["wish", WISH_COUNT ? `${WISH_COUNT} 個願望` : "", ""]] : []), ...(SHOW_SUPPORT() ? [["support"]] : [])]]] : []),
-    ["片語積木・像寫程式一樣學英文", [["ckLearn", ckRead() ? `${ckRead()} / 6 堂` : "從這裡開始", ""], ["ckLib", ckLearned() ? `會了 ${ckLearned()} 個` : "", ""], ["ckBuild"], ["ckListen"], ["ckTalk"]]],
+    ["片語積木・像寫程式一樣學英文", [["ckDaily", ckDailyTag(), ckDailyDesc()], ["ckLearn", ckRead() ? `${ckRead()} / 6 堂` : "從這裡開始", ""], ["ckLib", ckLearned() ? `會了 ${ckLearned()} 個` : "", ""], ["ckBuild"], ["ckGram", ckGramDone() ? `練過 ${ckGramDone()} / 12` : "", ""], ["ckListen"], ["ckTalk"]]],
     ["親子", [["baby", "", "給 1–3 歲：看大圖、聽真人發音，不用讀寫"]]],
     ["每天練", [["due", dueN ? `${dueN} 個到期` : "", dueN ? "" : "今天沒有到期的，很好"], ["cards", "", ""], ["trans", AI.kind ? "AI 批改" : "", ""], ["mistakes", (state.mistakes || []).length ? `${state.mistakes.length} 句` : "", (state.mistakes || []).length ? "" : "被改過的句子會自動收進來"], ["mc"], ["listen"], ["cloze"], ["build"], ["spell"], ["dictation"], ["review", weak ? `${weak} 個字` : "", weak ? "答錯過的字，答對兩次就畢業" : "目前沒有錯題"]]],
     ["口說練習", [["coach", AUDIO_AI() ? "AI 聽發音" : needAiTag, AUDIO_AI() ? "" : GUEST ? "分享版沒有開放" : "設定 Gemini 金鑰後可以用"], ["speak", "", AUDIO_AI() ? "跟讀句子，AI 聽你的發音" : CAN_SPEAK ? "錄音、辨識、打分數" : "跟讀自評（設定 AI 後可錄音評分）"], ["diary", (state.diary || []).some(e => e.d === today()) ? "今天完成" : GUEST ? "" : needAiTag, AUDIO_AI() ? "說 1 分鐘，AI 改文法和發音" : GUEST ? "用打字寫，沒有 AI 批改" : CAN_SPEAK ? "" : "先用打字寫"], ["chat", needAiTag, AUDIO_AI() ? "可以用說的回覆" : needAiDesc]]],
@@ -4139,7 +4318,7 @@ function renderHome() {
     ["遊戲", [["match"], ["blitz", state.best.blitz ? `紀錄 ${state.best.blitz} 題` : ""], ["rain", state.best.rain ? `紀錄 ${state.best.rain} 個` : "", ""]]],
     ["生活與測驗", [["travel"], ["assess", lastA ? `上次 ${lastA.cefr}` : "", "6 分鐘，看得懂和用得出來都測"]]],
   ];
-  const SKILL = { ckLearn: "觀念", ckLib: "模組", ckBuild: "組合", ckListen: "聽", ckTalk: "說・寫", baby: "聽・親子", wish: "一起變更好", support: "一起變更好", cards: "讀・記憶", pic: "讀", mc: "讀", listen: "聽", cloze: "讀", build: "寫", spell: "寫", dictation: "聽・寫", match: "讀", blitz: "讀", speak: "說", review: "複習", assess: "測驗", reading: "讀", writing: "寫", chat: "說・寫", notes: "台詞", rain: "寫・遊戲", due: "複習", coach: "說", trans: "寫", mistakes: "寫・複習", ladder: "聽・說", dialog: "聽", diary: "說", subs: "聽・說", pairs: "聽・說", travel: "說", map: "進度" };
+  const SKILL = { ckDaily: "每天固定", ckGram: "文法", ckLearn: "觀念", ckLib: "模組", ckBuild: "組合", ckListen: "聽", ckTalk: "說・寫", baby: "聽・親子", wish: "一起變更好", support: "一起變更好", cards: "讀・記憶", pic: "讀", mc: "讀", listen: "聽", cloze: "讀", build: "寫", spell: "寫", dictation: "聽・寫", match: "讀", blitz: "讀", speak: "說", review: "複習", assess: "測驗", reading: "讀", writing: "寫", chat: "說・寫", notes: "台詞", rain: "寫・遊戲", due: "複習", coach: "說", trans: "寫", mistakes: "寫・複習", ladder: "聽・說", dialog: "聽", diary: "說", subs: "聽・說", pairs: "聽・說", travel: "說", map: "進度" };
   $("modeGrid").outerHTML = `<div id="modeGrid" style="display:flex;flex-direction:column;gap:10px">${groups.map(([g, cards]) => `<div class="group-h">${g}</div><div class="grid">${cards.map(([k, tag, desc]) => `<button class="mode" data-m="${k}"><span class="tagline">${esc(SKILL[k] + (tag ? " · " + tag : ""))}</span><b>${esc(MODES[k].name)}</b><small>${esc(desc || MODES[k].desc)}</small></button>`).join("")}</div>`).join("")}</div>`;
   $("modeGrid").querySelectorAll(".mode").forEach(b => b.onclick = () => startPractice(b.dataset.m));
   renderStorage();
