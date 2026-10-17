@@ -169,6 +169,8 @@ button.chip:hover{border-color:var(--primary)}
 .bankbox dt{color:var(--muted);font-size:13px}.bankbox dd{margin:0;font-weight:700;font-variant-numeric:tabular-nums;word-break:break-all}
 
 /* practice grid */
+.bbord{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.bbord .seg{flex-wrap:wrap;justify-content:center}
 .seg{display:inline-flex;background:var(--surface-2);border-radius:12px;padding:3px;gap:2px}
 .seg button{border:0;background:none;border-radius:9px;padding:6px 12px;font-size:14px;font-weight:700;color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
@@ -603,7 +605,7 @@ let GUEST = false;
 let SPONSOR = "";
 let OWNER_WHO = "";
 const EQ_BUILD = "b7173e";
-const EQ_WEB = "bd20";
+const EQ_WEB = "05f6";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -3161,6 +3163,19 @@ function sayTTS(text, rate) {
   });
 }
 /* 寶寶模式不等查詢：已經查好的才播真人，還沒查好的先用電腦語音（背景會查好，下次就是真人） */
+/* 播放順序：zhfirst 先中後英（預設）・alt 英中交替・zh 只有中文・en 只有英文 */
+const BB_ORDERS = [["zhfirst", "先中後英"], ["alt", "英中交替"], ["zh", "只有中文"], ["en", "只有英文"]];
+const bbOrder = () => BB_ORDERS.some(o => o[0] === state.babyOrder) ? state.babyOrder : "zhfirst";
+const bbCnt = (v, d) => { v = Math.floor(Number(v)); return v >= 1 && v <= 5 ? v : d; };
+const bbEnN = () => bbCnt(state.babyReps, 5), bbZhN = () => bbCnt(state.babyZhN, 3);
+function bbSteps() {
+  const o = bbOrder(), en = bbEnN(), zh = bbZhN(), st = [];
+  if (o === "zhfirst") { for (let k = 0; k < zh; k++) st.push({ zh: 1, k, n: zh, f: 0 }); for (let r = 0; r < en; r++) st.push({ r, n: en, f: r }); }
+  else if (o === "alt") for (let r = 0; r < en; r++) { st.push({ r, n: en, f: r }); st.push({ zh: 1, k: r, n: en, f: r, tight: 1 }); }
+  else if (o === "zh") for (let k = 0; k < zh; k++) st.push({ zh: 1, k, n: zh, f: k });
+  else for (let r = 0; r < en; r++) st.push({ r, n: en, f: r });
+  return st;
+}
 const bbRate = (human) => state.babySlow ? (human ? 0.85 : 0.72) : (human ? 1 : 0.9);
 async function sayBabyPhrase(ph, tok) {
   for (const sn of splitSents(ph)) {
@@ -3428,8 +3443,11 @@ function renderBaby(say) {
     <div class="bbsub" id="bbSub" aria-live="polite" ${state.babySub === false ? "hidden" : ""}><div class="bbsen">${esc(ph)}</div><div class="bbszh">${esc(zp)}</div></div>
     <div class="row bbctl"><button class="btn" id="bbPrev" aria-label="上一個">◀</button><button class="btn primary" id="bbAuto">${BB.auto ? "⏸ 暫停" : "▶ 自動播放"}</button><button class="btn" id="bbNext" aria-label="下一個">▶</button></div>
     <div class="row bbctl"><button class="btn small" id="bbDark">只放聲音（螢幕變暗）</button><button class="btn small${state.babySlow ? " primary" : ""}" id="bbSlow" aria-pressed="${state.babySlow ? "true" : "false"}">🐢 慢一點</button></div>
-    <div class="row bbctl"><button class="btn small${state.babySub !== false ? " primary" : ""}" id="bbSubT" aria-pressed="${state.babySub !== false}">字幕（英＋中）</button><button class="btn small${state.babyZh ? " primary" : ""}" id="bbZh" aria-pressed="${!!state.babyZh}">中文語音</button><button class="btn small${state.babyPhoto !== false ? " primary" : ""}" id="bbPhoto" aria-pressed="${state.babyPhoto !== false}">真實照片</button></div>
-    <div class="row bbctl"><span class="muted" style="font-size:13px">每張重複</span><div class="seg" id="bbReps">${[1, 3, 5].map(n => `<button data-reps="${n}" aria-pressed="${(([1, 3, 5].includes(state.babyReps) ? state.babyReps : 5) === n)}">${n} 次</button>`).join("")}</div></div>
+    <div class="row bbctl"><button class="btn small${state.babySub !== false ? " primary" : ""}" id="bbSubT" aria-pressed="${state.babySub !== false}">字幕（英＋中）</button><button class="btn small${state.babyPhoto !== false ? " primary" : ""}" id="bbPhoto" aria-pressed="${state.babyPhoto !== false}">真實照片</button></div>
+    <div class="bbord"><span class="muted" style="font-size:13px">播放順序</span><div class="seg" id="bbOrder">${BB_ORDERS.map(([k, t]) => `<button data-bord="${k}" aria-pressed="${bbOrder() === k}">${t}</button>`).join("")}</div>
+      ${bbOrder() === "zhfirst" || bbOrder() === "zh" ? `<div class="row" style="gap:8px;justify-content:center"><span class="muted" style="font-size:13px">中文唸</span><div class="seg">${[1, 2, 3, 4, 5].map(n => `<button data-zhn="${n}" aria-pressed="${bbZhN() === n}">${n}</button>`).join("")}</div><span class="muted" style="font-size:13px">次</span></div>` : ""}
+      ${bbOrder() !== "zh" ? `<div class="row" style="gap:8px;justify-content:center"><span class="muted" style="font-size:13px">${bbOrder() === "alt" ? "英＋中各唸" : "英文唸"}</span><div class="seg" id="bbReps">${[1, 2, 3, 4, 5].map(n => `<button data-reps="${n}" aria-pressed="${bbEnN() === n}">${n}</button>`).join("")}</div><span class="muted" style="font-size:13px">次</span></div>` : ""}
+      <span class="muted" style="font-size:12px">${(() => { const o = bbOrder(), z = bbZhN(), e = bbEnN(); return o === "zhfirst" ? `先講中文 ${z} 次，再講英文 ${e} 次` : o === "alt" ? `英文、中文輪流，共 ${e} 輪` : o === "zh" ? `只講中文 ${z} 次` : `只講英文 ${e} 次`; })()}</span></div>
     ${AIV_CAN_MAKE() && AIV_ON() ? (() => { const its = babyAivItems(), todo = aivTodo(its); return todo ? `<div class="reply" style="display:flex;flex-direction:column;gap:6px;border-radius:12px;padding:10px 12px"><b>AI 語音（4 種聲音＋中文）還有 ${todo} / ${its.length} 段沒產生</b><span class="muted" style="font-size:13px">還沒產生的先用原本的聲音。按一次「一鍵產生全部」，${Store.backend === "sheet" ? "後台會自己慢慢做（先做這個主題），關掉網頁也會繼續" : "這頁開著就會慢慢做"}。</span><div class="row" style="flex-wrap:wrap"><button class="btn small primary" id="bbGen">一鍵產生全部</button><button class="btn small" data-aivstop hidden>停止</button></div><span style="font-size:13px" data-aivsrv></span><span style="font-size:13px" data-aivout></span></div>` : ""; })() : ""}
     ${bpicCan() ? `<div class="reply" style="display:flex;flex-direction:column;gap:6px;border-radius:12px;padding:10px 12px"><b>照片小幫手（只有你看得到）</b>${(BPICS.pending || []).length ? `<button class="btn primary" id="bpReview">📬 朋友提供了 ${BPICS.pending.length} 張照片，點這裡一張一張確認</button><span class="muted" style="font-size:12px">${[...new Set(BPICS.pending.map(x => x[1]))].slice(0, 8).map(esc).join("、")}${new Set(BPICS.pending.map(x => x[1])).size > 8 ? "…" : ""}</span>` : ""}<span class="muted" style="font-size:13px">第 1～5 次都可以放你的照片（按「放我的照片」選位置）；第 2、4 次沒指定時，自動依序用：自己拍的 → 朋友提供的 → AI 畫的 → Unsplash 照片 → 維基百科。照片不對就按照片下方的「這張不對」。AI 畫圖要 Gemini 付費（一張約 1 塊台幣）。</span><div class="row" style="flex-wrap:wrap;gap:6px"><button class="btn small" id="bpAll">${BPAI.on ? "停止" : "AI 幫每個沒照片的字畫一張"}</button><span style="font-size:13px" id="bpAllOut"></span></div></div>` : ""}
     <p class="muted" style="margin:0;font-size:13px;text-align:center">點大圖可以再聽一次。建議爸媽陪著一起聽、跟著唸、指給寶寶看；自動播放 10 分鐘會自己停下來休息。</p>
@@ -3444,6 +3462,8 @@ function renderBaby(say) {
   $("bbDark").onclick = () => { BB.dark = true; if (!BB.auto) { BB.auto = true; BB.started = Date.now(); renderBaby(true); } else renderBaby(false); };
   $("bbSlow").onclick = () => { state.babySlow = !state.babySlow; Store.save(); renderBaby(true); };
   $("baby").querySelectorAll("[data-reps]").forEach(b => b.onclick = () => { state.babyReps = Number(b.dataset.reps); Store.save(); renderBaby(false); });
+  $("baby").querySelectorAll("[data-zhn]").forEach(b => b.onclick = () => { state.babyZhN = Number(b.dataset.zhn); Store.save(); renderBaby(false); });
+  $("baby").querySelectorAll("[data-bord]").forEach(b => b.onclick = () => { state.babyOrder = b.dataset.bord; Store.save(); if (state.babyOrder !== "en" && TTS && !AIV_ON() && !zhVoice()) toast("這台裝置找不到中文語音，請到系統設定加入「中文（台灣）」語音"); renderBaby(false); });
   if ($("bbGen")) $("bbGen").onclick = () => aivGenAll(true);
   aivStatusUi();
   $("baby").querySelectorAll("[data-aivstop]").forEach(b => b.onclick = () => { AIV.stop = true; });
@@ -3458,34 +3478,34 @@ function renderBaby(say) {
   $("bbPhoto").onclick = () => { state.babyPhoto = state.babyPhoto === false; Store.save(); renderBaby(false); };
   prefetchBabyPix(items, BB.i);
   $("bbSubT").onclick = () => { state.babySub = state.babySub === false; Store.save(); renderBaby(false); };
-  $("bbZh").onclick = () => { state.babyZh = !state.babyZh; Store.save(); if (state.babyZh && TTS && !zhVoice()) toast("這台裝置找不到中文語音，請到系統設定加入「中文（台灣）」語音"); renderBaby(true); };
   if ($("bbLight")) $("bbLight").onclick = () => { BB.dark = false; renderBaby(false); };
   if (say) sayCard();
 }
 async function sayCard() {
   const tok = ++BB.tok, [, , items] = BABY[BB.t], [w, , ph, zw, zp] = items[BB.i], zh = !!state.babyZh;
   const card = $("bbCard"); if (card) { card.classList.remove("pop"); void card.offsetWidth; card.classList.add("pop"); }
-  const reps = [1, 3, 5].includes(state.babyReps) ? state.babyReps : 5, en = babyEn(w, ph), zt = babyZhT(zw, zp), slow = !!state.babySlow;
+  const en = babyEn(w, ph), zt = babyZhT(zw, zp), slow = !!state.babySlow, steps = bbSteps();
   const frames = await bbFrames(w, items[BB.i][1]); if (tok !== BB.tok) return;
-  for (let r = 0; r < reps; r++) {
-    const [vid, vname] = AIV_LIST[r % 4];
-    BB.rep = `第 ${r + 1} / ${reps} 次・${AIV_ON() ? vname : "電腦語音"}`;
-    bbShowFrame(frames[r % 5], w, items[BB.i][1]);
-    const u = AIV_ON() ? await raceMs(aiVoiceUrl(vid, en), 2500) : "";
-    if (tok !== BB.tok) return;
-    bbSub(en.replace(" ... ", " "), `${zw}。${zp}`, "en");
-    if (u) { if (!(await playUrl(u, slow ? 0.85 : 1)) && tok === BB.tok) await bbOldEn(w, ph, tok); }
-    else { if (AIV_ON()) aivQueue([[vid, en]]); await bbOldEn(w, ph, tok); }
-    if (tok !== BB.tok) return;
-    if (zh) {
-      await waitMs(300); if (tok !== BB.tok) return;
+  for (let i = 0; i < steps.length; i++) {
+    const st = steps[i];
+    bbShowFrame(frames[st.f % 5], w, items[BB.i][1]);
+    if (!st.zh) {
+      const [vid, vname] = AIV_LIST[st.r % 4];
+      BB.rep = `英文 第 ${st.r + 1} / ${st.n} 次・${AIV_ON() ? vname : "電腦語音"}`;
+      const u = AIV_ON() ? await raceMs(aiVoiceUrl(vid, en), 2500) : "";
+      if (tok !== BB.tok) return;
+      bbSub(en.replace(" ... ", " "), `${zw}。${zp}`, "en");
+      if (u) { if (!(await playUrl(u, slow ? 0.85 : 1)) && tok === BB.tok) await bbOldEn(w, ph, tok); }
+      else { if (AIV_ON()) aivQueue([[vid, en]]); await bbOldEn(w, ph, tok); }
+    } else {
+      BB.rep = `中文 第 ${st.k + 1} / ${st.n} 次`;
       bbSub(en.replace(" ... ", " "), `${zw}。${zp}`, "zh");
       const zu = AIV_ON() ? await raceMs(aiVoiceUrl("zh", zt), 2500) : "";
       if (tok !== BB.tok) return;
       if (!(zu && await playUrl(zu, slow ? 0.85 : 1))) { if (AIV_ON() && !zu) aivQueue([["zh", zt]]); await sayZh(zw, slow ? 0.75 : 0.9); await waitMs(300); if (tok !== BB.tok) return; await sayZh(zp, slow ? 0.75 : 0.9); }
-      if (tok !== BB.tok) return;
     }
-    if (r + 1 < reps) { await waitMs(900); if (tok !== BB.tok) return; }
+    if (tok !== BB.tok) return;
+    if (i + 1 < steps.length) { await waitMs(steps[i + 1].tight ? 300 : 900); if (tok !== BB.tok) return; }
   }
   BB.rep = ""; bbShowFrame(frames[0], w, items[BB.i][1]);
   if (!BB.auto) return;
