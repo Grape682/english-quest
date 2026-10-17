@@ -105,6 +105,8 @@ button.chip:hover{border-color:var(--primary)}
 .tchip.on{background:var(--primary);color:#fff;border-color:var(--primary)}
 .bbcard{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;min-height:50vh;border:0;border-radius:28px;background:var(--surface);box-shadow:0 10px 30px -18px rgba(0,0,0,.35);cursor:pointer;color:var(--ink)}
 .bbem{font-size:min(44vw,210px);line-height:1.05}
+.bbvis{display:flex;align-items:center;justify-content:center;min-height:min(46vw,230px)}
+.bbimg{width:min(70vw,320px);height:min(52vw,240px);object-fit:cover;border-radius:22px;box-shadow:0 8px 24px -12px rgba(0,0,0,.4);animation:bbpop .6s ease}
 .bbw{font-size:clamp(34px,9vw,52px);font-weight:800;font-family:var(--f-display);letter-spacing:-.01em}
 .bbzh{font-size:clamp(22px,6vw,30px);font-weight:700;color:var(--muted)}
 .bbsub{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px 14px;text-align:center;display:flex;flex-direction:column;gap:2px}
@@ -596,6 +598,7 @@ let GUEST = false;
 let SPONSOR = "";
 let OWNER_WHO = "";
 const EQ_BUILD = "287b45";
+const EQ_WEB = "c839";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -918,6 +921,7 @@ async function humanUrl(word) {
   let cache = {}; try { cache = JSON.parse(localStorage.getItem("eq-human") || "{}"); } catch (e) { }
   if (cache[k] || (("@" + k) in cache && Date.now() - cache["@" + k] < 7 * 864e5)) return (HUMAN.mem[k] = cache[k] || "");
   let url = "";
+  if (Date.now() < (HUMAN.down || 0)) return "";
   try {
     const r = await fetch("https:\/\/api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(w0));
     if (r.ok) {
@@ -926,8 +930,8 @@ async function humanUrl(word) {
       url = UK() ? (all.find(a => /-uk\.mp3$/i.test(a)) || "") : (all.find(a => /-us\.mp3$/i.test(a)) || all.find(a => /\.mp3$/i.test(a)) || all[0] || "");
       if (url.slice(0, 2) === "\/\/") url = "https:" + url;
       if (!/^https:\/\/[^\s"'<>]+$/.test(url)) url = "";
-    } else if (r.status !== 404) return "";
-  } catch (e) { return ""; }
+    } else if (r.status !== 404) { if (r.status >= 500) HUMAN.down = Date.now() + 10 * 60e3; return ""; }
+  } catch (e) { HUMAN.down = Date.now() + 10 * 60e3; return ""; }
   HUMAN.mem[k] = url;
   try { const c = JSON.parse(localStorage.getItem("eq-human") || "{}"); if (url) c[k] = url; else c["@" + k] = Date.now(); localStorage.setItem("eq-human", JSON.stringify(c)); } catch (e) { }
   return url;
@@ -3187,6 +3191,52 @@ async function bbOldEn(w, ph, tok) {
   await waitMs(500); if (tok !== BB.tok) return;
   await sayBabyPhrase(ph, tok);
 }
+/* 寶寶聽力的變化圖：卡通圖輪流，再穿插 1～2 張真實照片（維基百科 / Wikimedia Commons） */
+const BABY_PIX = {"dog": [["Dog", "Puppy"], ["🐕", "🦮", "🐾"]], "cat": [["Cat", "Kitten"], ["🐈", "😺", "🐾"]], "cow": [["Cattle", "Calf (animal)"], ["🐄", "🥛", "🌾"]], "duck": [["Duck", "Mallard"], ["🐥", "🦆", "🪿"]], "pig": [["Domestic pig", "Pig"], ["🐖", "🐽", "🐷"]], "sheep": [["Sheep", "Merino"], ["🐏", "☁️", "🧶"]], "bird": [["House sparrow", "European robin"], ["🐤", "🪺", "🪶"]], "fish": [["Goldfish", "Clownfish"], ["🐠", "🐡", "🫧"]], "rabbit": [["Rabbit", "Domestic rabbit"], ["🐇", "🥕", "🐰"]], "elephant": [["Elephant", "Asian elephant"], ["🐘", "🥜", "🦣"]], "apple": [["Apple", "Gala (apple)"], ["🍏", "🍎", "🌳"]], "banana": [["Banana", "Cavendish banana"], ["🍌", "🐒", "🍌"]], "milk": [["Milk"], ["🍼", "🐄", "🥛"]], "water": [["Drinking water"], ["🚰", "🫗", "💧"]], "bread": [["Bread", "Toast"], ["🥖", "🥪", "🍞"]], "egg": [["Egg as food", "Boiled egg"], ["🍳", "🐔", "🥚"]], "rice": [["Rice"], ["🍙", "🥢", "🍚"]], "cookie": [["Cookie", "Chocolate chip cookie"], ["🍪", "🥛", "🍪"]], "eyes": [["Human eye"], ["👁️", "🙈", "👀"]], "nose": [["Human nose"], ["👃", "🌸", "🤧"]], "mouth": [["Smile"], ["😮", "😁", "👄"]], "ears": [["Auricle (anatomy)"], ["👂", "🎵", "🎧"]], "hands": [["Hand"], ["🙌", "✋", "👏"]], "feet": [["Foot"], ["🦶", "👣", "🧦"]], "teeth": [["Toothbrush"], ["🪥", "😁", "🦷"]], "hair": [["Hairbrush"], ["💇", "🎀", "💈"]], "red": [[], ["🍎", "🚒", "🍓"]], "blue": [[], ["🫐", "🐳", "🧢"]], "yellow": [[], ["🍌", "🐥", "🌻"]], "green": [[], ["🥦", "🐸", "🍀"]], "orange": [[], ["🍊", "🥕", "🎃"]], "purple": [[], ["🍇", "🍆", "💜"]], "black": [[], ["🐈‍⬛", "🎱", "🕶️"]], "white": [[], ["🥛", "🐑", "☁️"]], "mommy": [[], ["🤱", "👩‍👧", "👩"]], "daddy": [[], ["👨‍🍼", "👨‍👦", "👨"]], "baby": [[], ["🍼", "🧸", "👶"]], "grandma": [[], ["🧶", "🍪", "👵"]], "grandpa": [[], ["👓", "🌳", "👴"]], "brother": [[], ["⚽", "🚲", "👦"]], "sister": [[], ["🎀", "🎨", "👧"]], "family": [[], ["🏠", "❤️", "👨‍👩‍👧"]], "ball": [["Ball", "Beach ball"], ["🏀", "🎾", "⚽"]], "teddy bear": [["Teddy bear"], ["🐻", "🤗", "🧸"]], "book": [["Book", "Picture book"], ["📚", "📕", "📖"]], "car": [["Car"], ["🚙", "🏎️", "🚗"]], "bus": [["Bus", "School bus"], ["🚍", "🚏", "🚌"]], "shoes": [["Shoe", "Sneakers"], ["👞", "🥾", "👟"]], "hat": [["Hat", "Sun hat"], ["🎩", "🧢", "👒"]], "cup": [["Cup", "Mug"], ["☕", "🍵", "🥤"]], "hello": [[], ["😊", "🌞", "👋"]], "bye-bye": [[], ["🚪", "🚗", "👋"]], "eat": [[], ["🍚", "🍎", "🥣"]], "bath": [["Rubber duck"], ["🫧", "🦆", "🛁"]], "sleep": [[], ["🛏️", "🌙", "😴"]], "walk": [[], ["🌳", "🐕", "🚶"]], "hug": [[], ["🧸", "❤️", "🤗"]], "kiss": [[], ["💋", "❤️", "😘"]], "sun": [["Sun", "Sunrise"], ["🌞", "🌅", "☀️"]], "moon": [["Moon", "Full moon"], ["🌕", "🌛", "🌙"]], "star": [["Night sky"], ["🌟", "✨", "⭐"]], "rain": [["Rain", "Umbrella"], ["☔", "💧", "🌧️"]], "flower": [["Flower", "Common sunflower"], ["🌻", "🌷", "🌸"]], "tree": [["Tree", "Oak"], ["🌲", "🍂", "🌳"]], "cloud": [["Cloud", "Cumulus cloud"], ["⛅", "🌥️", "☁️"]], "rainbow": [["Rainbow"], ["🦄", "🌦️", "🌈"]]};
+const PIX = { mem: {}, wait: {} };
+function pixCache() { try { return JSON.parse(localStorage.getItem("eq-pix") || "{}"); } catch (e) { return {}; } }
+function babyPhoto(title) {
+  if (!title || state.babyPhoto === false) return Promise.resolve(null);
+  if (title in PIX.mem) return Promise.resolve(PIX.mem[title]);
+  const c = pixCache()[title];
+  if (c && (c.u || Date.now() - (c.t || 0) < 7 * 864e5)) return Promise.resolve(PIX.mem[title] = c.u ? c : null);
+  if (PIX.wait[title]) return PIX.wait[title];
+  return (PIX.wait[title] = (async () => {
+    let out = null;
+    try {
+      const r = await fetch("https:\/\/en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(title.replace(/ /g, "_")));
+      if (r.ok) {
+        const j = await r.json(); let u = j && j.type === "standard" && j.thumbnail && j.thumbnail.source || "";
+        u = String(u).replace(/\/(\d+)px-/, "/640px-");
+        if (/^https:\/\/upload\.wikimedia\.org\/[^\s"'<>]+$/.test(u)) out = { u, p: String((j.content_urls && j.content_urls.mobile && j.content_urls.mobile.page) || "") };
+      }
+    } catch (e) { delete PIX.wait[title]; return null; }
+    PIX.mem[title] = out;
+    try { const c2 = pixCache(); c2[title] = out ? out : { t: Date.now() }; localStorage.setItem("eq-pix", JSON.stringify(c2)); } catch (e) { }
+    delete PIX.wait[title];
+    if (out) { const im = new Image(); im.src = out.u; }
+    return out;
+  })());
+}
+/* 第 r 次要顯示什麼：1 卡通 → 2 照片 → 3 另一張卡通 → 4 第二張照片 → 5 回到原本的卡通 */
+/* 5 次的畫面：1 原本卡通 → 2 照片 → 3 另一張卡通 → 4 第二張照片 → 5 再換一張卡通（沒照片就用卡通補上，不重複） */
+async function bbFrames(w, e) {
+  const [titles, alts] = BABY_PIX[w] || [[], []], on = state.babyPhoto !== false;
+  const [p1, p2] = on ? await Promise.all([titles[0] ? raceMs(babyPhoto(titles[0]), 1500) : null, titles[1] ? raceMs(babyPhoto(titles[1]), 1500) : null]) : [null, null];
+  const pool = [e].concat(alts); let ci = 1; const next = () => ({ em: pool[(ci++) % pool.length] });
+  const f = [{ em: e }];
+  f.push(p1 && p1.u ? { img: p1 } : next());
+  f.push(next());
+  f.push(p2 && p2.u ? { img: p2 } : next());
+  f.push(next());
+  return f;
+}
+function bbShowFrame(fr, w, e) {
+  const box = $("bbVis"); if (!box || !fr) return;
+  box.innerHTML = fr.img ? `<img class="bbimg" src="${esc(fr.img.u)}" alt="${esc(w)} 的照片" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'bbem',textContent:'${e}'}))">` : `<span class="bbem">${fr.em}</span>`;
+  const cr = $("bbCredit"); if (cr) { cr.hidden = !fr.img; if (fr.img) cr.innerHTML = `照片：<a href="${esc(fr.img.p)}" target="_blank" rel="noopener">維基百科</a>（Wikimedia Commons，CC 授權）`; }
+}
+function prefetchBabyPix(items, i) { if (state.babyPhoto === false) return; [items[i], items[(i + 1) % items.length]].forEach(x => (BABY_PIX[x[0]] || [[]])[0].forEach(t => babyPhoto(t))); }
 async function sayBabyWord(w) {
   let url = "";
   if (canHuman(w)) url = await raceMs(humanUrl(w), 1200) || "";
@@ -3213,11 +3263,12 @@ function renderBaby(say) {
   $("baby").innerHTML = `
     <header class="top"><button class="icon-btn" id="bbBack" aria-label="離開">${ICON.x}</button><h2 style="font-size:22px;flex:1;min-width:0">寶寶聽力</h2><span class="muted" style="font-size:14px">${BB.i + 1} / ${items.length}</span></header>
     <div class="bbthemes">${BABY.map(([n, ic], k) => `<button class="tchip${k === BB.t ? " on" : ""}" data-bt="${k}"><span aria-hidden="true">${ic}</span>${esc(n)}</button>`).join("")}</div>
-    <button class="bbcard" id="bbCard" aria-label="再聽一次 ${esc(w)}"><span class="bbem" aria-hidden="true">${e}</span><span class="bbw">${esc(w)}</span>${state.babySub === false ? "" : `<span class="bbzh">${esc(zw)}</span>`}</button>
+    <button class="bbcard" id="bbCard" aria-label="再聽一次 ${esc(w)}"><span class="bbvis" id="bbVis" aria-hidden="true"><span class="bbem">${e}</span></span><span class="bbw">${esc(w)}</span>${state.babySub === false ? "" : `<span class="bbzh">${esc(zw)}</span>`}</button>
+    <p class="muted" id="bbCredit" hidden style="margin:-6px 0 0;font-size:11px;text-align:center"></p>
     <div class="bbsub" id="bbSub" aria-live="polite" ${state.babySub === false ? "hidden" : ""}><div class="bbsen">${esc(ph)}</div><div class="bbszh">${esc(zp)}</div></div>
     <div class="row bbctl"><button class="btn" id="bbPrev" aria-label="上一個">◀</button><button class="btn primary" id="bbAuto">${BB.auto ? "⏸ 暫停" : "▶ 自動播放"}</button><button class="btn" id="bbNext" aria-label="下一個">▶</button></div>
     <div class="row bbctl"><button class="btn small" id="bbDark">只放聲音（螢幕變暗）</button><button class="btn small${state.babySlow ? " primary" : ""}" id="bbSlow" aria-pressed="${state.babySlow ? "true" : "false"}">🐢 慢一點</button></div>
-    <div class="row bbctl"><button class="btn small${state.babySub !== false ? " primary" : ""}" id="bbSubT" aria-pressed="${state.babySub !== false}">字幕（英＋中）</button><button class="btn small${state.babyZh ? " primary" : ""}" id="bbZh" aria-pressed="${!!state.babyZh}">中文語音</button></div>
+    <div class="row bbctl"><button class="btn small${state.babySub !== false ? " primary" : ""}" id="bbSubT" aria-pressed="${state.babySub !== false}">字幕（英＋中）</button><button class="btn small${state.babyZh ? " primary" : ""}" id="bbZh" aria-pressed="${!!state.babyZh}">中文語音</button><button class="btn small${state.babyPhoto !== false ? " primary" : ""}" id="bbPhoto" aria-pressed="${state.babyPhoto !== false}">真實照片</button></div>
     <div class="row bbctl"><span class="muted" style="font-size:13px">每張重複</span><div class="seg" id="bbReps">${[1, 3, 5].map(n => `<button data-reps="${n}" aria-pressed="${(([1, 3, 5].includes(state.babyReps) ? state.babyReps : 5) === n)}">${n} 次</button>`).join("")}</div></div>
     ${AIV_CAN_MAKE() && AIV_ON() ? (() => { const its = babyAivItems(), todo = aivTodo(its); return todo ? `<div class="reply" style="display:flex;flex-direction:column;gap:6px;border-radius:12px;padding:10px 12px"><b>AI 語音（4 種聲音＋中文）還有 ${todo} / ${its.length} 段沒產生</b><span class="muted" style="font-size:13px">還沒產生的先用原本的聲音。按一次「一鍵產生全部」，${Store.backend === "sheet" ? "後台會自己慢慢做（先做這個主題），關掉網頁也會繼續" : "這頁開著就會慢慢做"}。</span><div class="row" style="flex-wrap:wrap"><button class="btn small primary" id="bbGen">一鍵產生全部</button><button class="btn small" data-aivstop hidden>停止</button></div><span style="font-size:13px" data-aivsrv></span><span style="font-size:13px" data-aivout></span></div>` : ""; })() : ""}
     <p class="muted" style="margin:0;font-size:13px;text-align:center">點大圖可以再聽一次。建議爸媽陪著一起聽、跟著唸、指給寶寶看；自動播放 10 分鐘會自己停下來休息。</p>
@@ -3237,6 +3288,8 @@ function renderBaby(say) {
   $("baby").querySelectorAll("[data-aivstop]").forEach(b => b.onclick = () => { AIV.stop = true; });
   aivUi();
   { const [w0, , ph0, zw0, zp0] = items[BB.i], nx = items[(BB.i + 1) % items.length]; aivPrefetch(AIV_LIST.map(([v]) => [v, babyEn(w0, ph0)]).concat([["zh", babyZhT(zw0, zp0)]], AIV_LIST.map(([v]) => [v, babyEn(nx[0], nx[2])]))); }
+  $("bbPhoto").onclick = () => { state.babyPhoto = state.babyPhoto === false; Store.save(); renderBaby(false); };
+  prefetchBabyPix(items, BB.i);
   $("bbSubT").onclick = () => { state.babySub = state.babySub === false; Store.save(); renderBaby(false); };
   $("bbZh").onclick = () => { state.babyZh = !state.babyZh; Store.save(); if (state.babyZh && TTS && !zhVoice()) toast("這台裝置找不到中文語音，請到系統設定加入「中文（台灣）」語音"); renderBaby(true); };
   if ($("bbLight")) $("bbLight").onclick = () => { BB.dark = false; renderBaby(false); };
@@ -3246,9 +3299,11 @@ async function sayCard() {
   const tok = ++BB.tok, [, , items] = BABY[BB.t], [w, , ph, zw, zp] = items[BB.i], zh = !!state.babyZh;
   const card = $("bbCard"); if (card) { card.classList.remove("pop"); void card.offsetWidth; card.classList.add("pop"); }
   const reps = [1, 3, 5].includes(state.babyReps) ? state.babyReps : 5, en = babyEn(w, ph), zt = babyZhT(zw, zp), slow = !!state.babySlow;
+  const frames = await bbFrames(w, items[BB.i][1]); if (tok !== BB.tok) return;
   for (let r = 0; r < reps; r++) {
     const [vid, vname] = AIV_LIST[r % 4];
     BB.rep = `第 ${r + 1} / ${reps} 次・${AIV_ON() ? vname : "電腦語音"}`;
+    bbShowFrame(frames[r % 5], w, items[BB.i][1]);
     const u = AIV_ON() ? await raceMs(aiVoiceUrl(vid, en), 2500) : "";
     if (tok !== BB.tok) return;
     bbSub(en.replace(" ... ", " "), `${zw}。${zp}`, "en");
@@ -3265,7 +3320,7 @@ async function sayCard() {
     }
     if (r + 1 < reps) { await waitMs(900); if (tok !== BB.tok) return; }
   }
-  BB.rep = "";
+  BB.rep = ""; bbShowFrame(frames[0], w, items[BB.i][1]);
   if (!BB.auto) return;
   if (Date.now() - BB.started > 10 * 60e3) { BB.auto = false; BB.dark = false; toast("聽了 10 分鐘了，休息一下吧！"); renderBaby(false); return; }
   await waitMs(2500); if (tok !== BB.tok || !BB.auto) return;
@@ -4773,7 +4828,7 @@ function renderStats(focus) {
     <section class="card flat"><h3>資料</h3><p class="muted" style="margin:0" id="stStore"></p>
       <div class="row"><button class="btn small" id="resetBtn">清除所有進度</button></div></section>`;
   if (OWNER_WHO && !GUEST && $("stStore")) $("stStore").insertAdjacentHTML("beforebegin", `<p style="margin:0">你是擁有者：已用 <b>${esc(OWNER_WHO)}</b> 驗證。</p>`);
-  if (!GUEST && Store.backend === "sheet" && $("stStore")) $("stStore").insertAdjacentHTML("afterend", BACKEND_BUILD === EQ_BUILD ? `<p class="muted" style="margin:0;font-size:12px">網頁和後台都是 ${esc(EQ_BUILD)} 版 ✓</p>`
+  if (!GUEST && Store.backend === "sheet" && $("stStore")) $("stStore").insertAdjacentHTML("afterend", BACKEND_BUILD === EQ_BUILD ? `<p class="muted" style="margin:0;font-size:12px">網頁和後台都是 ${esc(EQ_BUILD)} 版 ✓（網頁更新編號 ${esc(EQ_WEB)}）</p>`
     : !BACKEND_BUILD ? `<div class="reply" style="padding:8px 10px;border-radius:10px;font-size:14px" id="bkWait"><b>${STATUS_CHK.busy ? "正在確認後台版本…" : "這次沒連上後台，還不知道後台版本"}</b>（網頁 ${esc(EQ_BUILD)}）<br><span class="muted" style="font-size:13px">這不代表後台是舊版，通常是 Google 剛睡醒或網路慢一下。</span>${STATUS_CHK.busy ? "" : `<div class="row" style="margin-top:6px"><button class="btn small" id="bkRetry">再檢查一次</button></div>`}</div>`
     : `<div class="reply" style="border:1px solid var(--bad);padding:8px 10px;border-radius:10px;font-size:14px"><b>後台還是舊版</b>（網頁 ${esc(EQ_BUILD)}・後台 ${esc(BACKEND_BUILD)}）<br>${REMOTE ? "1. Apps Script 換上新的 Code.gs、按存檔<br>2.「部署 → 管理部署作業」→ 點「所有人」的部署 → 鉛筆 → 版本選「新版本」→ 部署<br>3. 回來重新整理這頁" : "Apps Script 換上新的 Code.gs、按存檔，再重新整理這頁"}</div>`);
   if ($("bkRetry")) $("bkRetry").onclick = () => checkStatus(1).then(() => { if (!$("stats").hidden) renderStats(); });
