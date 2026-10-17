@@ -128,11 +128,12 @@ button.chip:hover{border-color:var(--primary)}
 .wish .reply{background:var(--surface-2);border-radius:10px;padding:8px 10px;font-size:14px}
 .st{font-size:12px;font-weight:700;border-radius:999px;padding:2px 8px;background:var(--surface-2)}.st.done{background:var(--good);color:#fff}.st.doing{background:var(--gold);color:#1a1a1a}
 .wall{overflow:hidden;border-radius:12px;background:var(--surface-2);padding:8px 0;font-size:14px}
-.wall .track{display:inline-flex;gap:28px;white-space:nowrap;padding-left:100%;animation:wall var(--dur,30s) linear infinite}
+.wall .track{display:inline-flex;white-space:nowrap;animation:wall var(--dur,30s) linear infinite}
+.wall .tseg{display:inline-flex;gap:28px;padding-right:28px;padding-left:12px}
 .wall:hover .track,.wall:focus-within .track{animation-play-state:paused}
 .wall b{font-weight:700}.wall i{font-style:normal;color:var(--muted)}
-@keyframes wall{to{transform:translateX(-100%)}}
-@media (prefers-reduced-motion: reduce){.wall .track{animation:none;padding-left:12px;padding-right:12px;flex-wrap:wrap;white-space:normal;gap:6px 18px}}
+@keyframes wall{to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion: reduce){.wall .track{animation:none;padding-left:12px;padding-right:12px;flex-wrap:wrap;white-space:normal;gap:6px 18px}.wall .tseg{flex-wrap:wrap;white-space:normal}.wall .tseg+.tseg{display:none}}
 .blk{display:inline-block;padding:2px 8px;margin:2px 1px;border-radius:8px;line-height:1.5;cursor:pointer}
 .blk.b0{background:rgba(46,84,222,.14)}.blk.b1{background:rgba(60,196,139,.20)}.blk.b2{background:rgba(231,180,76,.24)}.blk.b3{background:rgba(255,123,103,.18)}
 .blk.bfix{background:transparent;padding:2px 2px;cursor:default}
@@ -157,6 +158,9 @@ button.chip:hover{border-color:var(--primary)}
 .badline{display:flex;flex-direction:column;gap:2px;font-size:15px}.badline s{color:var(--bad)}.badline b{color:var(--good)}
 .cktable{width:100%;border-collapse:collapse;font-size:14px}.cktable td,.cktable th{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
 .cktable th{font-size:12px;color:var(--muted)}
+.sponsorwrap{display:flex;flex-direction:column;gap:4px}
+.sponsorwrap .wall{font-size:15px;padding:10px 0;background:var(--primary-soft)}
+.sponsorwrap .tlabel{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
 .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .tier{border:1px solid var(--line);border-radius:14px;padding:12px 10px;display:flex;flex-direction:column;gap:2px;text-align:center;min-width:0}
 .tier .em{font-size:26px}.tier b{font-size:18px;font-variant-numeric:tabular-nums}.tier span{font-size:13px;color:var(--muted)}
@@ -415,6 +419,7 @@ a.btn{text-decoration:none}
     <button class="tchip" id="tbSup" hidden><span aria-hidden="true">💛</span>贊助與感謝</button>
     <button class="tchip" id="tbPic" hidden><span aria-hidden="true">📬</span>朋友的照片<b id="tbPicN"></b></button>
   </nav>
+  <div id="sponsorWrap" class="sponsorwrap" hidden><span class="tlabel">💛 感謝</span><div id="sponsorWall"></div></div>
 
   <section class="card" id="assessCard" hidden>
     <span class="eyebrow">第一次來嗎？</span>
@@ -480,7 +485,6 @@ a.btn{text-decoration:none}
     <div class="grid" id="modeGrid"></div>
   </section>
 
-  <div class="wall" id="sponsorWall" hidden></div>
   <p class="foot" id="storageNote"></p>
 </main>
 
@@ -599,7 +603,7 @@ let GUEST = false;
 let SPONSOR = "";
 let OWNER_WHO = "";
 const EQ_BUILD = "cb6c37";
-const EQ_WEB = "75a2";
+const EQ_WEB = "a566";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -4722,12 +4726,13 @@ function renderHome() {
 }
 function wallHtml() {
   const items = SPONSORS.map(s => `<span>${esc(s.t || "💛")} <b>${esc(s.n)}</b>${s.m ? ` <i>${esc(s.m)}</i>` : ""}</span>`).join("");
-  return `<div class="wall" tabindex="0" aria-label="感謝贊助者名單"><div class="track" style="--dur:${Math.max(18, SPONSORS.length * 6)}s">${items}</div></div>`;
+  return `<div class="wall" tabindex="0" aria-label="感謝名單"><div class="track" style="--dur:${Math.max(16, SPONSORS.length * 7)}s"><span class="tseg">${items}</span><span class="tseg" aria-hidden="true">${items}</span></div></div>`;
 }
 function renderSponsorWall() {
-  const el = $("sponsorWall"); if (!el) return;
-  if (!SPONSORS.length || !SHOW_SUPPORT()) { el.hidden = true; return; }
-  el.hidden = false; el.outerHTML = wallHtml().replace('<div class="wall"', '<div class="wall" id="sponsorWall" title="感謝贊助者"');
+  const wrap = $("sponsorWrap"), el = $("sponsorWall"); if (!wrap || !el) return;
+  if (!SPONSORS.length || !SHOW_SUPPORT()) { wrap.hidden = true; return; }
+  wrap.hidden = false; el.innerHTML = wallHtml();
+  el.firstChild.style.cursor = "pointer"; el.firstChild.title = "點一下看贊助方式"; el.firstChild.onclick = openSupport;
 }
 function openSupport() {
   const I = SPONSOR_INFO || {}, bankOk = !!I.account;
@@ -4752,7 +4757,7 @@ function openSupport() {
       <p style="margin:0;font-size:15px">想要什麼新功能、哪裡不好用，都歡迎告訴我。你的想法會讓這個工具一起長大；覺得好用的話，也歡迎分享給需要的朋友。</p>
       ${I.wish ? `<a class="btn block" href="${esc(I.wish)}" target="_blank" rel="noopener">打開許願表單</a>` : CAN_WISH() ? `<button class="btn block" id="spWishBoard">去許願池看看大家的願望</button>` : CAN_FEEDBACK() ? `<textarea class="field" id="spWish" maxlength="500" style="min-height:70px" placeholder="我希望可以…"></textarea><div class="row"><button class="btn small" id="spWishGo">許願</button><span class="muted" style="font-size:13px" id="spWishOut"></span></div>` : ""}
     </section>
-    ${SPONSORS.length ? `<span class="eyebrow">感謝贊助者</span>${wallHtml()}` : ""}`);
+    ${SPONSORS.length ? `<span class="eyebrow">💛 感謝</span>${wallHtml()}` : ""}`);
   $("spClose").onclick = closeModal;
   if ($("spCopy")) $("spCopy").onclick = async () => {
     const acct = (SPONSOR_INFO.account || "").replace(/-/g, "");
@@ -4921,7 +4926,7 @@ function renderStats(focus) {
       <p style="margin:0">謝謝你願意讓這份心意繼續走下去。若能幫得上忙，表示彼此有份機緣，送給您，一起變得更好。請多多支持，是小葡的動力！</p>
       <p style="margin:0">願意使用、分享給需要的人，或到許願池留一句建議，都是很珍貴的鼓勵。工具會持續整理與調整，遇到不順手的地方，也歡迎告訴我。</p>
       <div class="row">${CAN_WISH() ? `<button class="btn small primary" id="wishOpen2">去許願池</button>` : ""}${SHOW_SUPPORT() ? `<button class="btn small" id="supOpen">看贊助方式</button>` : ""}</div>
-      ${SHOW_SUPPORT() && SPONSORS.length ? `<span class="eyebrow">感謝贊助者</span>${wallHtml()}` : ""}
+      ${SHOW_SUPPORT() && SPONSORS.length ? `<span class="eyebrow">💛 感謝</span>${wallHtml()}` : ""}
       ${CAN_FEEDBACK() && !CAN_WISH() && GUEST ? `<label class="lbl" for="fbText">給我一句建議</label>
       <textarea class="field" id="fbText" maxlength="500" style="min-height:76px" placeholder="哪裡好用、哪裡卡卡的，或想要什麼新功能，都可以寫"></textarea>
       <div class="row"><button class="btn small" id="fbSend">送出</button><span class="muted" style="font-size:13px" id="fbMsg"></span></div>` : ""}
