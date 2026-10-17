@@ -175,6 +175,40 @@ button.chip:hover{border-color:var(--primary)}
 .bbviews .vt{border:0;background:none;border-radius:12px;padding:6px 0;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap;cursor:pointer}
 .bbviews .vt span{font-size:20px;line-height:1.2}
 .bbviews .vt.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.bbcount{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:4px 10px;max-width:min(78vw,330px);min-height:min(46vw,230px);font-size:min(14vw,60px);line-height:1.15}
+.bbcount.n1{font-size:min(40vw,180px)}.bbcount.n2{font-size:min(28vw,120px)}.bbcount.n3,.bbcount.n4{font-size:min(20vw,84px)}
+.bbcount span{animation:bbpop .5s ease both}
+.dailybox{display:flex;flex-direction:column;gap:8px;border-radius:14px;padding:10px 12px}
+.dailydots{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
+.dailydots span{font-size:20px;opacity:.35;filter:grayscale(.6);transition:opacity .2s}
+.dailydots span.done{opacity:.8;filter:none}
+.dailydots span.on{opacity:1;filter:none;transform:scale(1.25)}
+.dailytag{align-self:center;font-size:12px;font-weight:700;background:var(--surface);border-radius:999px;padding:2px 10px}
+.spflow{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:12px;color:var(--muted)}
+.spk-chip{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:800;color:#fff;background:var(--c)}
+.c0{--c:#3E6FD8}.c1{--c:#D9772B}.c2{--c:#23946C}.c3{--c:#A257C9}.c4{--c:#D24B6E}
+.spblocks{display:flex;flex-direction:column;gap:8px}
+.spblk{display:flex;flex-direction:column;gap:4px;border-radius:14px;padding:10px 12px;background:var(--surface);box-shadow:var(--shadow);border-left:6px solid var(--c);cursor:pointer}
+.spblk.now{outline:3px solid var(--primary)}
+.spk-k{font-size:12px;font-weight:800;color:var(--c)}
+.spblk .en{font-size:18px;font-weight:700}.spblk .zh{font-size:14px;color:var(--muted)}
+.spfull{background:var(--surface-2);border-radius:14px;padding:12px;line-height:1.7;display:flex;flex-direction:column;gap:4px}
+.spbar{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden}.spbar i{display:block;height:100%;width:0;background:var(--primary)}
+.spchips{display:flex;flex-direction:column;gap:6px}
+.spchip{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:2px solid transparent;background:var(--surface-2);border-radius:12px;padding:8px 10px;cursor:pointer;color:inherit}
+.spchip span{font-size:13px;color:var(--muted)}
+.spchip[aria-pressed="true"]{border-color:var(--c);background:var(--surface)}
+.spchat{display:flex;flex-direction:column;gap:8px}
+.bubble{align-self:flex-start;max-width:88%;background:var(--surface);border-radius:16px 16px 16px 4px;padding:10px 12px;box-shadow:var(--shadow)}
+.bubble .zh{font-size:13px;color:var(--muted)}
+.bubble.me{align-self:flex-end;background:var(--primary-soft);border-radius:16px 16px 4px 16px}
+.bubble.hint{opacity:.7;border:2px dashed var(--primary);background:none;box-shadow:none}
+.bubble.now{outline:2px solid var(--primary)}
+.nwitem{background:var(--surface);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:6px}
+.nwt{font-weight:800;font-size:17px;line-height:1.35}
+.nwd{font-size:13px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.nwmeta{font-size:12px;color:var(--muted);font-weight:700}
+.passage.nwblur{filter:blur(7px);user-select:none;pointer-events:none}
 .bbview{display:flex;flex-direction:column;gap:14px}
 .ptq{display:block;width:100%;border:0;background:var(--surface);border-radius:18px;padding:12px 14px;text-align:center;box-shadow:var(--shadow);cursor:pointer;color:inherit}
 .ptgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -457,6 +491,7 @@ a.btn{text-decoration:none}
     <button class="tchip" id="tbWish"><span aria-hidden="true">💬</span>許願池<b id="tbWishN"></b></button>
     <button class="tchip" id="tbSup" hidden><span aria-hidden="true">💛</span>贊助與感謝</button>
     <button class="tchip" id="tbPic" hidden><span aria-hidden="true">📬</span>朋友的照片<b id="tbPicN"></b></button>
+    <button class="tchip" id="tbFam" hidden><span aria-hidden="true">👪</span>家人申請<b id="tbFamN"></b></button>
   </nav>
   <div id="sponsorWrap" class="sponsorwrap" hidden><span class="tlabel">💛 感謝</span><div id="sponsorWall"></div></div>
 
@@ -486,6 +521,7 @@ a.btn{text-decoration:none}
     <div class="dots" id="dailyDots" aria-hidden="true"></div>
     <button class="btn primary block" id="dailyBtn"></button>
     <button class="btn block" id="ckDayBtn"></button>
+    <button class="btn block" id="spkDayBtn"></button>
     <button class="btn block" id="dueBtn" hidden></button>
     <div class="ai-row" id="aiRow" hidden>
       <span class="muted" id="aiText">想要不一樣的例句？讓 AI 用今天的單字寫全新的句子。</span>
@@ -550,6 +586,8 @@ a.btn{text-decoration:none}
 <main id="dialog" class="wrap" hidden></main>
 <main id="baby" class="wrap" hidden></main>
 <main id="chunk" class="wrap" hidden></main>
+<main id="speak" class="wrap" hidden></main>
+<main id="news" class="wrap" hidden></main>
 <main id="diary" class="wrap" hidden></main>
 <main id="pairs" class="wrap" hidden></main>
 <main id="travel" class="wrap" hidden></main>
@@ -641,8 +679,8 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
-const EQ_BUILD = "1b01f5";
-const EQ_WEB = "fea6";
+const EQ_BUILD = "789378";
+const EQ_WEB = "a0eb";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -769,6 +807,7 @@ function mergeLibrary(lib) {
   if (lib.voices && typeof lib.voices === "object") mergeVoices(lib.voices);
   if (Array.isArray(lib.tts)) lib.tts.forEach(k => typeof k === "string" && AIV.have.add(k));
   if (lib.babyPics && typeof lib.babyPics === "object") BPICS = { pics: lib.babyPics.pics || {}, hide: lib.babyPics.hide || [], pending: lib.babyPics.pending || [] };
+  if (typeof lib.famPending === "number") FAMG.pending = lib.famPending;
   try { renderWishBar(); } catch (e) { }
   if (typeof renderSponsorWall === "function") renderSponsorWall();
 }
@@ -1096,10 +1135,10 @@ const aivTodo = items => items.filter(([v, t]) => !AIV.have.has(aiKey(v, t))).le
 /* 一鍵全部產生：Google 版交給後台排程（關掉網頁也會繼續）；電腦版在這頁慢慢做 */
 const AIVS = { st: null, timer: 0 };
 function aivAllItems(babyFirst) {
-  const cur = BB ? BABY[BB.t][2] : [], first = [];
+  const cur = BB ? bbItems() : [], first = [];
   if (babyFirst) cur.forEach(([w, , ph, zw, zp]) => { AIV_LIST.forEach(([v]) => first.push([v, babyEn(w, ph)])); first.push(["zh", babyZhT(zw, zp)]); });
   const seen = new Set(), out = [];
-  first.concat(babyAivItems(), courseAivItems()).forEach(([v, t]) => { const k = aiKey(v, t); if (!seen.has(k) && !AIV.have.has(k)) { seen.add(k); out.push({ k, v, t }); } });
+  first.concat(babyAivItems(), courseAivItems(), spkAivItems()).forEach(([v, t]) => { const k = aiKey(v, t); if (!seen.has(k) && !AIV.have.has(k)) { seen.add(k); out.push({ k, v, t }); } });
   return out;
 }
 async function aivGenAll(babyFirst) {
@@ -2785,15 +2824,20 @@ function ckLibHtml() {
   const cats = CHUNK.lib, [name, , mods] = cats[CK.cat], st = ckState(), total = cats.reduce((a, c) => a + c[2].length, 0), ai = ckAiList();
   return `<p class="muted" style="margin:0">每一個區塊就像一個寫好的函式，___ 的地方換成不同內容，就是不同的句子。會用了就按「我會了」。<b>已經會 ${ckLearned()} / ${total} 個</b></p>
     <div class="bbthemes">${cats.map(([n, ic, m], k) => `<button class="tchip${k === CK.cat ? " on" : ""}" data-cat="${k}"><span aria-hidden="true">${ic}</span>${esc(n)} <b>${m.filter(x => st.learned[x[0]]).length}/${m.length}</b></button>`).join("")}</div>
-    ${mods.map(([c, zh, slot, exs]) => `<div class="ckcard">
+    ${mods.map(([c, zh, slot, exs], mi) => `<div class="ckcard">
       <div class="row" style="align-items:flex-start"><div style="flex:1;min-width:0"><span class="big blk b0" data-say="${esc(c.replace(/\s*_+\??/g, "").trim())}">${esc(c)}</span><div style="margin-top:4px">${esc(zh)}<span class="muted" style="font-size:13px">・後面接：${esc(slot)}</span></div></div>
       <button class="btn small${st.learned[c] ? " primary" : ""}" data-learn="${esc(c)}" aria-pressed="${st.learned[c] ? "true" : "false"}">${st.learned[c] ? "會了 ✓" : "我會了"}</button></div>
       ${exs.map(([en, z]) => `<div>${ckBlocks(en)}<div class="muted" style="font-size:14px">${esc(z)}</div></div>`).join("")}
-      ${(() => { const h = c.replace(/\s*_+\??/g, "").replace(/[,?]$/, "").trim().toLowerCase(); if (h.split(" ").length < 2) return ""; const hit = ai.filter(x => (" " + ckPlain(x.en).toLowerCase() + " ").includes(" " + h + " ") || ckPlain(x.en).toLowerCase().startsWith(h + " ")).slice(0, 2); return hit.length ? `<span class="eyebrow">在你的 AI 例句裡</span>${hit.map(x => `<div>${ckBlocks(x.en)}<div class="muted" style="font-size:14px">${esc(x.zh)}</div></div>`).join("")}` : ""; })()}
+      ${(() => { const mine = (state.aiBank[ckKeyMod(c)] || []).slice(-5).reverse(), seen = new Set(mine.map(x => x.s)); const h = c.replace(/\s*_+\??/g, "").replace(/[,?]$/, "").trim().toLowerCase(); const hit = h.split(" ").length < 2 ? [] : ai.filter(x => !seen.has(ckPlain(x.en)) && ((" " + ckPlain(x.en).toLowerCase() + " ").includes(" " + h + " ") || ckPlain(x.en).toLowerCase().startsWith(h + " "))).slice(0, 2);
+        const n = (state.aiBank[ckKeyMod(c)] || []).length;
+        return (mine.length ? `<span class="eyebrow">🤖 AI 新例句（共 ${n} 句${n > 5 ? "，顯示最新 5 句" : ""}）</span>${mine.map(x => `<div>${ckBlocks(x.c && ckValid(x.c, x.s) ? x.c : ckAuto(x.s))}<div class="muted" style="font-size:14px">${esc(x.zh)}</div></div>`).join("")}` : "")
+          + (hit.length ? `<span class="eyebrow">在你的 AI 例句裡</span>${hit.map(x => `<div>${ckBlocks(x.en)}<div class="muted" style="font-size:14px">${esc(x.zh)}</div></div>`).join("")}` : "")
+          + (AI.kind ? `<button class="btn small" data-ckmore="${mi}" style="align-self:flex-start">🤖 用這個片語再出 5 句</button>` : ""); })()}
     </div>`).join("")}`;
 }
 function ckLibBind() {
   $("ckBody").querySelectorAll("[data-cat]").forEach(b => b.onclick = () => { CK.cat = Number(b.dataset.cat); renderChunk(); });
+  $("ckBody").querySelectorAll("[data-ckmore]").forEach(b => b.onclick = () => ckAiMore("mod", Number(b.dataset.ckmore), b));
   $("ckBody").querySelectorAll("[data-learn]").forEach(b => b.onclick = () => {
     const st = ckState(), k = b.dataset.learn;
     if (st.learned[k]) delete st.learned[k]; else { st.learned[k] = today(); addXp(3); }
@@ -2898,7 +2942,65 @@ function ckListenBind() {
 /* ---- 第四層：情境輸出 ---- */
 function ckTalkScene() {
   if (CK.src === "ai" && ckAiList().length >= 4) { CK.aiTasks = CK.aiTasks || ckAiTasks(); return ["我的 AI 例句", "🤖", CK.aiTasks]; }
-  return CHUNK.scenes[CK.sc];
+  const [n, ic, tasks] = CHUNK.scenes[CK.sc];
+  return [n, ic, tasks.concat(ckSceneAi(n))];
+}
+/* ---- 🤖 用這個片語／情境再出 5 句：存進 AI 例句庫（試算表「AI例句」），之後題目也會輪到 ---- */
+const ckKeyMod = c => "片語:" + c, ckKeySc = n => "情境:" + n;
+function ckSceneAi(n) {
+  const heads = CHUNK.lib.flatMap(c => c[2].map(m => m[0].replace(/\s*_+\??/g, "").replace(/[,?]$/, "").trim()));
+  return (state.aiBank[ckKeySc(n)] || []).filter(x => x && x.s && x.zh).map(x => {
+    const en = x.c && ckValid(x.c, x.s) ? x.c : ckAuto(x.s), low = x.s.toLowerCase(), out = [];
+    for (let k = 0, st = hashStr(x.s); k < heads.length && out.length < 2; k++) { const h = heads[(st + k * 7) % heads.length]; if (!low.includes(h.toLowerCase()) && !out.includes(h)) out.push(h); }
+    return [x.zh, en, out];
+  }).filter(t => ckParts(t[1]).length >= 2);
+}
+async function ckAiMore(kind, idx, btn) {
+  if (!AI.kind) { toast("要先設定 Gemini API 金鑰才能用 AI 出題"); return; }
+  let key, head = "", prompt;
+  const rules = "Each sentence: natural, everyday, at most 16 words, plain ASCII punctuation, no quotes from movies or TV. " +
+    "Give \"chunks\": the SAME English sentence with \" | \" between natural chunks (multi-word blocks a learner remembers as one unit), 2 to 5 chunks";
+  if (kind === "mod") {
+    const [c, zh, slot] = CHUNK.lib[CK.cat][2][idx]; key = ckKeyMod(c); head = c.replace(/\s*_+\??/g, "").replace(/[,?]$/, "").trim();
+    const have = (state.aiBank[key] || []).map(x => x.s).slice(-20);
+    prompt = "You write practice sentences for a Taiwanese adult who learns English by chunks (ready-made phrases).\n" +
+      `Level: ${D().ai}.\nTarget chunk: "${c}" (meaning in Chinese: ${zh}; what follows it: ${slot}).\n` +
+      "Write 5 NEW sentences that each use the target chunk exactly. Mix the topics: daily life, work, family and kids, travel, golf. " + rules + ", and keep the target chunk as ONE block.\n" +
+      "Give each sentence a natural Traditional Chinese (Taiwan) translation.\n" +
+      (have.length ? "Do not repeat these existing sentences:\n" + have.map(x => "- " + x).join("\n") + "\n" : "") +
+      'Reply with only a JSON array like [{"en":"I\'m used to working late.","chunks":"I\'m used to | working late.","zh":"我習慣加班到很晚。"}]';
+  } else {
+    const [n] = CHUNK.scenes[idx]; key = ckKeySc(n);
+    const have = (state.aiBank[key] || []).map(x => x.s).concat(CHUNK.scenes[idx][2].map(t => ckPlain(t[1]))).slice(-24);
+    prompt = "You write speaking tasks for a Taiwanese adult who learns English by chunks (ready-made phrases like I'm trying to, as soon as, because of, Could you, I'm looking forward to, I'm used to, so that, Even though).\n" +
+      `Level: ${D().ai}.\nSituation category: ${n}.\n` +
+      "Write 5 NEW short real-life moments in this category. For each, give \"situation\": who they talk to and what they want to say, in Traditional Chinese (Taiwan), in the form 對象＋說：內容 (for example 跟同事說：會議一結束，我就把檔案寄給你。), and \"en\": what they would naturally say in English, using at least one common chunk. " + rules + ".\n" +
+      (have.length ? "Do not repeat these existing sentences:\n" + have.map(x => "- " + x).join("\n") + "\n" : "") +
+      'Reply with only a JSON array like [{"situation":"跟同事說：會議一結束，我就把檔案寄給你。","en":"I\'ll send you the file as soon as the meeting ends.","chunks":"I\'ll send you the file | as soon as | the meeting ends."}]';
+  }
+  const label = btn.textContent; btn.disabled = true; btn.textContent = "🤖 AI 出題中…";
+  try {
+    const res = await AI.json(prompt), arr = (state.aiBank[key] = state.aiBank[key] || []), added = [];
+    const headRe = head ? new RegExp("(^|[^a-z'])" + head.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "($|[^a-z'])") : null;
+    for (const x of Array.isArray(res) ? res : []) {
+      if (!x || typeof x.en !== "string") continue;
+      const sen = x.en.replace(/[’‘]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, " ").trim();
+      if (sen.length > 130 || sen.split(" ").length > 18 || !/^[A-Za-z0-9 ,.'!?;:"-]+$/.test(sen)) continue;
+      if (headRe && !headRe.test(sen.toLowerCase())) continue;
+      if (arr.some(y => y.s === sen)) continue;
+      const zh = String((kind === "mod" ? x.zh : x.situation) || "").replace(/[<>]/g, "").trim().slice(0, 80);
+      if (!zh) continue;
+      const ck = ckValid(x.chunks, sen);
+      arr.push(Object.assign({ s: sen, zh, lv: state.diff, d: today() }, ck ? { c: ck } : {}));
+      added.push({ word: key, en: sen, zh, level: D().name, chunks: ck });
+      while (arr.length > 40) arr.shift();
+    }
+    if (!added.length) throw { code: "empty" };
+    Store.save(true); logEvent("AI例句", { rows: added }); prefetchSents(added.map(x => x.en));
+    if (kind === "sc") { const tasks = ckTalkScene()[2], at = tasks.findIndex(t => ckPlain(t[1]) === added[0].en); CK.T = { sc: CK.sc, i: Math.max(0, at), R: null }; }
+    toast(kind === "mod" ? `新增 ${added.length} 句！已經放進題庫，也顯示在這個片語下面` : `新增 ${added.length} 題！現在就從第一題新題目開始`);
+    renderChunk();
+  } catch (e) { btn.disabled = false; btn.textContent = label; toast(e && e.code === "empty" ? "這次沒有產生合適的句子，再按一次試試" : aiErrorText(e)); }
 }
 function ckTalkHtml() {
   CK.sc = CK.sc || 0;
@@ -2909,7 +3011,8 @@ function ckTalkHtml() {
   const R = T.R;
   return `<p class="muted" style="margin:0">遇到這個情境，你想說的話腦中先有中文，接著直接「提取」熟悉的區塊，把它們接起來。</p>
     ${ckSrcHtml()}
-    ${CK.src === "ai" && ckAiList().length >= 4 ? "" : `<div class="bbthemes">${CHUNK.scenes.map(([n, ic], k) => `<button class="tchip${k === CK.sc ? " on" : ""}" data-sc="${k}"><span aria-hidden="true">${ic}</span>${esc(n)}</button>`).join("")}</div>`}
+    ${CK.src === "ai" && ckAiList().length >= 4 ? "" : `<div class="bbthemes">${CHUNK.scenes.map(([n, ic], k) => `<button class="tchip${k === CK.sc ? " on" : ""}" data-sc="${k}"><span aria-hidden="true">${ic}</span>${esc(n)}</button>`).join("")}</div>
+      ${(() => { const n = ckSceneAi(CHUNK.scenes[CK.sc][0]).length; return AI.kind || n ? `<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">${AI.kind ? `<button class="btn small" id="ckScMore">🤖 用這個情境再出 5 句</button>` : ""}<span class="muted" style="font-size:13px">內建 ${CHUNK.scenes[CK.sc][2].length} 題${n ? `＋AI 新題 ${n} 題` : ""}</span></div>` : ""; })()}`}
     <div class="card" style="gap:10px"><span class="eyebrow">${esc(name)}・${T.i + 1} / ${tasks.length}</span><div style="font-size:18px;font-weight:700">${esc(t[0])}</div>
     ${ckArrangeHtml(R, "依照你想說的順序，點下面的區塊")}
     ${R.done ? `<div class="reply" style="border:1px solid ${R.right ? "var(--good)" : "var(--bad)"}"><b>${R.right ? "組對了！" : "參考說法："}</b><div style="margin-top:6px">${ckBlocks(t[1])}</div></div>
@@ -2922,6 +3025,7 @@ function ckTalkBind() {
   const T = CK.T, R = T.R, tasks = ckTalkScene()[2];
   ckSrcBind();
   $("ckBody").querySelectorAll("[data-sc]").forEach(b => b.onclick = () => { CK.sc = Number(b.dataset.sc); CK.T = null; renderChunk(); });
+  if ($("ckScMore")) $("ckScMore").onclick = () => ckAiMore("sc", CK.sc, $("ckScMore"));
   $("ckBody").querySelectorAll("[data-pick]").forEach(b => b.onclick = () => { const i = Number(b.dataset.pick); R.picked.push(i); speak(ckCardSay(R.deck[i].c)); renderChunk(); });
   if ($("ckUndo")) $("ckUndo").onclick = () => { R.picked.pop(); renderChunk(); };
   if ($("ckOk")) $("ckOk").onclick = () => { R.done = true; R.right = ckCheck(R); if (R.right) addXp(10); Store.save(); renderChunk(); speak(ckPlain(R.item.en)); };
@@ -3181,11 +3285,11 @@ async function ckAiChunk() {
 }
 function ckAiTasks() {
   const list = shuffle(ckAiList()), others = list.flatMap(x => ckParts(x.en));
-  return list.slice(0, 8).map(x => [x.zh ? "說出：" + x.zh : "把這句排出來", x.en, shuffle(others).filter(c => !ckParts(x.en).includes(c)).slice(0, 2)]);
+  return list.slice(0, 8).map(x => [x.zh ? (/：/.test(x.zh) ? x.zh : "說出：" + x.zh) : "把這句排出來", x.en, shuffle(others).filter(c => !ckParts(x.en).includes(c)).slice(0, 2)]);
 }
 
 /* ================= 寶寶聽力（1–3 歲） ================= */
-const BABY = [["動物", "🐾", [["dog", "🐶", "Woof woof! A dog.", "狗狗", "汪汪！是狗狗。"], ["cat", "🐱", "Meow! A cat.", "貓咪", "喵～是貓咪。"], ["cow", "🐮", "Moo! A cow.", "牛", "哞～是牛。"], ["duck", "🦆", "Quack quack! A duck.", "鴨鴨", "呱呱！是鴨鴨。"], ["pig", "🐷", "Oink oink! A pig.", "豬豬", "齁齁！是豬豬。"], ["sheep", "🐑", "Baa! A sheep.", "綿羊", "咩～是綿羊。"], ["bird", "🐦", "Tweet tweet! A bird.", "小鳥", "啾啾！是小鳥。"], ["fish", "🐟", "A fish. Swim, swim!", "魚", "是魚，游呀游！"], ["rabbit", "🐰", "Hop hop! A rabbit.", "兔兔", "跳跳！是兔兔。"], ["elephant", "🐘", "A big elephant!", "大象", "好大的大象！"]]], ["吃東西", "🍎", [["apple", "🍎", "Yummy! An apple.", "蘋果", "好好吃！是蘋果。"], ["banana", "🍌", "A yellow banana.", "香蕉", "黃色的香蕉。"], ["milk", "🥛", "Drink your milk.", "牛奶", "來喝牛奶。"], ["water", "💧", "Some water, please.", "水", "請給我一點水。"], ["bread", "🍞", "Yummy bread.", "麵包", "好吃的麵包。"], ["egg", "🥚", "An egg.", "蛋", "一顆蛋。"], ["rice", "🍚", "Eat your rice.", "飯", "來吃飯飯。"], ["cookie", "🍪", "A cookie for you!", "餅乾", "給你一片餅乾！"]]], ["身體", "👀", [["eyes", "👀", "Where are your eyes?", "眼睛", "你的眼睛在哪裡？"], ["nose", "👃", "Touch your nose.", "鼻子", "摸摸你的鼻子。"], ["mouth", "👄", "Open your mouth. Ahh!", "嘴巴", "嘴巴張開，啊～"], ["ears", "👂", "Where are your ears?", "耳朵", "你的耳朵在哪裡？"], ["hands", "👏", "Clap your hands!", "手", "拍拍手！"], ["feet", "🦶", "Stomp your feet!", "腳", "跺跺腳！"], ["teeth", "🦷", "Brush your teeth.", "牙齒", "刷刷牙。"], ["hair", "💇", "Brush your hair.", "頭髮", "梳梳頭髮。"]]], ["顏色", "🎨", [["red", "🔴", "Red! It is red.", "紅色", "紅色！這是紅色。"], ["blue", "🔵", "Blue! It is blue.", "藍色", "藍色！這是藍色。"], ["yellow", "🟡", "Yellow! It is yellow.", "黃色", "黃色！這是黃色。"], ["green", "🟢", "Green! It is green.", "綠色", "綠色！這是綠色。"], ["orange", "🟠", "Orange! It is orange.", "橘色", "橘色！這是橘色。"], ["purple", "🟣", "Purple! It is purple.", "紫色", "紫色！這是紫色。"], ["black", "⚫", "Black! It is black.", "黑色", "黑色！這是黑色。"], ["white", "⚪", "White! It is white.", "白色", "白色！這是白色。"]]], ["家人", "👪", [["mommy", "👩", "Hi, Mommy!", "媽媽", "媽媽好！"], ["daddy", "👨", "Hi, Daddy!", "爸爸", "爸爸好！"], ["baby", "👶", "A happy baby.", "寶寶", "開心的寶寶。"], ["grandma", "👵", "Hi, Grandma!", "奶奶", "奶奶好！"], ["grandpa", "👴", "Hi, Grandpa!", "爺爺", "爺爺好！"], ["brother", "👦", "My big brother.", "哥哥", "我的哥哥。"], ["sister", "👧", "My big sister.", "姊姊", "我的姊姊。"], ["family", "👨‍👩‍👧", "I love my family.", "家人", "我愛我的家人。"]]], ["玩具東西", "🧸", [["ball", "⚽", "Roll the ball!", "球", "滾滾球！"], ["teddy bear", "🧸", "Hug the teddy bear.", "泰迪熊", "抱抱泰迪熊。"], ["book", "📖", "Let's read a book.", "書", "我們來看書。"], ["car", "🚗", "Beep beep! A car.", "車車", "叭叭！是車車。"], ["bus", "🚌", "The bus goes round and round.", "公車", "公車轉呀轉。"], ["shoes", "👟", "Put on your shoes.", "鞋子", "穿上鞋子。"], ["hat", "👒", "Put on your hat.", "帽子", "戴上帽子。"], ["cup", "🥤", "A cup of water.", "杯子", "一杯水。"]]], ["每一天", "☀️", [["hello", "👋", "Hello! Good morning.", "你好", "你好！早安。"], ["bye-bye", "👋", "Bye-bye! See you soon.", "掰掰", "掰掰！待會見。"], ["eat", "🥣", "It's time to eat.", "吃", "吃飯時間到了。"], ["bath", "🛁", "Bath time! Splash splash.", "洗澡", "洗澡囉！嘩啦嘩啦。"], ["sleep", "😴", "Time to sleep. Good night.", "睡覺", "該睡覺了，晚安。"], ["walk", "🚶", "Let's go for a walk.", "散步", "我們去散步吧。"], ["hug", "🤗", "Give me a hug!", "抱抱", "抱抱我！"], ["kiss", "😘", "A big kiss for you!", "親親", "給你一個大親親！"]]], ["大自然", "🌈", [["sun", "☀️", "The sun is up!", "太陽", "太陽出來了！"], ["moon", "🌙", "Hello, moon! Good night.", "月亮", "月亮你好！晚安。"], ["star", "⭐", "A little star.", "星星", "一顆小星星。"], ["rain", "🌧️", "Rain, rain. Pitter patter.", "下雨", "下雨了，滴答滴答。"], ["flower", "🌸", "Smell the flower.", "花", "聞聞花。"], ["tree", "🌳", "A big green tree.", "樹", "一棵綠色的大樹。"], ["cloud", "☁️", "A white cloud.", "雲", "一朵白雲。"], ["rainbow", "🌈", "Look! A rainbow!", "彩虹", "你看！彩虹！"]]]];
+const BABY = [["動物", "🐾", [["dog", "🐶", "Woof woof! A dog.", "狗狗", "汪汪！是狗狗。"], ["cat", "🐱", "Meow! A cat.", "貓咪", "喵～是貓咪。"], ["cow", "🐮", "Moo! A cow.", "牛", "哞～是牛。"], ["duck", "🦆", "Quack quack! A duck.", "鴨鴨", "呱呱！是鴨鴨。"], ["pig", "🐷", "Oink oink! A pig.", "豬豬", "齁齁！是豬豬。"], ["sheep", "🐑", "Baa! A sheep.", "綿羊", "咩～是綿羊。"], ["bird", "🐦", "Tweet tweet! A bird.", "小鳥", "啾啾！是小鳥。"], ["fish", "🐟", "A fish. Swim, swim!", "魚", "是魚，游呀游！"], ["rabbit", "🐰", "Hop hop! A rabbit.", "兔兔", "跳跳！是兔兔。"], ["elephant", "🐘", "A big elephant!", "大象", "好大的大象！"]]], ["吃東西", "🍎", [["apple", "🍎", "Yummy! An apple.", "蘋果", "好好吃！是蘋果。"], ["banana", "🍌", "A yellow banana.", "香蕉", "黃色的香蕉。"], ["milk", "🥛", "Drink your milk.", "牛奶", "來喝牛奶。"], ["water", "💧", "Some water, please.", "水", "請給我一點水。"], ["bread", "🍞", "Yummy bread.", "麵包", "好吃的麵包。"], ["egg", "🥚", "An egg.", "蛋", "一顆蛋。"], ["rice", "🍚", "Eat your rice.", "飯", "來吃飯飯。"], ["cookie", "🍪", "A cookie for you!", "餅乾", "給你一片餅乾！"]]], ["身體", "👀", [["eyes", "👀", "Where are your eyes?", "眼睛", "你的眼睛在哪裡？"], ["nose", "👃", "Touch your nose.", "鼻子", "摸摸你的鼻子。"], ["mouth", "👄", "Open your mouth. Ahh!", "嘴巴", "嘴巴張開，啊～"], ["ears", "👂", "Where are your ears?", "耳朵", "你的耳朵在哪裡？"], ["hands", "👏", "Clap your hands!", "手", "拍拍手！"], ["feet", "🦶", "Stomp your feet!", "腳", "跺跺腳！"], ["teeth", "🦷", "Brush your teeth.", "牙齒", "刷刷牙。"], ["hair", "💇", "Brush your hair.", "頭髮", "梳梳頭髮。"]]], ["顏色", "🎨", [["red", "🔴", "Red! It is red.", "紅色", "紅色！這是紅色。"], ["blue", "🔵", "Blue! It is blue.", "藍色", "藍色！這是藍色。"], ["yellow", "🟡", "Yellow! It is yellow.", "黃色", "黃色！這是黃色。"], ["green", "🟢", "Green! It is green.", "綠色", "綠色！這是綠色。"], ["orange", "🟠", "Orange! It is orange.", "橘色", "橘色！這是橘色。"], ["purple", "🟣", "Purple! It is purple.", "紫色", "紫色！這是紫色。"], ["black", "⚫", "Black! It is black.", "黑色", "黑色！這是黑色。"], ["white", "⚪", "White! It is white.", "白色", "白色！這是白色。"]]], ["家人", "👪", [["mommy", "👩", "Hi, Mommy!", "媽媽", "媽媽好！"], ["daddy", "👨", "Hi, Daddy!", "爸爸", "爸爸好！"], ["baby", "👶", "A happy baby.", "寶寶", "開心的寶寶。"], ["grandma", "👵", "Hi, Grandma!", "奶奶", "奶奶好！"], ["grandpa", "👴", "Hi, Grandpa!", "爺爺", "爺爺好！"], ["brother", "👦", "My big brother.", "哥哥", "我的哥哥。"], ["sister", "👧", "My big sister.", "姊姊", "我的姊姊。"], ["family", "👨‍👩‍👧", "I love my family.", "家人", "我愛我的家人。"]]], ["玩具東西", "🧸", [["ball", "⚽", "Roll the ball!", "球", "滾滾球！"], ["teddy bear", "🧸", "Hug the teddy bear.", "泰迪熊", "抱抱泰迪熊。"], ["book", "📖", "Let's read a book.", "書", "我們來看書。"], ["car", "🚗", "Beep beep! A car.", "車車", "叭叭！是車車。"], ["bus", "🚌", "The bus goes round and round.", "公車", "公車轉呀轉。"], ["shoes", "👟", "Put on your shoes.", "鞋子", "穿上鞋子。"], ["hat", "👒", "Put on your hat.", "帽子", "戴上帽子。"], ["cup", "🥤", "A cup of water.", "杯子", "一杯水。"]]], ["每一天", "☀️", [["hello", "👋", "Hello! Good morning.", "你好", "你好！早安。"], ["bye-bye", "👋", "Bye-bye! See you soon.", "掰掰", "掰掰！待會見。"], ["eat", "🥣", "It's time to eat.", "吃", "吃飯時間到了。"], ["bath", "🛁", "Bath time! Splash splash.", "洗澡", "洗澡囉！嘩啦嘩啦。"], ["sleep", "😴", "Time to sleep. Good night.", "睡覺", "該睡覺了，晚安。"], ["walk", "🚶", "Let's go for a walk.", "散步", "我們去散步吧。"], ["hug", "🤗", "Give me a hug!", "抱抱", "抱抱我！"], ["kiss", "😘", "A big kiss for you!", "親親", "給你一個大親親！"]]], ["大自然", "🌈", [["sun", "☀️", "The sun is up!", "太陽", "太陽出來了！"], ["moon", "🌙", "Hello, moon! Good night.", "月亮", "月亮你好！晚安。"], ["star", "⭐", "A little star.", "星星", "一顆小星星。"], ["rain", "🌧️", "Rain, rain. Pitter patter.", "下雨", "下雨了，滴答滴答。"], ["flower", "🌸", "Smell the flower.", "花", "聞聞花。"], ["tree", "🌳", "A big green tree.", "樹", "一棵綠色的大樹。"], ["cloud", "☁️", "A white cloud.", "雲", "一朵白雲。"], ["rainbow", "🌈", "Look! A rainbow!", "彩虹", "你看！彩虹！"]]], ["數字", "🔢", [["one", "1️⃣", "One! One sun.", "一", "一！一個太陽。"], ["two", "2️⃣", "Two! Two shoes.", "二", "二！兩隻鞋子。"], ["three", "3️⃣", "Three! Three little pigs.", "三", "三！三隻小豬。"], ["four", "4️⃣", "Four! Four ducks.", "四", "四！四隻鴨子。"], ["five", "5️⃣", "Five! Five fingers.", "五", "五！五根手指頭。"], ["six", "6️⃣", "Six! Six eggs.", "六", "六！六顆蛋。"], ["seven", "7️⃣", "Seven! Seven stars.", "七", "七！七顆星星。"], ["eight", "8️⃣", "Eight! Eight legs on an octopus.", "八", "八！章魚有八隻腳。"], ["nine", "9️⃣", "Nine! Nine balloons.", "九", "九！九顆氣球。"], ["ten", "🔟", "Ten! Ten fingers.", "十", "十！十根手指頭。"]]], ["形狀", "🔷", [["circle", "⭕", "A circle. Round and round!", "圓形", "圓形，圓圓的！"], ["square", "🟦", "A square. Four sides!", "正方形", "正方形，有四個邊！"], ["triangle", "🔺", "A triangle. Three sides!", "三角形", "三角形，有三個邊！"], ["heart", "❤️", "A heart. I love you!", "愛心", "愛心，我愛你！"], ["diamond", "🔷", "A diamond. So shiny!", "菱形", "菱形，亮晶晶！"]]], ["交通工具", "🚆", [["train", "🚆", "Choo choo! A train.", "火車", "嘟嘟！是火車。"], ["plane", "✈️", "A plane in the sky.", "飛機", "天空中的飛機。"], ["boat", "⛵", "A boat on the water.", "船", "水上的船。"], ["bike", "🚲", "Ride a bike!", "腳踏車", "騎腳踏車！"], ["truck", "🚚", "A big truck.", "卡車", "大卡車。"], ["taxi", "🚕", "A yellow taxi.", "計程車", "黃色的計程車。"], ["fire truck", "🚒", "Nee-naw! A fire truck.", "消防車", "喔咿喔咿！是消防車。"], ["helicopter", "🚁", "A helicopter. Whirr!", "直升機", "直升機，轟轟轟！"]]], ["相反詞", "↕️", [["big", "🐘", "Big! A big elephant.", "大", "大！大大的大象。"], ["small", "🐭", "Small! A small mouse.", "小", "小！小小的老鼠。"], ["hot", "🔥", "Hot! Don't touch.", "燙", "好燙！不要摸。"], ["cold", "🧊", "Cold! Brr!", "冷", "好冰！好冷！"], ["up", "⬆️", "Up, up, up!", "上", "上，上，上！"], ["down", "⬇️", "Down, down, down!", "下", "下，下，下！"], ["fast", "🐆", "Fast! Run fast!", "快", "快！跑得好快！"], ["slow", "🐢", "Slow. Very slow.", "慢", "慢，好慢好慢。"]]], ["動作", "🏃", [["jump", "🦘", "Jump, jump, jump!", "跳", "跳，跳，跳！"], ["run", "🏃", "Run, run, run!", "跑", "跑，跑，跑！"], ["sit", "🪑", "Sit down, please.", "坐", "請坐下。"], ["stand", "🧍", "Stand up!", "站", "站起來！"], ["clap", "👏", "Clap, clap, clap!", "拍手", "拍拍手！"], ["dance", "💃", "Let's dance!", "跳舞", "我們來跳舞！"], ["sing", "🎤", "Let's sing a song!", "唱歌", "我們來唱歌！"], ["swim", "🏊", "Swim like a fish!", "游泳", "像魚一樣游泳！"]]]];
 let BB = null;
 const waitMs = ms => new Promise(r => setTimeout(r, ms));
 function sayTTS(text, rate) {
@@ -3251,7 +3355,7 @@ async function bbOldEn(w, ph, tok) {
   await sayBabyPhrase(ph, tok);
 }
 /* 寶寶聽力的變化圖：卡通圖輪流，再穿插 1～2 張真實照片（維基百科 / Wikimedia Commons） */
-const BABY_PIX = {"dog": [["Dog", "Puppy"], ["🐕", "🦮", "🐾"]], "cat": [["Cat", "Kitten"], ["🐈", "😺", "🐾"]], "cow": [["Cattle", "Calf (animal)"], ["🐄", "🥛", "🌾"]], "duck": [["Duck", "Mallard"], ["🐥", "🦆", "🪿"]], "pig": [["Domestic pig", "Pig"], ["🐖", "🐽", "🐷"]], "sheep": [["Sheep", "Merino"], ["🐏", "☁️", "🧶"]], "bird": [["House sparrow", "European robin"], ["🐤", "🪺", "🪶"]], "fish": [["Goldfish", "Clownfish"], ["🐠", "🐡", "🫧"]], "rabbit": [["Rabbit", "Domestic rabbit"], ["🐇", "🥕", "🐰"]], "elephant": [["Elephant", "Asian elephant"], ["🐘", "🥜", "🦣"]], "apple": [["Apple", "Gala (apple)"], ["🍏", "🍎", "🌳"]], "banana": [["Banana", "Cavendish banana"], ["🍌", "🐒", "🍌"]], "milk": [["Milk"], ["🍼", "🐄", "🥛"]], "water": [["Drinking water"], ["🚰", "🫗", "💧"]], "bread": [["Bread", "Toast"], ["🥖", "🥪", "🍞"]], "egg": [["Egg as food", "Boiled egg"], ["🍳", "🐔", "🥚"]], "rice": [["Rice"], ["🍙", "🥢", "🍚"]], "cookie": [["Cookie", "Chocolate chip cookie"], ["🍪", "🥛", "🍪"]], "eyes": [["Human eye"], ["👁️", "🙈", "👀"]], "nose": [["Human nose"], ["👃", "🌸", "🤧"]], "mouth": [["Smile"], ["😮", "😁", "👄"]], "ears": [["Auricle (anatomy)"], ["👂", "🎵", "🎧"]], "hands": [["Hand"], ["🙌", "✋", "👏"]], "feet": [["Foot"], ["🦶", "👣", "🧦"]], "teeth": [["Toothbrush"], ["🪥", "😁", "🦷"]], "hair": [["Hairbrush"], ["💇", "🎀", "💈"]], "red": [[], ["🍎", "🚒", "🍓"]], "blue": [[], ["🫐", "🐳", "🧢"]], "yellow": [[], ["🍌", "🐥", "🌻"]], "green": [[], ["🥦", "🐸", "🍀"]], "orange": [[], ["🍊", "🥕", "🎃"]], "purple": [[], ["🍇", "🍆", "💜"]], "black": [[], ["🐈‍⬛", "🎱", "🕶️"]], "white": [[], ["🥛", "🐑", "☁️"]], "mommy": [[], ["🤱", "👩‍👧", "👩"]], "daddy": [[], ["👨‍🍼", "👨‍👦", "👨"]], "baby": [[], ["🍼", "🧸", "👶"]], "grandma": [[], ["🧶", "🍪", "👵"]], "grandpa": [[], ["👓", "🌳", "👴"]], "brother": [[], ["⚽", "🚲", "👦"]], "sister": [[], ["🎀", "🎨", "👧"]], "family": [[], ["🏠", "❤️", "👨‍👩‍👧"]], "ball": [["Ball", "Beach ball"], ["🏀", "🎾", "⚽"]], "teddy bear": [["Teddy bear"], ["🐻", "🤗", "🧸"]], "book": [["Book", "Picture book"], ["📚", "📕", "📖"]], "car": [["Car"], ["🚙", "🏎️", "🚗"]], "bus": [["Bus", "School bus"], ["🚍", "🚏", "🚌"]], "shoes": [["Shoe", "Sneakers"], ["👞", "🥾", "👟"]], "hat": [["Hat", "Sun hat"], ["🎩", "🧢", "👒"]], "cup": [["Cup", "Mug"], ["☕", "🍵", "🥤"]], "hello": [[], ["😊", "🌞", "👋"]], "bye-bye": [[], ["🚪", "🚗", "👋"]], "eat": [[], ["🍚", "🍎", "🥣"]], "bath": [["Rubber duck"], ["🫧", "🦆", "🛁"]], "sleep": [[], ["🛏️", "🌙", "😴"]], "walk": [[], ["🌳", "🐕", "🚶"]], "hug": [[], ["🧸", "❤️", "🤗"]], "kiss": [[], ["💋", "❤️", "😘"]], "sun": [["Sun", "Sunrise"], ["🌞", "🌅", "☀️"]], "moon": [["Moon", "Full moon"], ["🌕", "🌛", "🌙"]], "star": [["Night sky"], ["🌟", "✨", "⭐"]], "rain": [["Rain", "Umbrella"], ["☔", "💧", "🌧️"]], "flower": [["Flower", "Common sunflower"], ["🌻", "🌷", "🌸"]], "tree": [["Tree", "Oak"], ["🌲", "🍂", "🌳"]], "cloud": [["Cloud", "Cumulus cloud"], ["⛅", "🌥️", "☁️"]], "rainbow": [["Rainbow"], ["🦄", "🌦️", "🌈"]]};
+const BABY_PIX = {"dog": [["Dog", "Puppy"], ["🐕", "🦮", "🐾"]], "cat": [["Cat", "Kitten"], ["🐈", "😺", "🐾"]], "cow": [["Cattle", "Calf (animal)"], ["🐄", "🥛", "🌾"]], "duck": [["Duck", "Mallard"], ["🐥", "🦆", "🪿"]], "pig": [["Domestic pig", "Pig"], ["🐖", "🐽", "🐷"]], "sheep": [["Sheep", "Merino"], ["🐏", "☁️", "🧶"]], "bird": [["House sparrow", "European robin"], ["🐤", "🪺", "🪶"]], "fish": [["Goldfish", "Clownfish"], ["🐠", "🐡", "🫧"]], "rabbit": [["Rabbit", "Domestic rabbit"], ["🐇", "🥕", "🐰"]], "elephant": [["Elephant", "Asian elephant"], ["🐘", "🥜", "🦣"]], "apple": [["Apple", "Gala (apple)"], ["🍏", "🍎", "🌳"]], "banana": [["Banana", "Cavendish banana"], ["🍌", "🐒", "🍌"]], "milk": [["Milk"], ["🍼", "🐄", "🥛"]], "water": [["Drinking water"], ["🚰", "🫗", "💧"]], "bread": [["Bread", "Toast"], ["🥖", "🥪", "🍞"]], "egg": [["Egg as food", "Boiled egg"], ["🍳", "🐔", "🥚"]], "rice": [["Rice"], ["🍙", "🥢", "🍚"]], "cookie": [["Cookie", "Chocolate chip cookie"], ["🍪", "🥛", "🍪"]], "eyes": [["Human eye"], ["👁️", "🙈", "👀"]], "nose": [["Human nose"], ["👃", "🌸", "🤧"]], "mouth": [["Smile"], ["😮", "😁", "👄"]], "ears": [["Auricle (anatomy)"], ["👂", "🎵", "🎧"]], "hands": [["Hand"], ["🙌", "✋", "👏"]], "feet": [["Foot"], ["🦶", "👣", "🧦"]], "teeth": [["Toothbrush"], ["🪥", "😁", "🦷"]], "hair": [["Hairbrush"], ["💇", "🎀", "💈"]], "red": [[], ["🍎", "🚒", "🍓"]], "blue": [[], ["🫐", "🐳", "🧢"]], "yellow": [[], ["🍌", "🐥", "🌻"]], "green": [[], ["🥦", "🐸", "🍀"]], "orange": [[], ["🍊", "🥕", "🎃"]], "purple": [[], ["🍇", "🍆", "💜"]], "black": [[], ["🐈‍⬛", "🎱", "🕶️"]], "white": [[], ["🥛", "🐑", "☁️"]], "mommy": [[], ["🤱", "👩‍👧", "👩"]], "daddy": [[], ["👨‍🍼", "👨‍👦", "👨"]], "baby": [[], ["🍼", "🧸", "👶"]], "grandma": [[], ["🧶", "🍪", "👵"]], "grandpa": [[], ["👓", "🌳", "👴"]], "brother": [[], ["⚽", "🚲", "👦"]], "sister": [[], ["🎀", "🎨", "👧"]], "family": [[], ["🏠", "❤️", "👨‍👩‍👧"]], "ball": [["Ball", "Beach ball"], ["🏀", "🎾", "⚽"]], "teddy bear": [["Teddy bear"], ["🐻", "🤗", "🧸"]], "book": [["Book", "Picture book"], ["📚", "📕", "📖"]], "car": [["Car"], ["🚙", "🏎️", "🚗"]], "bus": [["Bus", "School bus"], ["🚍", "🚏", "🚌"]], "shoes": [["Shoe", "Sneakers"], ["👞", "🥾", "👟"]], "hat": [["Hat", "Sun hat"], ["🎩", "🧢", "👒"]], "cup": [["Cup", "Mug"], ["☕", "🍵", "🥤"]], "hello": [[], ["😊", "🌞", "👋"]], "bye-bye": [[], ["🚪", "🚗", "👋"]], "eat": [[], ["🍚", "🍎", "🥣"]], "bath": [["Rubber duck"], ["🫧", "🦆", "🛁"]], "sleep": [[], ["🛏️", "🌙", "😴"]], "walk": [[], ["🌳", "🐕", "🚶"]], "hug": [[], ["🧸", "❤️", "🤗"]], "kiss": [[], ["💋", "❤️", "😘"]], "sun": [["Sun", "Sunrise"], ["🌞", "🌅", "☀️"]], "moon": [["Moon", "Full moon"], ["🌕", "🌛", "🌙"]], "star": [["Night sky"], ["🌟", "✨", "⭐"]], "rain": [["Rain", "Umbrella"], ["☔", "💧", "🌧️"]], "flower": [["Flower", "Common sunflower"], ["🌻", "🌷", "🌸"]], "tree": [["Tree", "Oak"], ["🌲", "🍂", "🌳"]], "cloud": [["Cloud", "Cumulus cloud"], ["⛅", "🌥️", "☁️"]], "rainbow": [["Rainbow"], ["🦄", "🌦️", "🌈"]], "one": [[], ["#1:☀️", "☝️", "#1:🍎"]], "two": [[], ["#2:👟", "✌️", "#2:🐱"]], "three": [[], ["#3:🐷", "#3:🍎", "#3:⭐"]], "four": [[], ["#4:🦆", "#4:🍓", "#4:🚗"]], "five": [[], ["🖐️", "#5:⭐", "#5:🍎"]], "six": [[], ["#6:🥚", "#6:🍓", "#6:🐟"]], "seven": [[], ["#7:⭐", "#7:🎈", "#7:🍪"]], "eight": [[], ["🐙", "#8:🍪", "#8:🎈"]], "nine": [[], ["#9:🎈", "#9:⭐", "#9:🍬"]], "ten": [[], ["🙌", "#10:⭐", "#10:🍎"]], "circle": [[], ["🔴", "🍪", "🟡"]], "square": [[], ["🟥", "🎁", "🟩"]], "triangle": [[], ["📐", "🍕", "🔻"]], "heart": [[], ["💖", "💛", "💚"]], "diamond": [[], ["🔶", "💎", "🪁"]], "train": [["Train"], ["🚂", "🚄", "🚃"]], "plane": [["Airliner"], ["🛫", "🛬", "☁️"]], "boat": [["Sailboat"], ["🚤", "🛶", "🌊"]], "bike": [["Bicycle"], ["🚴", "🛴", "🚲"]], "truck": [["Truck"], ["🚛", "📦", "🚚"]], "taxi": [["Taxicab"], ["🚖", "🟨", "🚕"]], "fire truck": [["Fire engine"], ["🧑‍🚒", "🔥", "🚒"]], "helicopter": [["Helicopter"], ["🌀", "☁️", "🚁"]], "big": [[], ["🦒", "🐳", "🏔️"]], "small": [[], ["🐜", "🐣", "🐞"]], "hot": [[], ["☀️", "🌶️", "☕"]], "cold": [[], ["⛄", "❄️", "🍦"]], "up": [[], ["🎈", "🚀", "🪁"]], "down": [[], ["🍂", "🛝", "⬇️"]], "fast": [[], ["🚀", "🏎️", "🐇"]], "slow": [[], ["🐌", "🦥", "🐢"]], "jump": [[], ["🐸", "🐰", "🦘"]], "run": [[], ["🏃‍♀️", "🐕", "👟"]], "sit": [[], ["🧸", "🛋️", "🪑"]], "stand": [[], ["🧍‍♀️", "🦩", "🧍"]], "clap": [[], ["🙌", "🎉", "👏"]], "dance": [[], ["🕺", "🎶", "💃"]], "sing": [[], ["🎵", "🐦", "🎤"]], "swim": [[], ["🐟", "🐬", "🦆"]]};
 const PIX = { mem: {}, wait: {} };
 function pixCache() { try { return JSON.parse(localStorage.getItem("eq-pix") || "{}"); } catch (e) { return {}; } }
 function babyPhoto(title) {
@@ -3280,7 +3384,7 @@ function babyPhoto(title) {
 /* 第 r 次要顯示什麼：1 卡通 → 2 照片 → 3 另一張卡通 → 4 第二張照片 → 5 回到原本的卡通 */
 /* 5 次的畫面：1 原本卡通 → 2 照片 → 3 另一張卡通 → 4 第二張照片 → 5 再換一張卡通（沒照片就用卡通補上，不重複） */
 /* 自己拍的、AI 畫的照片（存在雲端硬碟，大家共用）＋不要的維基照片 */
-const BPIC_DESC = {"dog": "a friendly golden puppy sitting on grass", "cat": "a fluffy kitten sitting on a sofa", "cow": "a black and white dairy cow in a green field", "duck": "a yellow duckling and a white duck by a pond", "pig": "a pink piglet on a farm", "sheep": "a fluffy white sheep in a meadow", "bird": "a small colorful bird on a branch", "fish": "an orange goldfish in clear water", "rabbit": "a white bunny rabbit on grass", "elephant": "a gentle elephant with big ears", "apple": "one shiny red apple", "banana": "a ripe yellow banana", "milk": "a glass of milk", "water": "a clear glass of water", "bread": "a loaf of soft bread", "egg": "two whole eggs", "rice": "a small bowl of white rice", "cookie": "a round chocolate chip cookie", "eyes": "a smiling toddler's face, close-up of bright eyes", "nose": "a toddler touching their own nose and smiling", "mouth": "a toddler opening their mouth wide, saying ahh", "ears": "a toddler pointing to their ear and smiling", "hands": "two small toddler hands clapping", "feet": "two little toddler feet on a soft rug", "teeth": "a toddler brushing teeth with a small toothbrush", "hair": "a parent gently brushing a toddler's hair", "red": "a set of bright red things: a red ball, a red apple and a red toy car", "blue": "a set of bright blue things: a blue ball, a blue cup and a blue toy block", "yellow": "a set of bright yellow things: a yellow duck toy, a banana and a yellow ball", "green": "a set of bright green things: a green apple, a green leaf and a green toy block", "orange": "a set of bright orange things: an orange, a carrot and an orange ball", "purple": "a set of bright purple things: purple grapes, a purple ball and a purple crayon", "black": "a set of black things: a black cat toy, black shoes and a black ball", "white": "a set of white things: a white teddy bear, a glass of milk and a white ball", "mommy": "a smiling mother hugging her baby", "daddy": "a smiling father holding his toddler", "baby": "a happy baby smiling on a blanket", "grandma": "a smiling grandmother reading to a toddler", "grandpa": "a smiling grandfather playing with a toddler", "brother": "a cheerful young boy, a big brother, playing with a toddler", "sister": "a cheerful young girl, a big sister, playing with a toddler", "family": "a happy family of parents and children sitting together", "ball": "a colorful toy ball", "teddy bear": "a soft brown teddy bear", "book": "a colorful children's picture book", "car": "a small red toy car", "bus": "a yellow school bus", "shoes": "a pair of small children's sneakers", "hat": "a small sun hat for children", "cup": "a toddler's plastic cup", "hello": "a smiling toddler waving hello", "bye-bye": "a toddler waving bye-bye at a door", "eat": "a toddler eating with a spoon in a high chair", "bath": "a toddler playing with a rubber duck in a bubble bath, only head and shoulders visible", "sleep": "a baby sleeping peacefully in a crib", "walk": "a parent and toddler walking hand in hand in a park", "hug": "a parent and toddler hugging", "kiss": "a mother kissing her baby's cheek", "sun": "the bright sun in a blue sky", "moon": "a full moon in the night sky", "star": "bright stars twinkling in the night sky", "rain": "raindrops falling and a child's colorful umbrella", "flower": "a bright sunflower", "tree": "a big green tree in a park", "cloud": "fluffy white clouds in a blue sky", "rainbow": "a colorful rainbow over green hills"};
+const BPIC_DESC = {"dog": "a friendly golden puppy sitting on grass", "cat": "a fluffy kitten sitting on a sofa", "cow": "a black and white dairy cow in a green field", "duck": "a yellow duckling and a white duck by a pond", "pig": "a pink piglet on a farm", "sheep": "a fluffy white sheep in a meadow", "bird": "a small colorful bird on a branch", "fish": "an orange goldfish in clear water", "rabbit": "a white bunny rabbit on grass", "elephant": "a gentle elephant with big ears", "apple": "one shiny red apple", "banana": "a ripe yellow banana", "milk": "a glass of milk", "water": "a clear glass of water", "bread": "a loaf of soft bread", "egg": "two whole eggs", "rice": "a small bowl of white rice", "cookie": "a round chocolate chip cookie", "eyes": "a smiling toddler's face, close-up of bright eyes", "nose": "a toddler touching their own nose and smiling", "mouth": "a toddler opening their mouth wide, saying ahh", "ears": "a toddler pointing to their ear and smiling", "hands": "two small toddler hands clapping", "feet": "two little toddler feet on a soft rug", "teeth": "a toddler brushing teeth with a small toothbrush", "hair": "a parent gently brushing a toddler's hair", "red": "a set of bright red things: a red ball, a red apple and a red toy car", "blue": "a set of bright blue things: a blue ball, a blue cup and a blue toy block", "yellow": "a set of bright yellow things: a yellow duck toy, a banana and a yellow ball", "green": "a set of bright green things: a green apple, a green leaf and a green toy block", "orange": "a set of bright orange things: an orange, a carrot and an orange ball", "purple": "a set of bright purple things: purple grapes, a purple ball and a purple crayon", "black": "a set of black things: a black cat toy, black shoes and a black ball", "white": "a set of white things: a white teddy bear, a glass of milk and a white ball", "mommy": "a smiling mother hugging her baby", "daddy": "a smiling father holding his toddler", "baby": "a happy baby smiling on a blanket", "grandma": "a smiling grandmother reading to a toddler", "grandpa": "a smiling grandfather playing with a toddler", "brother": "a cheerful young boy, a big brother, playing with a toddler", "sister": "a cheerful young girl, a big sister, playing with a toddler", "family": "a happy family of parents and children sitting together", "ball": "a colorful toy ball", "teddy bear": "a soft brown teddy bear", "book": "a colorful children's picture book", "car": "a small red toy car", "bus": "a yellow school bus", "shoes": "a pair of small children's sneakers", "hat": "a small sun hat for children", "cup": "a toddler's plastic cup", "hello": "a smiling toddler waving hello", "bye-bye": "a toddler waving bye-bye at a door", "eat": "a toddler eating with a spoon in a high chair", "bath": "a toddler playing with a rubber duck in a bubble bath, only head and shoulders visible", "sleep": "a baby sleeping peacefully in a crib", "walk": "a parent and toddler walking hand in hand in a park", "hug": "a parent and toddler hugging", "kiss": "a mother kissing her baby's cheek", "sun": "the bright sun in a blue sky", "moon": "a full moon in the night sky", "star": "bright stars twinkling in the night sky", "rain": "raindrops falling and a child's colorful umbrella", "flower": "a bright sunflower", "tree": "a big green tree in a park", "cloud": "fluffy white clouds in a blue sky", "rainbow": "a colorful rainbow over green hills", "one": "one red apple on a table", "two": "two small children's shoes side by side", "three": "three toy piglets in a row", "four": "four yellow rubber ducks in a row", "five": "a child's hand showing five fingers", "six": "six eggs in a carton", "seven": "seven paper stars in a row", "eight": "a cute toy octopus with eight legs", "nine": "nine colorful balloons", "ten": "two small hands showing ten fingers", "circle": "a big red circle shape made of paper", "square": "a blue square wooden block", "triangle": "a red triangle shape made of paper", "heart": "a red heart shape made of paper", "diamond": "a blue diamond shape made of paper", "train": "a colorful passenger train", "plane": "an airplane flying in a blue sky", "boat": "a small sailboat on calm water", "bike": "a small children's bicycle", "truck": "a big friendly truck", "taxi": "a yellow taxi", "fire truck": "a red fire truck", "helicopter": "a helicopter flying in the sky", "big": "a big elephant next to a small mouse", "small": "a tiny mouse", "hot": "a cup of hot tea with steam", "cold": "ice cubes and a snowman", "up": "colorful balloons floating up into the sky", "down": "a child going down a playground slide", "fast": "a cheetah running fast", "slow": "a turtle walking slowly", "jump": "a happy child jumping in the air", "run": "a happy child running on grass", "sit": "a toddler sitting on a small chair", "stand": "a toddler standing up proudly", "clap": "a toddler clapping hands", "dance": "a child dancing happily", "sing": "a child singing into a toy microphone", "swim": "a happy dog swimming in a lake"};
 let BPICS = { pics: {}, hide: [], pending: [] };
 const BPIC_URL = {};
 const bpicCan = () => KEY_MODE() && Store.backend === "sheet";
@@ -3297,7 +3401,7 @@ async function bpicUrl(id) {
   return "";
 }
 /* Unsplash 免費照片（每個字挑好兩張，直接從 Unsplash 載入，並標示攝影師） */
-const UNSPLASH = {"dog": [["photo-1760615302825-900295f63a2c", "Florian Schindler", "flo_raw"], ["photo-1537151608828-ea2b11777ee8", "Alvan Nee", "alvannee"]], "cat": [["photo-1561948955-570b270e7c36", "hang niu", "niuhang"], ["photo-1560114928-40f1f1eb26a0", "Andriyko Podilnyk", "andriyko"]], "cow": [["photo-1570042225831-d98fa7577f1e", "Screenroad", "screenroad"], ["photo-1564085352725-08da0272627d", "Jean Carlo Emer", "jeancarloemer"]], "duck": [["photo-1613923004014-1e3ab5b741c6", "Ray Harrington", "raymondo600"], ["photo-1554453954-3bca4671e5b9", "Andrea Lightfoot", "andreaelphotography"]], "pig": [["photo-1541689221361-ad95003448dc", "Forest S", "forest_ms"], ["photo-1516467508483-a7212febe31a", "Christopher Carson", "bhris1017"]], "sheep": [["photo-1484557985045-edf25e08da73", "Sam Carter", "samdc"], ["photo-1773188533286-2811d536fa2f", "Brandee Taylor", "brandee35"]], "bird": [["photo-1525275963076-7a70249a9925", "Ray Hennessy", "rayhennessy"], ["photo-1774460759950-e7291e8f1888", "Howard Walsh", "hswalsh"]], "fish": [["photo-1668862347626-70a980820f06", "Hale Tat", "haletat"], ["photo-1785822387462-1b8dd36804be", "fishy fishy", "its12_06pm"]], "rabbit": [["photo-1585110396000-c9ffd4e4b308", "Satyabratasm", "smpicturez"], ["photo-1581872454565-822dac9367aa", "Stefan Fluck", "sfluck"]], "elephant": [["photo-1557050543-4d5f4e07ef46", "Nam Anh", "bepnamanh"], ["photo-1759697421244-1710c7a6f924", "Masood Aslami", "masoodaslami"]], "apple": [["photo-1619546813926-a78fa6372cd2", "Amit Lahav", "amit_lahav"], ["photo-1570913149827-d2ac84ab3f9a", "Priscilla Du Preez", "priscilladupreez"]], "banana": [["photo-1587132137056-bfbf0166836e", "Mockup Graphics", "mockupgraphics"], ["photo-1571771894821-ce9b6c11b08e", "Giorgio Trovato", "giorgiotrovato"]], "milk": [["photo-1550583724-b2692b85b150", "Eiliv Aceron", "shootdelicious"], ["photo-1596151163116-98a5033814c2", "an_vision", "anvision"]], "water": [["photo-1534616042650-80f5c9b61f09", "manu schwendener", "manuschwendener"], ["photo-1602904761432-f9ad96133982", "Nicolas Ruiz", "nicoruiz01981"]], "bread": [["photo-1598373182133-52452f7691ef", "Charles Chen", "color0911"], ["photo-1767065886426-832b32ce435a", "Diego Arenas de Rodrigo", "diegoarenasderodrigo"]], "egg": [["photo-1587486913049-53fc88980cfc", "Mockup Graphics", "mockupgraphics"], ["photo-1583927136633-7ecde5b23ac5", "Leti Kugler", "leti_kugler"]], "rice": [["photo-1536304993881-ff6e9eefa2a6", "Pille R. Priske", "pillepriske"], ["photo-1680137248876-6ad53db8caef", "Seiya Maeda", "seiya_maeda"]], "cookie": [["photo-1767335911106-b96c1cc33099", "aria bima", "ariabimadf"], ["photo-1499636136210-6f4ee915583e", "Jennifer Pallian", "foodess"]], "eyes": [["photo-1578461273189-0950898bd0f2", "Jonnelle Yankovich", "jey_photography"], ["photo-1768844871810-9ed6705f28da", "Flaviu Costin", "fladsgn"]], "nose": [["photo-1768657890219-bfb18a58e0fa", "Rohit Dey", "rohit16dey"]], "mouth": [["photo-1504298589646-858f2c46ce1d", "Carlos Martinez", "carlosmart626"], ["photo-1742321694002-34b7e55bc823", "Jackie Best", "bugsandslugs"]], "ears": [["photo-1717690306655-32a8cd518920", "Laura Ohlman", "ohlmanphotography"]], "hands": [["photo-1760934578868-7fda69895ecb", "Jessica Donnelly", "jessicadonnelly"], ["photo-1582486225644-aeacf6aa0b1b", "Nathan Dumlao", "nate_dumlao"]], "feet": [["photo-1510154221590-ff63e90a136f", "Omar Lopez", "omarlopez1"], ["photo-1782944440224-f89228cf5416", "Ana Curcan", "annaacurcan"]], "teeth": [["photo-1780327065569-b2205c22104e", "Vitalii Khodzinskyi", "khodzinskyi"], ["photo-1780327065644-399075fb9e9b", "Vitalii Khodzinskyi", "khodzinskyi"]], "hair": [["photo-1751980105043-2bf9dadd80a3", "张 Shining", "voideye"], ["photo-1615553499637-feb3e8ce77c2", "Aritra Roy", "aritraroys"]], "red": [["photo-1774809695548-07ab0976a91a", "Mehmet Can Özgümüş", "canmehmet"], ["photo-1514870231399-3fb76b3c379e", "Denisse Leon", "denisseleon"]], "blue": [["photo-1562003985-145bc8353647", "kids&me Germany", "kidsandme"], ["photo-1759990639053-80b6c7acb10b", "Vikram Singh", "vikraw"]], "yellow": [["photo-1582845512747-e42001c95638", "Timothy Dykes", "timothycdykes"], ["photo-1652441547536-f6edb2fc5206", "Susan Weber", "havasuartist"]], "green": [["photo-1487017931017-0e0d9e02bb0c", "Scott Webb", "scottwebb"], ["photo-1525498128493-380d1990a112", "Chris Lee", "chrisleeiam"]], "orange": [["photo-1547514701-42782101795e", "Xiaolong Wong", "runblue"], ["photo-1611080626919-7cf5a9dbab5b", "Jen Gunter", "sweetsimplesunshine"]], "purple": [["photo-1596363505729-4190a9506133", "Andrey Haimin", "akb001"], ["photo-1578829779691-99b60bd8c7be", "Rajesh Rajput", "rrajputphotography"]], "black": [["photo-1604916287784-c324202b3205", "Anton Ponomarenko", "antonnpo"], ["photo-1612690319858-99b5b909fae1", "Adél Grőber", "ninszi"]], "white": [["photo-1576618449357-6c156849f8de", "Brad Newcomb", "bnewc43"], ["photo-1773649333497-3344b1685405", "雙 film", "film002"]], "mommy": [["photo-1560707854-fb9a10eeaace", "Jonathan Borba", "jonathanborba"], ["photo-1570657891791-e39a9d185540", "Raul Angel", "raulangel"]], "daddy": [["photo-1650872466823-433d9e461b9d", "Tim Mossholder", "timmossholder"], ["photo-1543253464-213ff7db5ce7", "Mikael Stenberg", "bonko86"]], "baby": [["photo-1617331140180-e8262094733a", "Christian Bowen", "chrishcush"], ["photo-1774641374227-866fa0f0adf7", "Brooke Balentine", "brookebalentine"]], "grandma": [["photo-1593100126453-19b562a800c1", "Ekaterina Shakharova", "minigirl"], ["photo-1652300353103-490b43ac8366", "Tim Mossholder", "timmossholder"]], "grandpa": [["photo-1742696405936-fe5ef4f37b4b", "Jeferson Santu", "jefersonsantu"], ["photo-1687253958545-615bed0aa462", "Annie Spratt", "anniespratt"]], "brother": [["photo-1488956322016-1e7554142097", "Kevin Gent", "kevingent"], ["photo-1650498438073-e98824700b85", "Fares Hamouche", "fodelwdc"]], "sister": [["photo-1673177008716-c8f8fe4ec4a2", "Navid Sohrabi", "navidsohrabi"], ["photo-1633504095502-4d5b7c58586c", "Rowen Smith", "hellosmith"]], "family": [["photo-1611024847487-e26177381a3f", "Josue Michel", "josuemichelphotography"], ["photo-1694232755153-23cd61feaf78", "Jennifer Kalenberg", "jkalen71"]], "ball": [["photo-1498940757830-82f7813bf178", "Greyson Joralemon", "greysonjoralemon"], ["photo-1721657253040-10acf60aeabd", "Glen Carrie", "glencarrie"]], "teddy bear": [["photo-1556012018-50c5c0da73bf", "Sandy Millar", "sandym10"], ["photo-1562040506-a9b32cb51b94", "Oxana Lyashenko", "sanateddy"]], "book": [["photo-1661760070712-9d349a47f483", "Moon Bhuyan", "moonbhuyan"], ["photo-1686644472053-70275e21bb02", "Kristyna Squared.one", "squared_one1"]], "car": [["photo-1621349337086-f4187372d31c", "Jonas Jaeken", "jonasjaekenmedia"], ["photo-1532974297617-c0f05fe48bff", "Eduardo Flores", "eduardoflorespe"]], "bus": [["photo-1602248406547-bda7af9fb7e9", "Lisa Boonaerts", "lisaboonaerts"], ["photo-1757621448452-009dc8603b33", "Rafael Garcin", "nimbus_vulpis"]], "shoes": [["photo-1678192568478-9488ee55def6", "Kawê Rodrigues", "kawerodriguess"], ["photo-1560769629-975ec94e6a86", "Irene Kredenets", "ikredenets"]], "hat": [["photo-1583703779199-e6ed378df595", "Yucel M", "ymoran"], ["photo-1601980265524-04468b355ac3", "Kaitlan Balsam", "khzelopia"]], "cup": [["photo-1514228742587-6b1558fcca3d", "NordWood Themes", "nordwood"], ["photo-1685384338018-1774719d5b69", "Kostas Vourou", "vourou"]], "hello": [["photo-1760090343192-f74e63013688", "ONUR KURT", "bykurt"], ["photo-1758739203060-79d89e818c9a", "Moslem Daneshzadeh", "moslemdanesh"]], "bye-bye": [["photo-1761047321481-abbdcfb7ff00", "Arthur Tseng", "arthur3607"], ["photo-1730143460152-c847b4cd42f2", "Marco Antonio Casique Reyes", "thalittlemarc"]], "eat": [["photo-1652480247284-a7ca2c1ffecc", "Toa Heftiba", "heftiba"], ["photo-1760267978902-b34c1cc0c0af", "NHN", "nuarharuha"]], "bath": [["photo-1669236767457-e1aa4678eadb", "Allison Astorga", "_allieastorga_"], ["photo-1546094164-381e9487c464", "Thomas Despeyroux", "thomasdes"]], "sleep": [["photo-1510632233616-88025944e960", "Tara Raye", "tararaye"], ["photo-1582212742235-a2500f31cb39", "hessam nabavi", "hessamnbv"]], "walk": [["photo-1492269815085-88eb3ffe14e5", "Ben White", "benwhitephotography"], ["photo-1557176278-3326a3193580", "Szilvia Basso", "szilviabasso"]], "hug": [["photo-1719870444400-5972ef034a6a", "Alejandro Villa", "avillaalegria"], ["photo-1475609471617-0ef53b59cff5", "Jordan Whitt", "jwwhitt"]], "kiss": [["photo-1638365436603-2f9fd7b00845", "Adriana Elias", "ashtychepe"], ["photo-1530047625168-4b29bfbbe1fc", "Omar Lopez", "omarlopez1"]], "sun": [["photo-1653105847957-dc9c898d4b42", "Kostiantyn Vierkieiev", "kostiantynvierkieiev"], ["photo-1693922614257-28a909c22089", "Mihail Ilchov", "archange1michael"]], "moon": [["photo-1522030299830-16b8d3d049fe", "Mike Petrucci", "mikepetrucci"], ["photo-1446941611757-91d2c3bd3d45", "NASA", "nasa"]], "star": [["photo-1628498188904-036f5e25e93e", "Olena Bohovyk", "olenkasergienko"], ["photo-1534796636912-3b95b3ab5986", "Kai Pilger", "kaip"]], "rain": [["photo-1611511450282-af4421e9e05d", "Aleksandra Boguslawska", "aleksandraboguslawska"], ["photo-1485797460056-2310c82d1213", "freddie marriage", "fredmarriage"]], "flower": [["photo-1470509037663-253afd7f0f51", "Paul Green", "pgreen1983"], ["photo-1551945326-df678a97c3af", "Jirasin Yossri", "weburus"]], "tree": [["photo-1610855707183-4ae1a75eda79", "Asmi Pai", "lens_witness"], ["photo-1558726538-3869c66322b0", "Matthias Götzke", "mgoetzke"]], "cloud": [["photo-1603437873662-dc1f44901825", "engin akyurt", "enginakyurt"], ["photo-1531147646552-1eec68116469", "Kumiko SHIMIZU", "shimikumi32"]], "rainbow": [["photo-1593362831502-5c3ad1c05f57", "Stainless Images", "ramone"], ["photo-1563846465145-c733e29ee0f8", "Yulia Gadalina", "yulia_gadalina"]]};
+const UNSPLASH = {"dog": [["photo-1760615302825-900295f63a2c", "Florian Schindler", "flo_raw"], ["photo-1537151608828-ea2b11777ee8", "Alvan Nee", "alvannee"]], "cat": [["photo-1561948955-570b270e7c36", "hang niu", "niuhang"], ["photo-1560114928-40f1f1eb26a0", "Andriyko Podilnyk", "andriyko"]], "cow": [["photo-1570042225831-d98fa7577f1e", "Screenroad", "screenroad"], ["photo-1564085352725-08da0272627d", "Jean Carlo Emer", "jeancarloemer"]], "duck": [["photo-1613923004014-1e3ab5b741c6", "Ray Harrington", "raymondo600"], ["photo-1554453954-3bca4671e5b9", "Andrea Lightfoot", "andreaelphotography"]], "pig": [["photo-1541689221361-ad95003448dc", "Forest S", "forest_ms"], ["photo-1516467508483-a7212febe31a", "Christopher Carson", "bhris1017"]], "sheep": [["photo-1484557985045-edf25e08da73", "Sam Carter", "samdc"], ["photo-1773188533286-2811d536fa2f", "Brandee Taylor", "brandee35"]], "bird": [["photo-1525275963076-7a70249a9925", "Ray Hennessy", "rayhennessy"], ["photo-1774460759950-e7291e8f1888", "Howard Walsh", "hswalsh"]], "fish": [["photo-1668862347626-70a980820f06", "Hale Tat", "haletat"], ["photo-1785822387462-1b8dd36804be", "fishy fishy", "its12_06pm"]], "rabbit": [["photo-1585110396000-c9ffd4e4b308", "Satyabratasm", "smpicturez"], ["photo-1581872454565-822dac9367aa", "Stefan Fluck", "sfluck"]], "elephant": [["photo-1557050543-4d5f4e07ef46", "Nam Anh", "bepnamanh"], ["photo-1759697421244-1710c7a6f924", "Masood Aslami", "masoodaslami"]], "apple": [["photo-1619546813926-a78fa6372cd2", "Amit Lahav", "amit_lahav"], ["photo-1570913149827-d2ac84ab3f9a", "Priscilla Du Preez", "priscilladupreez"]], "banana": [["photo-1587132137056-bfbf0166836e", "Mockup Graphics", "mockupgraphics"], ["photo-1571771894821-ce9b6c11b08e", "Giorgio Trovato", "giorgiotrovato"]], "milk": [["photo-1550583724-b2692b85b150", "Eiliv Aceron", "shootdelicious"], ["photo-1596151163116-98a5033814c2", "an_vision", "anvision"]], "water": [["photo-1534616042650-80f5c9b61f09", "manu schwendener", "manuschwendener"], ["photo-1602904761432-f9ad96133982", "Nicolas Ruiz", "nicoruiz01981"]], "bread": [["photo-1598373182133-52452f7691ef", "Charles Chen", "color0911"], ["photo-1767065886426-832b32ce435a", "Diego Arenas de Rodrigo", "diegoarenasderodrigo"]], "egg": [["photo-1587486913049-53fc88980cfc", "Mockup Graphics", "mockupgraphics"], ["photo-1583927136633-7ecde5b23ac5", "Leti Kugler", "leti_kugler"]], "rice": [["photo-1536304993881-ff6e9eefa2a6", "Pille R. Priske", "pillepriske"], ["photo-1680137248876-6ad53db8caef", "Seiya Maeda", "seiya_maeda"]], "cookie": [["photo-1767335911106-b96c1cc33099", "aria bima", "ariabimadf"], ["photo-1499636136210-6f4ee915583e", "Jennifer Pallian", "foodess"]], "eyes": [["photo-1578461273189-0950898bd0f2", "Jonnelle Yankovich", "jey_photography"], ["photo-1768844871810-9ed6705f28da", "Flaviu Costin", "fladsgn"]], "nose": [["photo-1768657890219-bfb18a58e0fa", "Rohit Dey", "rohit16dey"]], "mouth": [["photo-1504298589646-858f2c46ce1d", "Carlos Martinez", "carlosmart626"], ["photo-1742321694002-34b7e55bc823", "Jackie Best", "bugsandslugs"]], "ears": [["photo-1717690306655-32a8cd518920", "Laura Ohlman", "ohlmanphotography"]], "hands": [["photo-1760934578868-7fda69895ecb", "Jessica Donnelly", "jessicadonnelly"], ["photo-1582486225644-aeacf6aa0b1b", "Nathan Dumlao", "nate_dumlao"]], "feet": [["photo-1510154221590-ff63e90a136f", "Omar Lopez", "omarlopez1"], ["photo-1782944440224-f89228cf5416", "Ana Curcan", "annaacurcan"]], "teeth": [["photo-1780327065569-b2205c22104e", "Vitalii Khodzinskyi", "khodzinskyi"], ["photo-1780327065644-399075fb9e9b", "Vitalii Khodzinskyi", "khodzinskyi"]], "hair": [["photo-1751980105043-2bf9dadd80a3", "张 Shining", "voideye"], ["photo-1615553499637-feb3e8ce77c2", "Aritra Roy", "aritraroys"]], "red": [["photo-1774809695548-07ab0976a91a", "Mehmet Can Özgümüş", "canmehmet"], ["photo-1514870231399-3fb76b3c379e", "Denisse Leon", "denisseleon"]], "blue": [["photo-1562003985-145bc8353647", "kids&me Germany", "kidsandme"], ["photo-1759990639053-80b6c7acb10b", "Vikram Singh", "vikraw"]], "yellow": [["photo-1582845512747-e42001c95638", "Timothy Dykes", "timothycdykes"], ["photo-1652441547536-f6edb2fc5206", "Susan Weber", "havasuartist"]], "green": [["photo-1487017931017-0e0d9e02bb0c", "Scott Webb", "scottwebb"], ["photo-1525498128493-380d1990a112", "Chris Lee", "chrisleeiam"]], "orange": [["photo-1547514701-42782101795e", "Xiaolong Wong", "runblue"], ["photo-1611080626919-7cf5a9dbab5b", "Jen Gunter", "sweetsimplesunshine"]], "purple": [["photo-1596363505729-4190a9506133", "Andrey Haimin", "akb001"], ["photo-1578829779691-99b60bd8c7be", "Rajesh Rajput", "rrajputphotography"]], "black": [["photo-1604916287784-c324202b3205", "Anton Ponomarenko", "antonnpo"], ["photo-1612690319858-99b5b909fae1", "Adél Grőber", "ninszi"]], "white": [["photo-1576618449357-6c156849f8de", "Brad Newcomb", "bnewc43"], ["photo-1773649333497-3344b1685405", "雙 film", "film002"]], "mommy": [["photo-1560707854-fb9a10eeaace", "Jonathan Borba", "jonathanborba"], ["photo-1570657891791-e39a9d185540", "Raul Angel", "raulangel"]], "daddy": [["photo-1650872466823-433d9e461b9d", "Tim Mossholder", "timmossholder"], ["photo-1543253464-213ff7db5ce7", "Mikael Stenberg", "bonko86"]], "baby": [["photo-1617331140180-e8262094733a", "Christian Bowen", "chrishcush"], ["photo-1774641374227-866fa0f0adf7", "Brooke Balentine", "brookebalentine"]], "grandma": [["photo-1593100126453-19b562a800c1", "Ekaterina Shakharova", "minigirl"], ["photo-1652300353103-490b43ac8366", "Tim Mossholder", "timmossholder"]], "grandpa": [["photo-1742696405936-fe5ef4f37b4b", "Jeferson Santu", "jefersonsantu"], ["photo-1687253958545-615bed0aa462", "Annie Spratt", "anniespratt"]], "brother": [["photo-1488956322016-1e7554142097", "Kevin Gent", "kevingent"], ["photo-1650498438073-e98824700b85", "Fares Hamouche", "fodelwdc"]], "sister": [["photo-1673177008716-c8f8fe4ec4a2", "Navid Sohrabi", "navidsohrabi"], ["photo-1633504095502-4d5b7c58586c", "Rowen Smith", "hellosmith"]], "family": [["photo-1611024847487-e26177381a3f", "Josue Michel", "josuemichelphotography"], ["photo-1694232755153-23cd61feaf78", "Jennifer Kalenberg", "jkalen71"]], "ball": [["photo-1498940757830-82f7813bf178", "Greyson Joralemon", "greysonjoralemon"], ["photo-1721657253040-10acf60aeabd", "Glen Carrie", "glencarrie"]], "teddy bear": [["photo-1556012018-50c5c0da73bf", "Sandy Millar", "sandym10"], ["photo-1562040506-a9b32cb51b94", "Oxana Lyashenko", "sanateddy"]], "book": [["photo-1661760070712-9d349a47f483", "Moon Bhuyan", "moonbhuyan"], ["photo-1686644472053-70275e21bb02", "Kristyna Squared.one", "squared_one1"]], "car": [["photo-1621349337086-f4187372d31c", "Jonas Jaeken", "jonasjaekenmedia"], ["photo-1532974297617-c0f05fe48bff", "Eduardo Flores", "eduardoflorespe"]], "bus": [["photo-1602248406547-bda7af9fb7e9", "Lisa Boonaerts", "lisaboonaerts"], ["photo-1757621448452-009dc8603b33", "Rafael Garcin", "nimbus_vulpis"]], "shoes": [["photo-1678192568478-9488ee55def6", "Kawê Rodrigues", "kawerodriguess"], ["photo-1560769629-975ec94e6a86", "Irene Kredenets", "ikredenets"]], "hat": [["photo-1583703779199-e6ed378df595", "Yucel M", "ymoran"], ["photo-1601980265524-04468b355ac3", "Kaitlan Balsam", "khzelopia"]], "cup": [["photo-1514228742587-6b1558fcca3d", "NordWood Themes", "nordwood"], ["photo-1685384338018-1774719d5b69", "Kostas Vourou", "vourou"]], "hello": [["photo-1760090343192-f74e63013688", "ONUR KURT", "bykurt"], ["photo-1758739203060-79d89e818c9a", "Moslem Daneshzadeh", "moslemdanesh"]], "bye-bye": [["photo-1761047321481-abbdcfb7ff00", "Arthur Tseng", "arthur3607"], ["photo-1730143460152-c847b4cd42f2", "Marco Antonio Casique Reyes", "thalittlemarc"]], "eat": [["photo-1652480247284-a7ca2c1ffecc", "Toa Heftiba", "heftiba"], ["photo-1760267978902-b34c1cc0c0af", "NHN", "nuarharuha"]], "bath": [["photo-1669236767457-e1aa4678eadb", "Allison Astorga", "_allieastorga_"], ["photo-1546094164-381e9487c464", "Thomas Despeyroux", "thomasdes"]], "sleep": [["photo-1510632233616-88025944e960", "Tara Raye", "tararaye"], ["photo-1582212742235-a2500f31cb39", "hessam nabavi", "hessamnbv"]], "walk": [["photo-1492269815085-88eb3ffe14e5", "Ben White", "benwhitephotography"], ["photo-1557176278-3326a3193580", "Szilvia Basso", "szilviabasso"]], "hug": [["photo-1719870444400-5972ef034a6a", "Alejandro Villa", "avillaalegria"], ["photo-1475609471617-0ef53b59cff5", "Jordan Whitt", "jwwhitt"]], "kiss": [["photo-1638365436603-2f9fd7b00845", "Adriana Elias", "ashtychepe"], ["photo-1530047625168-4b29bfbbe1fc", "Omar Lopez", "omarlopez1"]], "sun": [["photo-1653105847957-dc9c898d4b42", "Kostiantyn Vierkieiev", "kostiantynvierkieiev"], ["photo-1693922614257-28a909c22089", "Mihail Ilchov", "archange1michael"]], "moon": [["photo-1522030299830-16b8d3d049fe", "Mike Petrucci", "mikepetrucci"], ["photo-1446941611757-91d2c3bd3d45", "NASA", "nasa"]], "star": [["photo-1628498188904-036f5e25e93e", "Olena Bohovyk", "olenkasergienko"], ["photo-1534796636912-3b95b3ab5986", "Kai Pilger", "kaip"]], "rain": [["photo-1611511450282-af4421e9e05d", "Aleksandra Boguslawska", "aleksandraboguslawska"], ["photo-1485797460056-2310c82d1213", "freddie marriage", "fredmarriage"]], "flower": [["photo-1470509037663-253afd7f0f51", "Paul Green", "pgreen1983"], ["photo-1551945326-df678a97c3af", "Jirasin Yossri", "weburus"]], "tree": [["photo-1610855707183-4ae1a75eda79", "Asmi Pai", "lens_witness"], ["photo-1558726538-3869c66322b0", "Matthias Götzke", "mgoetzke"]], "cloud": [["photo-1603437873662-dc1f44901825", "engin akyurt", "enginakyurt"], ["photo-1531147646552-1eec68116469", "Kumiko SHIMIZU", "shimikumi32"]], "rainbow": [["photo-1593362831502-5c3ad1c05f57", "Stainless Images", "ramone"], ["photo-1563846465145-c733e29ee0f8", "Yulia Gadalina", "yulia_gadalina"]], "train": [["photo-1601999007938-f584b47324ac", "Martin Sanchez", "zekedrone"], ["photo-1589196728426-4613a4992c42", "Andy Holmes", "andyjh07"]], "plane": [["photo-1483375801503-374c5f660610", "Gary Lopater", "glopater"], ["photo-1615317779547-2078d82c549a", "Reet Talreja", "_reettalreja_"]], "boat": [["photo-1546214755-c5d22447b43b", "Florian van Schreven", "florianvs"], ["photo-1540946485063-a40da27545f8", "Kristel Hayes", "kristelhayes"]], "bike": [["photo-1507035895480-2b3156c31fc8", "Tiffany Nutt", "tiffanylnutt"], ["photo-1485965120184-e220f721d03e", "Robert Bye", "robertbye"]], "truck": [["photo-1701637657912-9e23e32155d1", "Alexander Popovkin", "popovkin"], ["photo-1601584115197-04ecc0da31d7", "Gabriel Santos", "photogasan"]], "taxi": [["photo-1630717285906-29364ffacea0", "Maxime Doré", "maxime_dore"], ["photo-1572013343866-dfdb9b416810", "Scott Gummerson", "scottgummerson26"]], "fire truck": [["photo-1575345981599-ef9bb2510a7b", "Myles Cecil", "mymyshoots"], ["photo-1600970727887-1b608102839c", "Malachi Brooks", "mebrooks01"]], "helicopter": [["photo-1557818673-effec50525e1", "Isaac Benhesed", "isaacbenhesed"], ["photo-1495554698253-681539e9ea84", "Cristian Grecu", "taguwan"]], "jump": [["photo-1571210862729-78a52d3779a2", "Alvin Mahmudov", "alvinmahmudov"], ["photo-1611596534346-94839c5622ab", "9picturebyng", "9picturebyng"]], "run": [["photo-1749015314315-1c193d1f67e3", "Kirsten Hackett", "kirstenh2"], ["photo-1774791580994-34a4701ed33d", "Olek Buzunov", "olek_bznv_photo"]], "sit": [["photo-1700751616333-1ef1a7bd56fb", "Melbin Jacob", "melbinjacob"], ["photo-1780329941302-70653366202e", "Rohit Dey", "rohit16dey"]], "stand": [["photo-1603792273674-543a44863980", "krakenimages", "krakenimages"], ["photo-1611890293555-2cb0075ecd3e", "Kindred Hues Photography", "kindredhues"]], "clap": [["photo-1706394597187-b4956b0c8f6c", "Ana Curcan", "annaacurcan"]], "dance": [["photo-1528567656495-d439e32f6be1", "Laura Fuhrman", "lauracathleen"]], "sing": [["photo-1453738773917-9c3eff1db985", "Jason Rosewell", "jasonrosewell"], ["photo-1782567530660-63985063c559", "jason hu", "hujason"]], "swim": [["photo-1771613933868-3f762430a37e", "Caroline Badran", "___atmos"], ["photo-1629143392936-86ecc171c0ed", "Marina Helena Muller", "marinahmuller"]], "big": [["photo-1557050543-4d5f4e07ef46", "Nam Anh", "bepnamanh"], ["photo-1759697421244-1710c7a6f924", "Masood Aslami", "masoodaslami"]], "small": [["photo-1648331607020-aa51a96ff38d", "Kevin Yates", "kevinyates64"], ["photo-1561122265-866230806520", "Wolfgang Hasselmann", "wolfgang_hasselmann"]], "hot": [["photo-1635811831672-179f83a049be", "Masaaki Komori", "gaspanik"], ["photo-1596098823457-74e360fcd023", "tabitha turner", "tabithaturnervisuals"]], "cold": [["photo-1590430752967-d0e116909be1", "Jan Antonin Kolar", "jankolar"], ["photo-1578323851363-cf6a1a6afbb6", "Vika Wendish", "wendish"]], "up": [["photo-1751467897586-2d3015c40b42", "bahareh moradian", "bahar_mr"], ["photo-1716637563000-2f5f11b5542c", "Alexey Golubev", "freecx"]], "down": [["photo-1775740618179-1a2c332a9743", "Vitalii Khodzinskyi", "khodzinskyi"], ["photo-1746010531584-b3a67fc697c7", "setengah limasore", "ahmadfarisandy"]], "fast": [["photo-1498056523130-b76aa40137b0", "Cara Fuller", "caraventurera"], ["photo-1705218543098-09e4e3614591", "Andreas Vonlanthen", "vole73"]], "slow": [["photo-1470165385455-e981fe780611", "Ray Hennessy", "rayhennessy"], ["photo-1579470785623-3d2c229f4fc6", "amirali mirhashemian", "amir_v_ali"]], "heart": [["photo-1617114890850-421519e5eabb", "Brett Jordan", "brett_jordan"], ["photo-1723401697762-2909ec2b377d", "Buddha Elemental 3D", "buddhaelemental3d"]], "triangle": [["photo-1609675123886-1b2828d13700", "蔡 世宏", "cshong"]]};
 const usUrl = path => "https:\/\/images.unsplash.com/" + path + "?w=640&q=80&fit=crop&auto=format";
 const usRef = "?utm_source=english_quest&utm_medium=referral";
 const IMGOK = {};
@@ -3309,7 +3413,7 @@ async function bbPhotos(w) {
   if (state.babyPhoto === false) return [];
   const of = k => (BPICS.pics[w] || []).filter(x => x[1] === k && !x[2]);
   const out = [];
-  for (const [id, k] of of("mine").concat(of("guest"), of("ai"))) { if (out.length >= 2) break; const u = await raceMs(bpicUrl(id), 4000); if (u) out.push({ u, src: { kind: k, id } }); }
+  for (const [id, k] of of("mine").concat(of("fam"), of("guest"), of("ai"))) { if (out.length >= 2) break; const u = await raceMs(bpicUrl(id), 4000); if (u) out.push({ u, src: { kind: k, id } }); }
   for (const [path, name, user] of (UNSPLASH[w] || [])) { if (out.length >= 2) break; const key = "us:" + path; if (bpicHidden(key)) continue; const u = await imgOk(usUrl(path), 2500); if (u) out.push({ u, src: { kind: "unsplash", title: key, name, user } }); }
   for (const t of (BABY_PIX[w] || [[]])[0]) { if (out.length >= 2) break; if (bpicHidden(t)) continue; const ph = await raceMs(babyPhoto(t), 1500); if (ph && ph.u) out.push({ u: ph.u, p: ph.p, src: { kind: "wiki", title: t } }); }
   return out;
@@ -3328,7 +3432,7 @@ async function bbFrames(w, e) {
 }
 /* 你選要放在第幾次（1～5 都可以換），再拍照或選照片 */
 function bbSlotPicker() {
-  const [w, e] = BABY[BB.t][2][BB.i], have = {};
+  const [w, e] = bbItems()[BB.i], have = {};
   (BPICS.pics[w] || []).forEach(([id, k, sl]) => { if (sl) have[sl] = k; });
   const def = ["原本的卡通圖", "照片（自動）", "另一張卡通圖", "照片（自動）", "再一張卡通圖"];
   openModal(`
@@ -3342,13 +3446,14 @@ function bbSlotPicker() {
 }
 function bbShowFrame(fr, w, e) {
   const box = $("bbVis"); if (!box || !fr) return;
-  box.innerHTML = fr.img ? `<img class="bbimg" src="${esc(fr.img.u)}" alt="${esc(w)} 的照片" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'bbem',textContent:'${e}'}))">` : `<span class="bbem">${fr.em}</span>`;
+  const cm = !fr.img && /^#(\d{1,2}):(.+)$/.exec(String(fr.em));
+  box.innerHTML = fr.img ? `<img class="bbimg" src="${esc(fr.img.u)}" alt="${esc(w)} 的照片" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'bbem',textContent:'${e}'}))">` : cm ? `<span class="bbcount n${cm[1]}">${Array(Number(cm[1])).fill(`<span>${cm[2]}</span>`).join("")}</span>` : `<span class="bbem">${fr.em}</span>`;
   const cr = $("bbCredit"); BB.cur = fr.img ? { w, src: fr.img.src } : null;
   if (cr) {
     cr.hidden = !fr.img;
     if (fr.img) {
       const k = fr.img.src && fr.img.src.kind;
-      cr.innerHTML = (k === "mine" ? "照片：自己拍的" : k === "guest" ? "照片：朋友提供" : k === "ai" ? "圖片：AI 產生" : k === "unsplash" ? `照片：<a href="https:\/\/unsplash.com/@${encodeURIComponent(fr.img.src.user)}${usRef}" target="_blank" rel="noopener">${esc(fr.img.src.name)}</a>／<a href="https:\/\/unsplash.com/${usRef}" target="_blank" rel="noopener">Unsplash</a>` : `照片：<a href="${esc(fr.img.p || "")}" target="_blank" rel="noopener">維基百科</a>（Wikimedia Commons，CC 授權）`) +
+      cr.innerHTML = (k === "mine" ? "照片：自己拍的" : k === "fam" ? "照片：家人提供" : k === "guest" ? "照片：朋友提供" : k === "ai" ? "圖片：AI 產生" : k === "unsplash" ? `照片：<a href="https:\/\/unsplash.com/@${encodeURIComponent(fr.img.src.user)}${usRef}" target="_blank" rel="noopener">${esc(fr.img.src.name)}</a>／<a href="https:\/\/unsplash.com/${usRef}" target="_blank" rel="noopener">Unsplash</a>` : `照片：<a href="${esc(fr.img.p || "")}" target="_blank" rel="noopener">維基百科</a>（Wikimedia Commons，CC 授權）`) +
         ((k === "wiki" || k === "unsplash" || bpicCan()) ? ` <button class="btn small" id="bbWrong" style="padding:2px 8px;font-size:11px;margin-left:6px">🚫 這張不對</button>` : "");
       if ($("bbWrong")) $("bbWrong").onclick = bbWrongPic;
     }
@@ -3365,7 +3470,7 @@ async function bbWrongPic() {
     try { BPICS = await gs("babyPicDelete", c.src.id); toast("已刪掉"); } catch (e) { toast(backendError(e)); }
   }
   BB.frames = null; const cr = $("bbCredit"); if (cr) cr.hidden = true;
-  const box = $("bbVis"); if (box) box.innerHTML = `<span class="bbem">${BABY[BB.t][2][BB.i][1]}</span>`;
+  const box = $("bbVis"); if (box) box.innerHTML = `<span class="bbem">${bbItems()[BB.i][1]}</span>`;
 }
 /* 把手機拍的照片縮小（最長 900px）再存，省空間 */
 function shrinkImage(file) {
@@ -3378,10 +3483,11 @@ function shrinkImage(file) {
 }
 async function bbUpload(input) {
   const f = input.files && input.files[0]; input.value = ""; if (!f) return;
-  const w = BABY[BB.t][2][BB.i][0];
+  const w = bbItems()[BB.i][0];
   toast("照片上傳中…");
   try {
     const b64 = await shrinkImage(f);
+    if (isFam()) { BPICS = await gs("babyPicFam", w, b64, famTok()); toast("存好了！照片會出現在寶寶聽力（顯示「家人提供」）"); renderBaby(true); return; }
     if (!bpicCan()) { await gs("babyPicSuggest", w, b64, guestCode()); toast("謝謝你！照片已經送出，作者確認後就會出現"); return; }
     const slot = BB.upSlot || 0; BB.upSlot = 0;
     BPICS = await gs("babyPicSave", w, b64, slot);
@@ -3452,7 +3558,7 @@ async function sayBabyWord(w) {
   if (!(url && await playUrl(url, bbRate(true)))) await sayTTS(w, bbRate(false));
 }
 function prefetchBaby() {
-  const items = BABY[BB.t][2];
+  const items = bbItems();
   prefetchSents(items.map(x => x[2]));
   if (state.human === false) return;
   items.forEach(([w, , ph], k) => setTimeout(() => {
@@ -3489,13 +3595,77 @@ function babyExtraAivItems() {
   PT_CHEER.concat(PT_RETRY).forEach(add);
   return out;
 }
+function chipCenter(root) { (root || document).querySelectorAll(".bbthemes").forEach(row => { const on = row.querySelector(".tchip.on"); if (on) row.scrollLeft = Math.max(0, on.offsetLeft - row.offsetLeft - (row.clientWidth - on.offsetWidth) / 2); }); }
 const mdDate = d => { const m = /^\d{4}-(\d{2})-(\d{2})$/.exec(String(d || "")); return m ? `${Number(m[1])}/${Number(m[2])}` : ""; };
 
 /* ---------- 家人錄音：存在這台裝置；作者另外備份到自己的雲端硬碟（訪客聽不到） ---------- */
-const FV_WHO = [["mom", "媽媽"], ["dad", "爸爸"], ["fam", "家人"]];
+const FV_WHO = [["mom", "媽媽"], ["dad", "爸爸"], ["grandma", "奶奶"], ["grandpa", "爺爺"], ["nana", "外婆"], ["gramps", "外公"], ["aunt", "阿姨／姑姑"], ["uncle", "叔叔／舅舅"], ["sib", "哥哥／姊姊"], ["fam", "家人"], ["baby", "寶寶"]];
+const FV_PICK = FV_WHO.filter(x => x[0] !== "baby");
+/* 家人群組：家人在自己手機申請，作者確認後就能直接放照片、錄音 */
+const FAMG = { st: null, admin: null, pending: 0 };
+function famTok() { try { return localStorage.getItem("eq-famtok") || ""; } catch (e) { return ""; } }
+function famSt() { if (!FAMG.st) { try { FAMG.st = JSON.parse(localStorage.getItem("eq-famst") || "null") || { st: "none" }; } catch (e) { FAMG.st = { st: "none" }; } } return FAMG.st; }
+function famSetSt(x) { FAMG.st = x; try { localStorage.setItem("eq-famst", JSON.stringify(x)); } catch (e) { } }
+const isFam = () => Store.backend === "sheet" && !KEY_MODE() && famSt().st === "ok" && !!famTok();
+async function famRefresh() {
+  if (Store.backend !== "sheet" || KEY_MODE() || !famTok()) return;
+  const before = famSt().st;
+  try { const r = await gs("famStatus", famTok()); if (r && r.st) famSetSt(r); } catch (e) { return; }
+  if (famSt().st === "ok" && before !== "ok") { toast(`作者已經確認了！你現在是家人群組的一員（${famSt().name}）`); FV.synced = false; fvSync(); }
+  if (famSt().st !== before && !$("baby").hidden) renderBaby(false);
+}
+function openFamJoin() {
+  const st = famSt();
+  if (st.st === "pending") { toast("已經送出申請了，等作者確認就可以囉"); famRefresh(); return; }
+  openModal(`
+    <div class="row"><h2 style="font-size:20px;flex:1;min-width:0">👪 加入家人群組</h2><button class="icon-btn" id="fjClose" aria-label="關閉">${ICON.x}</button></div>
+    <p class="muted" style="margin:0;font-size:14px">你是寶寶的家人嗎？送出申請，作者確認後，你就可以：</p>
+    <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.7"><li>直接放照片到寶寶聽力（不用再等確認）</li><li>錄下你唸的英文單字、唱的兒歌，寶寶播放時會聽到你的聲音</li><li>聽到其他家人和寶寶的錄音</li></ul>
+    <label style="display:flex;flex-direction:column;gap:4px"><span style="font-size:14px">你的名字或稱呼</span><input id="fjName" maxlength="12" placeholder="例如：奶奶、小阿姨" value="${esc(st.name || "")}"></label>
+    <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:14px">你是寶寶的</span><div class="seg" style="flex-wrap:wrap">${FV_PICK.map(([k, n]) => `<button data-fjrel="${k}" aria-pressed="${k === (st.rel || "grandma")}">${n}</button>`).join("")}</div></div>
+    <button class="btn primary block" id="fjGo">送出申請</button>
+    <p class="muted" style="margin:0;font-size:12px">只有作者看得到你的申請。申請只綁定這支手機（這個瀏覽器）。</p>`);
+  let rel = st.rel || "grandma";
+  $("gPanel").querySelectorAll("[data-fjrel]").forEach(b => b.onclick = () => { rel = b.dataset.fjrel; $("gPanel").querySelectorAll("[data-fjrel]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
+  $("fjClose").onclick = closeModal;
+  $("fjGo").onclick = async () => {
+    const name = $("fjName").value.trim(); if (!name) { toast("請寫上你的名字或稱呼"); return; }
+    $("fjGo").disabled = true;
+    try {
+      const r = await gs("famJoin", name, rel, famTok());
+      try { localStorage.setItem("eq-famtok", r.tok); } catch (e) { }
+      famSetSt({ st: r.st, name, rel }); closeModal();
+      toast(r.st === "ok" ? "你已經是家人了！" : "申請送出了！作者確認後就可以直接放照片和錄音");
+      renderBaby(false);
+    } catch (e) { $("fjGo").disabled = false; toast(/TOO_MANY/.test(String(e && e.message)) ? "現在申請的人太多了，請晚點再試" : backendError(e)); }
+  };
+}
+async function openFamAdmin() {
+  openModal(`<div class="row"><h2 style="font-size:20px;flex:1;min-width:0">👪 家人群組</h2><button class="icon-btn" id="faClose" aria-label="關閉">${ICON.x}</button></div><p class="muted">讀取中…</p>`);
+  $("faClose").onclick = closeModal;
+  try { FAMG.admin = await gs("famAdmin"); } catch (e) { toast(backendError(e)); closeModal(); return; }
+  drawFamAdmin();
+}
+function drawFamAdmin() {
+  const a = FAMG.admin || { pending: [], members: [] }, rel = k => (FV_WHO.find(x => x[0] === k) || [0, "家人"])[1];
+  FAMG.pending = a.pending.length; try { renderWishBar(); } catch (e) { }
+  openModal(`
+    <div class="row"><h2 style="font-size:20px;flex:1;min-width:0">👪 家人群組</h2><button class="icon-btn" id="faClose" aria-label="關閉">${ICON.x}</button></div>
+    <p class="muted" style="margin:0;font-size:13px">家人在自己的手機打開寶寶聽力，按「👪 我是家人」送出申請。你按「加入」之後，他們就能直接放照片、錄音，也能聽到家人和寶寶的錄音。不認識的人請按「拒絕」。</p>
+    <section><span class="eyebrow">等你確認（${a.pending.length}）</span>
+      ${a.pending.length ? `<div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">${a.pending.map(([id, n, r, t]) => `<div class="row" style="gap:8px;align-items:center"><span style="flex:1;min-width:0"><b>${esc(n)}</b>・${esc(rel(r))}<br><span class="muted" style="font-size:12px">${esc(t)} 申請</span></span><button class="btn small primary" data-fa="${esc(id)}" data-fd="ok">✅ 加入</button><button class="btn small" data-fa="${esc(id)}" data-fd="no">拒絕</button></div>`).join("")}</div>` : `<p class="muted" style="margin:4px 0 0">目前沒有新的申請。</p>`}</section>
+    <section><span class="eyebrow">家人（${a.members.length}）</span>
+      ${a.members.length ? `<div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">${a.members.map(([id, n, r, t]) => `<div class="row" style="gap:8px;align-items:center"><span style="flex:1;min-width:0"><b>${esc(n)}</b>・${esc(rel(r))}<br><span class="muted" style="font-size:12px">${esc(t)} 加入</span></span><button class="btn small" data-fa="${esc(id)}" data-fd="remove">移除</button></div>`).join("")}</div>` : `<p class="muted" style="margin:4px 0 0">還沒有家人加入。</p>`}</section>`);
+  $("faClose").onclick = closeModal;
+  $("gPanel").querySelectorAll("[data-fa]").forEach(b => b.onclick = async () => {
+    if (b.dataset.fd === "remove" && !confirm("要把這位家人移出群組嗎？移出後他就不能再放照片、錄音。")) return;
+    b.disabled = true;
+    try { FAMG.admin = await gs("famDecide", b.dataset.fa, b.dataset.fd); drawFamAdmin(); toast(b.dataset.fd === "ok" ? "加入了！" : b.dataset.fd === "no" ? "已拒絕" : "已移除"); } catch (e) { b.disabled = false; toast(backendError(e)); }
+  });
+}
 const FV = { idx: null, url: {}, synced: false };
 const fvName = w => (FV_WHO.find(x => x[0] === w) || [0, "家人"])[1];
-const fvCloud = () => KEY_MODE() && Store.backend === "sheet";
+const fvCloud = () => Store.backend === "sheet" && (KEY_MODE() || isFam());
 const fvPath = (key, who, t) => "/fv/" + encodeURIComponent(key) + "/" + who + "/" + t;
 function fvIdx() { if (!FV.idx) { try { FV.idx = JSON.parse(localStorage.getItem("eq-fv") || "{}") || {}; } catch (e) { FV.idx = {}; } } return FV.idx; }
 function fvSaveIdx() { try { localStorage.setItem("eq-fv", JSON.stringify(FV.idx || {})); } catch (e) { } }
@@ -3506,7 +3676,7 @@ async function fvUrl(key, who) {
   const p = fvPath(key, who, e.t); if (FV.url[p]) return FV.url[p];
   try {
     const c = await caches.open("eq-famvoice"), r = await c.match(p); let blob = r ? await r.blob() : null;
-    if (!blob && e.id && fvCloud()) { const g = await gs("famVoiceGet", e.id); if (g && g.b64) { blob = b64ToBlob(g.b64, g.mime); try { await c.put(p, new Response(blob, { headers: { "Content-Type": g.mime || "audio/webm" } })); } catch (x) { } } }
+    if (!blob && e.id && fvCloud()) { const g = await gs("famVoiceGet", e.id, famTok()); if (g && g.b64) { blob = b64ToBlob(g.b64, g.mime); try { await c.put(p, new Response(blob, { headers: { "Content-Type": g.mime || "audio/webm" } })); } catch (x) { } } }
     if (blob && blob.size) return (FV.url[p] = URL.createObjectURL(blob));
   } catch (x) { }
   return "";
@@ -3519,19 +3689,19 @@ async function fvSave(key, who, blob) {
   const ent = { t, mime };
   (fvIdx()[key] = fvIdx()[key] || {})[who] = ent; fvSaveIdx();
   if (!fvCloud()) return "local";
-  try { const r = await gs("famVoiceSave", key, who, await blobToB64(b2), mime, t); if (r && r.id) { ent.id = r.id; fvSaveIdx(); } return "cloud"; }
+  try { const r = await gs("famVoiceSave", key, who, await blobToB64(b2), mime, t, famTok()); if (r && r.id) { ent.id = r.id; fvSaveIdx(); } return "cloud"; }
   catch (e) { toast("已存在這台裝置；備份到雲端硬碟失敗：" + backendError(e)); return "local"; }
 }
 async function fvDelete(key, who) {
   const e = (fvIdx()[key] || {})[who]; if (!e) return;
   try { const c = await caches.open("eq-famvoice"); await c.delete(fvPath(key, who, e.t)); } catch (x) { }
   delete fvIdx()[key][who]; if (!Object.keys(fvIdx()[key]).length) delete fvIdx()[key]; fvSaveIdx();
-  if (e.id && fvCloud()) { try { await gs("famVoiceDelete", e.id); } catch (x) { toast(backendError(x)); } }
+  if (e.id && fvCloud()) { try { await gs("famVoiceDelete", e.id, famTok()); } catch (x) { toast(/NOT_YOURS/.test(String(x && x.message)) ? "只刪掉了這台裝置上的；雲端那份是別的家人錄的" : backendError(x)); } }
 }
 /* 作者：把雲端硬碟裡的錄音清單同步過來（真正的聲音檔要播的時候才下載） */
 async function fvSync() {
   if (FV.synced || !fvCloud()) return; FV.synced = true;
-  let rows; try { rows = await gs("famVoiceList"); } catch (e) { FV.synced = false; return; }
+  let rows; try { rows = await gs("famVoiceList", famTok()); } catch (e) { FV.synced = false; return; }
   if (!Array.isArray(rows)) return;
   const idx = fvIdx(), seen = {};
   rows.forEach(([key, who, id, mime, t]) => {
@@ -3544,8 +3714,8 @@ async function fvSync() {
   if (!$("baby").hidden) renderBaby(false);
 }
 const FR = { a: null };
-function openFamRec(key, title, sub, maxSec, after, song) {
-  FR.a = null; const who0 = FV_WHO.some(x => x[0] === state.fvWho) ? state.fvWho : "mom";
+function openFamRec(key, title, sub, maxSec, after, song, baby) {
+  FR.a = null; const who0 = baby ? "baby" : FV_PICK.some(x => x[0] === state.fvWho) ? state.fvWho : isFam() && FV_PICK.some(x => x[0] === famSt().rel) ? famSt().rel : "mom";
   const draw = () => {
     const have = fvList(key);
     $("frHave").innerHTML = have.length ? `<span class="eyebrow">已經錄好的</span><div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">${have.map(h => `<div class="row" style="gap:8px;align-items:center"><span style="flex:1;min-width:0">🎙 ${esc(h.name)}${h.id ? ` <span class="muted" style="font-size:12px">☁️ 已備份</span>` : ""}</span><button class="btn small" data-frp="${h.who}">▶ 播放</button><button class="btn small" data-frd="${h.who}">🗑</button></div>`).join("")}</div>` : "";
@@ -3553,25 +3723,25 @@ function openFamRec(key, title, sub, maxSec, after, song) {
     $("frHave").querySelectorAll("[data-frd]").forEach(b => b.onclick = async () => { if (!confirm(`要刪掉${fvName(b.dataset.frd)}的錄音嗎？`)) return; await fvDelete(key, b.dataset.frd); draw(); toast("已刪掉"); });
   };
   openModal(`
-    <div class="row"><h2 style="font-size:20px;flex:1;min-width:0">🎙 錄家人的聲音</h2><button class="icon-btn" id="frClose" aria-label="關閉">${ICON.x}</button></div>
+    <div class="row"><h2 style="font-size:20px;flex:1;min-width:0">${baby ? "🎙 錄寶寶的聲音" : "🎙 錄家人的聲音"}</h2><button class="icon-btn" id="frClose" aria-label="關閉">${ICON.x}</button></div>
     <div style="text-align:center"><div style="font-size:24px;font-weight:800">${esc(title)}</div><div class="muted">${esc(sub)}</div></div>
-    <div class="row" style="justify-content:center;gap:8px;flex-wrap:wrap"><span class="muted" style="font-size:13px">誰在錄？</span><div class="seg">${FV_WHO.map(([k, n]) => `<button data-frwho="${k}" aria-pressed="${k === who0}">${n}</button>`).join("")}</div></div>
+    ${baby ? "" : `<div class="row" style="justify-content:center;gap:8px;flex-wrap:wrap"><span class="muted" style="font-size:13px">誰在錄？</span><div class="seg" style="flex-wrap:wrap;justify-content:center">${FV_PICK.map(([k, n]) => `<button data-frwho="${k}" aria-pressed="${k === who0}">${n}</button>`).join("")}</div></div>`}
     ${song ? `<div class="row" style="justify-content:center"><button class="btn small" id="frMb">🎵 放音樂盒當伴奏</button></div>` : ""}
     <div id="frRec"></div>
     <div class="row" style="justify-content:center;gap:8px" id="frAct" hidden><button class="btn" id="frPlay">▶ 聽聽看</button><button class="btn primary" id="frSave">✅ 存起來</button></div>
     <div id="frHave"></div>
-    <p class="muted" style="margin:0;font-size:12px">${fvCloud() ? "錄音存在這台裝置，並備份到你的雲端硬碟「English Quest 家人錄音」。只有你（作者）登入的裝置聽得到，訪客聽不到。" : "錄音只存在這台手機或電腦，不會上傳到任何地方。"}同一個人再錄一次會換掉舊的。</p>`);
+    <p class="muted" style="margin:0;font-size:12px">${fvCloud() ? (isFam() ? "錄音會存到作者的雲端硬碟，家人群組的每個人都聽得到，其他訪客聽不到。" : "錄音存在這台裝置，並備份到你的雲端硬碟「English Quest 家人錄音」。你和家人群組聽得到，其他訪客聽不到。") : "錄音只存在這台手機或電腦，不會上傳到任何地方。"}同一個人再錄一次會換掉舊的。</p>`);
   let who = who0;
   $("gPanel").querySelectorAll("[data-frwho]").forEach(b => b.onclick = () => { who = b.dataset.frwho; state.fvWho = who; Store.save(); $("gPanel").querySelectorAll("[data-frwho]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
   $("frClose").onclick = () => { mbStop(); stopHuman(); closeModal(); if (after) after(); };
   if ($("frMb")) $("frMb").onclick = () => mbPlay(song, () => { });
-  recorderUI($("frRec"), { maxSec, hint: song ? "按麥克風開始唱，唱完再按一次" : "按麥克風，清楚地唸一次，唸完再按一次", onAudio: a => { mbStop(); FR.a = a; $("frAct").hidden = false; } });
+  recorderUI($("frRec"), { maxSec, hint: baby ? "寶寶要說的時候按麥克風，說完再按一次" : song ? "按麥克風開始唱，唱完再按一次" : "按麥克風，清楚地唸一次，唸完再按一次", onAudio: a => { mbStop(); FR.a = a; $("frAct").hidden = false; } });
   $("frPlay").onclick = () => { if (FR.a) playUrl(FR.a.url); };
   $("frSave").onclick = async () => {
     if (!FR.a) return; const btn = $("frSave"); btn.disabled = true; btn.textContent = "儲存中…";
     const where = await fvSave(key, who, FR.a.blob);
     FR.a = null; $("frAct").hidden = true; btn.disabled = false; btn.textContent = "✅ 存起來";
-    toast(where === "cloud" ? `存好了！${fvName(who)}的聲音也備份到雲端硬碟了` : `存好了！${fvName(who)}的聲音存在這台裝置`);
+    toast(where === "cloud" ? `存好了！${fvName(who)}的聲音也存到雲端了` : `存好了！${fvName(who)}的聲音存在這台裝置`);
     draw();
   };
   draw();
@@ -3582,9 +3752,33 @@ function growLog() { if (!state.babyLog || typeof state.babyLog !== "object" || 
 function growMark(w, k) { const e = growLog()[w] = growLog()[w] || {}; e[k] = (Number(e[k]) || 0) + 1; if (k === "pt" && !e.pt1) e.pt1 = today(); Store.save(); }
 function growToggle(w, k) {
   const e = growLog()[w] = growLog()[w] || {};
-  if (e[k]) { if (!confirm(`要取消「${w}・${k === "point" ? "會指了" : "會說了"}」的紀錄嗎？`)) return false; delete e[k]; }
-  else { e[k] = today(); toast(k === "point" ? `記下來了：${w} 會指了 👆` : `記下來了：${w} 會說了 🗣`); }
-  Store.save(); return true;
+  if (e[k]) { if (!confirm(`要取消「${w}・${k === "point" ? "會指了" : "會說了"}」的紀錄嗎？${fvCloud() ? "（全家的紀錄都會一起取消）" : ""}`)) return false; delete e[k]; delete e[k + "By"]; }
+  else { e[k] = today(); e[k + "By"] = isFam() ? famSt().name : "爸媽"; toast(k === "point" ? `記下來了：${w} 會指了 👆` : `記下來了：${w} 會說了 🗣`); }
+  Store.save();
+  if (fvCloud()) gs("growSet", w, k, e[k] || "", famTok()).then(growApply).catch(x => toast("已記在這台裝置；同步給家人失敗：" + backendError(x)));
+  return true;
+}
+/* 成長紀錄：作者和家人群組共用雲端那一份（聽過幾次、指指看次數還是各自記） */
+const GROWC = { at: 0 };
+function growApply(r) {
+  if (!r || typeof r.m !== "object") return;
+  const L = growLog();
+  Object.keys(L).forEach(w => ["point", "say", "pointBy", "sayBy"].forEach(k => delete L[w][k]));
+  Object.keys(r.m).forEach(w => { const e = r.m[w], x = L[w] = L[w] || {}; ["point", "say"].forEach(k => { if (e[k]) { x[k] = e[k]; x[k + "By"] = e[k + "By"] || ""; } }); });
+  state.babyBirth = r.birth || ""; Store.save();
+}
+async function growSync() {
+  if (!fvCloud()) return;
+  GROWC.at = Date.now(); let r;
+  try { r = await gs("growGet", famTok()); } catch (e) { return; }
+  if (!state.growMig) {
+    const up = []; Object.entries(growLog()).forEach(([w, e]) => ["point", "say"].forEach(k => { if (e[k] && !(r.m[w] && r.m[w][k])) up.push([w, k, e[k]]); }));
+    if (state.babyBirth && !r.birth) up.push(["_baby", "birth", state.babyBirth]);
+    if (up.length) { try { r = await gs("growBulk", up, famTok()); } catch (e) { return; } }
+    state.growMig = true;
+  }
+  growApply(r);
+  if (!$("baby").hidden && BB && (bbView() === "grow" || (bbView() === "listen" && !BB.auto))) renderBaby(false);
 }
 function ageText(birth, d) {
   const b = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(birth || "")), x = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(d || "")); if (!b || !x) return "";
@@ -3595,20 +3789,21 @@ function renderGrow() {
   const L = growLog(), all = BABY.flatMap(t => t[2]), get = w => L[w] || {};
   const nPoint = all.filter(x => get(x[0]).point).length, nSay = all.filter(x => get(x[0]).say).length;
   const nHeard = all.filter(x => get(x[0]).heard).length, ptSum = all.reduce((a, x) => a + (Number(get(x[0]).pt) || 0), 0);
-  const ev = []; all.forEach(x => { const e = get(x[0]); if (e.say) ev.push([e.say, "say", x]); if (e.point) ev.push([e.point, "point", x]); });
+  if (fvCloud() && Date.now() - GROWC.at > 60000) growSync();
+  const ev = []; all.forEach(x => { const e = get(x[0]); if (e.say) ev.push([e.say, "say", x, e.sayBy]); if (e.point) ev.push([e.point, "point", x, e.pointBy]); });
   ev.sort((a, b) => a[0] < b[0] ? 1 : a[0] > b[0] ? -1 : 0);
   const firstSay = ev.filter(e => e[1] === "say").slice(-1)[0], birth = state.babyBirth || "";
   const showAll = !!GROW.all;
   $("bbView").innerHTML = `
     <div class="reply" style="display:flex;flex-direction:column;gap:8px;border-radius:14px;padding:12px 14px">
       <label class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><span style="font-size:14px">寶寶生日</span><input type="date" id="grBirth" value="${esc(birth)}" style="flex:1;min-width:150px"></label>
-      <span class="muted" style="font-size:12px">填了生日，紀錄會顯示寶寶當時幾個月大。資料只存在你的進度裡。</span></div>
+      <span class="muted" style="font-size:12px">${fvCloud() ? "☁️ 全家共用：家人群組的每個人都能記，大家看到的是同一份。" : "紀錄存在這台裝置。"}填了生日，紀錄會顯示寶寶當時幾個月大。寶寶說出新的字時，點 🎙 就能把寶寶的聲音錄下來。</span></div>
     <div class="gtiles">
       <div class="gtile"><b>${nPoint}</b>👆 會指了</div><div class="gtile"><b>${nSay}</b>🗣 會說了</div>
       <div class="gtile"><b>${nHeard}<small> / ${all.length}</small></b>🎧 聽過的字</div><div class="gtile"><b>${ptSum}</b>👆 指指看答對</div></div>
-    ${firstSay ? `<div class="reply" style="border-radius:14px;padding:12px 14px;text-align:center"><span class="eyebrow">第一個會說的英文字</span><div style="font-size:28px;font-weight:800">${firstSay[2][1]} ${esc(firstSay[2][0])}</div><div class="muted">${esc(firstSay[0])}${ageText(birth, firstSay[0]) ? `・${ageText(birth, firstSay[0])}` : ""}</div></div>` : ""}
+    ${firstSay ? `<div class="reply" style="border-radius:14px;padding:12px 14px;text-align:center"><span class="eyebrow">第一個會說的英文字</span><div style="font-size:28px;font-weight:800">${firstSay[2][1]} ${esc(firstSay[2][0])}</div><div class="muted">${esc(firstSay[0])}${ageText(birth, firstSay[0]) ? `・${ageText(birth, firstSay[0])}` : ""}</div>${fvList("b:" + firstSay[2][0]).length ? `<button class="btn small" data-gbp="${esc(firstSay[2][0])}" style="margin-top:6px">▶ 聽寶寶說</button>` : `<button class="btn small" data-gbr="${esc(firstSay[2][0])}" style="margin-top:6px">🎙 錄下寶寶說的聲音</button>`}</div>` : ""}
     <section><h3 style="font-size:17px;margin:0 0 6px">時間軸</h3>
-      ${ev.length ? `<div style="display:flex;flex-direction:column;gap:6px">${(showAll ? ev : ev.slice(0, 12)).map(([d, k, x]) => `<div class="row" style="gap:10px;align-items:center"><span class="muted" style="font-size:13px;width:44px">${mdDate(d)}</span><span style="font-size:22px">${x[1]}</span><span style="flex:1;min-width:0">${k === "say" ? "🗣 會說" : "👆 會指"} <b>${esc(x[0])}</b>（${esc(x[3])}）</span>${ageText(birth, d) ? `<span class="muted" style="font-size:12px">${ageText(birth, d)}</span>` : ""}</div>`).join("")}${ev.length > 12 && !showAll ? `<button class="btn small" id="grMore">顯示全部 ${ev.length} 筆</button>` : ""}</div>`
+      ${ev.length ? `<div style="display:flex;flex-direction:column;gap:6px">${(showAll ? ev : ev.slice(0, 12)).map(([d, k, x, by]) => `<div class="row" style="gap:10px;align-items:center"><span class="muted" style="font-size:13px;width:44px">${mdDate(d)}</span><span style="font-size:22px">${x[1]}</span><span style="flex:1;min-width:0">${k === "say" ? "🗣 會說" : "👆 會指"} <b>${esc(x[0])}</b>（${esc(x[3])}）${by && by !== "爸媽" ? `<br><span class="muted" style="font-size:12px">${esc(by)}記的</span>` : ""}</span>${k === "say" ? (fvList("b:" + x[0]).length ? `<button class="btn small" data-gbp="${esc(x[0])}" aria-label="聽寶寶說 ${esc(x[0])}">▶ 👶</button>` : `<button class="btn small" data-gbr="${esc(x[0])}" aria-label="錄寶寶說 ${esc(x[0])}">🎙</button>`) : ""}${ageText(birth, d) ? `<span class="muted" style="font-size:12px">${ageText(birth, d)}</span>` : ""}</div>`).join("")}${ev.length > 12 && !showAll ? `<button class="btn small" id="grMore">顯示全部 ${ev.length} 筆</button>` : ""}</div>`
         : `<p class="muted" style="margin:0">還沒有紀錄。寶寶會指出某個東西、或說出某個字的時候，在下面點 👆 或 🗣，就會記下日期。</p>`}
     </section>
     <section style="display:flex;flex-direction:column;gap:10px"><h3 style="font-size:17px;margin:0">每個字的紀錄</h3>
@@ -3616,9 +3811,11 @@ function renderGrow() {
       ${BABY.map(([tn, ic, items]) => `<div><span class="eyebrow">${ic} ${esc(tn)}</span><div class="gwords" style="margin-top:4px">${items.map(x => { const e = get(x[0]); return `<span class="gw"><span aria-hidden="true">${x[1]}</span>${esc(x[0])}${e.heard ? `<small class="muted">🎧${e.heard}</small>` : ""}<button data-gw="${esc(x[0])}" data-gk="point" aria-pressed="${!!e.point}" aria-label="${esc(x[0])} 會指了">👆</button><button data-gw="${esc(x[0])}" data-gk="say" aria-pressed="${!!e.say}" aria-label="${esc(x[0])} 會說了">🗣</button></span>`; }).join("")}</div></div>`).join("")}
     </section>
     <div class="row bbctl"><button class="btn small" id="grCopy">📋 複製成文字（分享給家人）</button></div>`;
-  $("grBirth").onchange = e => { const v = String(e.target.value || ""); state.babyBirth = /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : ""; Store.save(); renderGrow(); };
+  $("grBirth").onchange = e => { const v = String(e.target.value || ""); state.babyBirth = /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : ""; Store.save(); renderGrow(); if (fvCloud()) gs("growBirth", state.babyBirth, famTok()).then(growApply).catch(x => toast(backendError(x))); };
   if ($("grMore")) $("grMore").onclick = () => { GROW.all = true; renderGrow(); };
   $("bbView").querySelectorAll("[data-gw]").forEach(b => b.onclick = () => { if (growToggle(b.dataset.gw, b.dataset.gk)) renderGrow(); });
+  $("bbView").querySelectorAll("[data-gbp]").forEach(b => b.onclick = async () => { const ls = fvList("b:" + b.dataset.gbp); const u = ls.length ? await fvUrl("b:" + b.dataset.gbp, ls[0].who) : ""; if (u) playUrl(u); else toast("找不到這段錄音"); });
+  $("bbView").querySelectorAll("[data-gbr]").forEach(b => b.onclick = () => { const x = BABY.flatMap(t => t[2]).find(y => y[0] === b.dataset.gbr); if (x) openFamRec("b:" + x[0], `${x[1]} ${x[0]}`, `錄下寶寶說「${x[0]}」的聲音，以後可以回味`, 20, () => { if (bbView() === "grow") renderGrow(); }, null, true); });
   $("grCopy").onclick = () => {
     const lines = ["寶寶的英文成長紀錄（English Quest）", `會指 ${nPoint} 個字・會說 ${nSay} 個字・聽過 ${nHeard} 個字`];
     ev.slice().reverse().forEach(([d, k, x]) => lines.push(`${d}${ageText(birth, d) ? `（${ageText(birth, d)}）` : ""} ${k === "say" ? "會說" : "會指"} ${x[0]}（${x[3]}）`));
@@ -3629,24 +3826,28 @@ function renderGrow() {
 const GROW = { all: false };
 
 /* ---------- 指指看 ---------- */
-const PT_THEMES = [0, 1, 2, 3, 4, 5, 7];
+const PT_THEMES = BABY.map((t, i) => i).filter(i => !/每一天|動作/.test(BABY[i][0]));
 const PT_CHEER = ["Yay! Good job!", "Yes! You found it!", "Great job!", "Wow! You got it!"];
 const PT_RETRY = ["Try again!"];
 const PT_NAME = { mommy: "Mommy", daddy: "Daddy", grandma: "Grandma", grandpa: "Grandpa", brother: "your brother", sister: "your sister", baby: "the baby", family: "the family" };
 const PT_PL = { eyes: 1, ears: 1, hands: 1, feet: 1, teeth: 1, shoes: 1 };
 const PT = { tok: 0, t: -1, target: null, opts: [], miss: 0, last: "", score: 0, done: false };
 function pointQ(w, ti) {
-  if (ti === 3) return `Which one is ${w}?`;
+  const tn = (BABY[ti] || [""])[0];
+  if (tn === "顏色" || tn === "相反詞") return `Which one is ${w}?`;
+  if (tn === "數字") return `Where is number ${w}?`;
   if (PT_NAME[w]) return `Where is ${PT_NAME[w]}?`;
-  if (ti === 2) return PT_PL[w] ? `Where are your ${w}?` : `Where is your ${w}?`;
+  if (tn === "身體") return PT_PL[w] ? `Where are your ${w}?` : `Where is your ${w}?`;
   return PT_PL[w] ? `Where are the ${w}?` : `Where is the ${w}?`;
 }
-const pointZh = (x, ti) => ti === 3 ? `哪一個是${x[3]}？` : `${x[3]}在哪裡？`;
+const pointZh = (x, ti) => /顏色|相反詞/.test(BABY[ti][0]) ? `哪一個是${x[3]}？` : BABY[ti][0] === "數字" ? `數字${x[3]}在哪裡？` : `${x[3]}在哪裡？`;
 function ptNew() {
   if (!PT_THEMES.includes(PT.t)) PT.t = PT_THEMES.includes(BB.t) ? BB.t : 0;
   const items = BABY[PT.t][2], n = Math.min([2, 3, 4].includes(state.ptN) ? state.ptN : 2, items.length);
   const pool = items.filter(x => x[0] !== PT.last), target = pool[Math.floor(Math.random() * pool.length)];
-  const others = items.filter(x => x[0] !== target[0]).sort(() => Math.random() - 0.5).slice(0, n - 1);
+  let others = items.filter(x => x[0] !== target[0]).sort(() => Math.random() - 0.5);
+  if (BABY[PT.t][0] === "相反詞") { const mate = items[items.indexOf(target) ^ 1]; if (mate) others = [mate].concat(others.filter(x => x !== mate)); }
+  others = others.slice(0, n - 1);
   PT.target = target; PT.opts = others.concat([target]).sort(() => Math.random() - 0.5); PT.miss = 0; PT.last = target[0]; PT.done = false;
 }
 async function ptAsk() { const tok = ++PT.tok; await waitMs(250); if (tok !== PT.tok || bbView() !== "point") return; await sayLine(pointQ(PT.target[0], PT.t), !!state.babySlow); }
@@ -3660,6 +3861,7 @@ function renderPoint(fresh) {
     <div class="row bbctl"><button class="btn" id="ptAgain">🔊 再問一次</button><button class="btn primary" id="ptNext">下一題 ▶</button></div>
     <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><span class="muted" style="font-size:13px">圖片</span><div class="seg">${[2, 3, 4].map(n => `<button data-ptn="${n}" aria-pressed="${([2, 3, 4].includes(state.ptN) ? state.ptN : 2) === n}">${n} 張</button>`).join("")}</div><button class="btn small${state.ptWords ? " primary" : ""}" id="ptWords" aria-pressed="${!!state.ptWords}">顯示英文字</button></div>
     <p class="muted" style="margin:0;font-size:13px;text-align:center">這次答對 <b id="ptScore">${PT.score}</b> 題。適合 1 歲半以上：爸媽先示範指給寶寶看，再讓寶寶自己點。答錯兩次，正確的那張會閃一閃提示。</p>`;
+  chipCenter($("bbView"));
   $("bbView").querySelectorAll("[data-ptt]").forEach(b => b.onclick = () => { PT.t = Number(b.dataset.ptt); PT.last = ""; renderPoint(true); });
   $("bbView").querySelectorAll("[data-pt]").forEach(b => b.onclick = () => ptTap(Number(b.dataset.pt), b));
   $("bbView").querySelectorAll("[data-ptn]").forEach(b => b.onclick = () => { state.ptN = Number(b.dataset.ptn); Store.save(); renderPoint(true); });
@@ -3712,6 +3914,7 @@ function renderTips() {
     <div style="display:flex;flex-direction:column;gap:8px">${s[3].map((p, i) => `<button class="tipcard" data-tip="${i}"><span style="flex:1;min-width:0"><span class="en">${esc(p[0])}</span><br><span class="zh">${esc(p[1])}</span></span><span aria-hidden="true">🔊</span></button>`).join("")}</div>
     <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><button class="btn" id="tpAll">▶ 整組播一次</button><button class="btn small${state.babySlow ? " primary" : ""}" id="tpSlow" aria-pressed="${!!state.babySlow}">🐢 慢一點</button></div>
     <p class="muted" style="margin:0;font-size:13px;text-align:center">先按一下聽發音，再看著寶寶的眼睛說出來。說得不標準也沒關係，重點是每天在同一個時刻說同一句。</p>`;
+  chipCenter($("bbView"));
   $("bbView").querySelectorAll("[data-tps]").forEach(b => b.onclick = () => { TP.tok++; TP.s = Number(b.dataset.tps); renderTips(); });
   $("bbView").querySelectorAll("[data-tip]").forEach(b => b.onclick = () => tpSay(b, s[3][Number(b.dataset.tip)][0]));
   $("bbView").querySelector("[data-tipd]").onclick = e => tpSay(e.currentTarget, d[0][0]);
@@ -3807,27 +4010,54 @@ function renderSongs() {
   aivPrefetch(song.lines.slice(0, 6).map(l => [aivFor(l[0]), l[0]]));
 }
 
+/* 每日推薦 10 個字：還不會的複習 5、新的字 4、已經會的 1，當天固定不變 */
+const BB_DAILY = -1;
+function babyWordMap() { if (!babyWordMap.m) { babyWordMap.m = {}; BABY.forEach(t => t[2].forEach(x => babyWordMap.m[x[0]] = x)); } return babyWordMap.m; }
+function seededRand(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function dailyPlan() {
+  const d = today(), cur = state.babyDaily;
+  if (cur && cur.d === d && Array.isArray(cur.w) && cur.w.length && cur.w.every(x => babyWordMap()[x[0]])) return cur;
+  const L = growLog(), rnd = seededRand(hashStr("daily|" + d)), all = BABY.flatMap(t => t[2].map(x => x[0]));
+  const learned = w => !!(L[w] && (L[w].say || L[w].point)), heard = w => Number(L[w] && L[w].heard) || 0;
+  const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const review = shuffle(all.filter(w => heard(w) && !learned(w))).sort((a, b) => heard(a) - heard(b)).slice(0, 5).map(w => [w, "review"]);
+  const known = shuffle(all.filter(learned)).slice(0, 1).map(w => [w, "known"]);
+  const fresh = all.filter(w => !heard(w) && !learned(w)).slice(0, 10 - review.length - known.length).map(w => [w, "new"]);
+  let list = review.concat(fresh, known);
+  if (list.length < 10) { const have = new Set(list.map(x => x[0])); shuffle(all.filter(w => !have.has(w))).slice(0, 10 - list.length).forEach(w => list.push([w, learned(w) ? "known" : "review"])); }
+  list = shuffle(list.slice(0, 10));
+  state.babyDaily = { d, w: list, done: false }; Store.save();
+  return state.babyDaily;
+}
+const DAILY_TAG = { new: "🆕 新的字", review: "🔁 複習", known: "⭐ 已經會了" };
+function bbItems() { return BB && BB.t === BB_DAILY ? dailyPlan().w.map(x => babyWordMap()[x[0]]) : BABY[BB && BB.t >= 0 ? BB.t : 0][2]; }
 function openBaby(t) {
   show("baby");
-  BB = BB || { t: 0, i: 0, auto: false, dark: false, tok: 0, started: 0 };
+  BB = BB || { t: BB_DAILY, i: 0, auto: false, dark: false, tok: 0, started: 0 };
   if (t != null) { BB.t = t; BB.i = 0; }
-  fvSync();
+  famRefresh().then(() => { fvSync(); growSync(); });
+  if (bpicCan()) gs("famAdmin").then(a => { FAMG.admin = a; FAMG.pending = a.pending.length; renderWishBar(); if (!$("baby").hidden && bbView() === "listen") renderBaby(false); }).catch(() => { });
   prefetchBaby();
   renderBaby(true);
 }
 function renderBaby(say) {
   if (bbView() !== "listen") { renderBabyView(); return; }
-  const [, , items] = BABY[BB.t], [w, e, ph, zw, zp] = items[BB.i], gl = growLog()[w] || {}, fvn = fvList("w:" + w).length;
+  const items = bbItems(); if (BB.i >= items.length) BB.i = 0;
+  const [w, e, ph, zw, zp] = items[BB.i], gl = growLog()[w] || {}, fvn = fvList("w:" + w).length, daily = BB.t === BB_DAILY ? dailyPlan() : null;
   $("baby").innerHTML = `
     <header class="top"><button class="icon-btn" id="bbBack" aria-label="離開">${ICON.x}</button><h2 style="font-size:22px;flex:1;min-width:0">寶寶聽力</h2><span class="muted" style="font-size:14px">${BB.i + 1} / ${items.length}</span></header>
     ${bbTabs()}
     ${bpicCan() && (BPICS.pending || []).length ? `<button class="btn small block" id="bpTop" style="background:var(--primary-soft)">📬 朋友提供了 ${BPICS.pending.length} 張照片等你確認</button>` : ""}
-    <div class="bbthemes">${BABY.map(([n, ic], k) => `<button class="tchip${k === BB.t ? " on" : ""}" data-bt="${k}"><span aria-hidden="true">${ic}</span>${esc(n)}</button>`).join("")}</div>
+    <div class="bbthemes"><button class="tchip${BB.t === BB_DAILY ? " on" : ""}" data-bt="${BB_DAILY}"><span aria-hidden="true">⭐</span>今日 10 個字${state.babyDaily && state.babyDaily.d === today() && state.babyDaily.done ? " ✓" : ""}</button>${BABY.map(([n, ic], k) => `<button class="tchip${k === BB.t ? " on" : ""}" data-bt="${k}"><span aria-hidden="true">${ic}</span>${esc(n)}</button>`).join("")}</div>
+    ${daily ? `<div class="reply dailybox"><div class="row" style="gap:8px;align-items:center"><span style="flex:1;min-width:0"><b>⭐ 今日推薦 10 個字</b><br><span class="muted" style="font-size:12px">${(() => { const c = k => daily.w.filter(x => x[1] === k).length; return `複習 ${c("review")}・新的字 ${c("new")}・已經會的 ${c("known")}`; })()}${daily.done ? "・今天聽完了 🎉" : ""}</span></span><button class="btn small primary" id="dailyGo">▶ 從頭播到尾</button></div>
+      <div class="dailydots" aria-hidden="true">${daily.w.map((x, i) => `<span class="${i === BB.i ? "on" : i < BB.i ? "done" : ""}" title="${esc(x[0])}">${babyWordMap()[x[0]][1]}</span>`).join("")}</div>
+      <span class="dailytag">${DAILY_TAG[(daily.w[BB.i] || [])[1]] || ""}</span></div>` : ""}
     <button class="bbcard" id="bbCard" aria-label="再聽一次 ${esc(w)}"><span class="bbvis" id="bbVis" aria-hidden="true"><span class="bbem">${e}</span></span><span class="bbw">${esc(w)}</span>${state.babySub === false ? "" : `<span class="bbzh">${esc(zw)}</span>`}</button>
     <p class="muted" id="bbCredit" hidden style="margin:-6px 0 0;font-size:11px;text-align:center"></p>
-    <div class="row bbctl" style="flex-wrap:wrap;gap:6px"><button class="btn small${gl.point ? " primary" : ""}" id="gPoint" aria-pressed="${!!gl.point}">👆 會指了${gl.point ? " " + mdDate(gl.point) : ""}</button><button class="btn small${gl.say ? " primary" : ""}" id="gSay" aria-pressed="${!!gl.say}">🗣 會說了${gl.say ? " " + mdDate(gl.say) : ""}</button><button class="btn small" id="bbRec">🎙 錄家人的聲音${fvn ? `（${fvn}）` : ""}</button></div>
+    <div class="row bbctl" style="flex-wrap:wrap;gap:6px"><button class="btn small${gl.point ? " primary" : ""}" id="gPoint" aria-pressed="${!!gl.point}">👆 會指了${gl.point ? " " + mdDate(gl.point) : ""}</button><button class="btn small${gl.say ? " primary" : ""}" id="gSay" aria-pressed="${!!gl.say}">🗣 會說了${gl.say ? " " + mdDate(gl.say) : ""}</button>${gl.say ? `<button class="btn small" id="gBabyRec">${fvList("b:" + w).length ? "👶 寶寶的錄音" : "🎙 錄寶寶說"}</button>` : ""}<button class="btn small" id="bbRec">🎙 錄家人的聲音${fvn ? `（${fvn}）` : ""}</button></div>
     ${bpicCan() ? (() => { const mine = (BPICS.pics[w] || []), c = k => mine.filter(x => x[1] === k).length; return `<div class="row bbctl" style="flex-wrap:wrap;gap:6px"><button class="btn small" id="bbUpBtn">📷 放我的照片（可選第 1～5 次）</button><input type="file" accept="image/*" id="bbUp" hidden><button class="btn small" id="bbAi">🎨 AI 產生照片</button>${mine.length ? `<span class="muted" style="font-size:12px">這個字：自己拍 ${c("mine")}・朋友 ${c("guest")}・AI ${c("ai")}</span>` : ""}</div>`; })()
-      : Store.backend === "sheet" ? `<div class="row bbctl"><label class="btn small" style="cursor:pointer">📷 幫忙提供照片<input type="file" accept="image/*" id="bbUp" hidden></label><span class="muted" style="font-size:12px">作者確認後才會出現</span></div>` : ""}
+      : Store.backend === "sheet" ? (isFam() ? `<div class="row bbctl" style="flex-wrap:wrap;gap:6px"><label class="btn small" style="cursor:pointer">📷 放照片<input type="file" accept="image/*" id="bbUp" hidden></label><span class="muted" style="font-size:12px">👪 你是家人：${esc(famSt().name)}，放的照片會直接出現</span></div>`
+        : `<div class="row bbctl" style="flex-wrap:wrap;gap:6px"><label class="btn small" style="cursor:pointer">📷 幫忙提供照片<input type="file" accept="image/*" id="bbUp" hidden></label><button class="btn small" id="famJoinBtn">${famSt().st === "pending" ? "👪 等作者確認中" : "👪 我是家人"}</button></div>`) : ""}
     <div class="bbsub" id="bbSub" aria-live="polite" ${state.babySub === false ? "hidden" : ""}><div class="bbsen">${esc(ph)}</div><div class="bbszh">${esc(zp)}</div></div>
     <div class="row bbctl"><button class="btn" id="bbPrev" aria-label="上一個">◀</button><button class="btn primary" id="bbAuto">${BB.auto ? "⏸ 暫停" : "▶ 自動播放"}</button><button class="btn" id="bbNext" aria-label="下一個">▶</button></div>
     <div class="row bbctl"><button class="btn small" id="bbDark">只放聲音（螢幕變暗）</button><button class="btn small${state.babySlow ? " primary" : ""}" id="bbSlow" aria-pressed="${state.babySlow ? "true" : "false"}">🐢 慢一點</button></div>
@@ -3837,17 +4067,21 @@ function renderBaby(say) {
       ${bbOrder() !== "zh" ? `<div class="row" style="gap:8px;justify-content:center"><span class="muted" style="font-size:13px">${bbOrder() === "alt" ? "英＋中各唸" : "英文唸"}</span><div class="seg" id="bbReps">${[1, 2, 3, 4, 5].map(n => `<button data-reps="${n}" aria-pressed="${bbEnN() === n}">${n}</button>`).join("")}</div><span class="muted" style="font-size:13px">次</span></div>` : ""}
       <span class="muted" style="font-size:12px">${(() => { const o = bbOrder(), z = bbZhN(), e = bbEnN(); return o === "zhfirst" ? `先講中文 ${z} 次，再講英文 ${e} 次` : o === "alt" ? `英文、中文輪流，共 ${e} 輪` : o === "zh" ? `只講中文 ${z} 次` : `只講英文 ${e} 次`; })()}</span></div>
     ${AIV_CAN_MAKE() && AIV_ON() ? (() => { const its = babyAivItems(), todo = aivTodo(its); return todo ? `<div class="reply" style="display:flex;flex-direction:column;gap:6px;border-radius:12px;padding:10px 12px"><b>AI 語音（單字 4 種聲音＋中文、兒歌、小抄）還有 ${todo} / ${its.length} 段沒產生</b><span class="muted" style="font-size:13px">還沒產生的先用原本的聲音。按一次「一鍵產生全部」，${Store.backend === "sheet" ? "後台會自己慢慢做（先做這個主題），關掉網頁也會繼續" : "這頁開著就會慢慢做"}。</span><div class="row" style="flex-wrap:wrap"><button class="btn small primary" id="bbGen">一鍵產生全部</button><button class="btn small" data-aivstop hidden>停止</button></div><span style="font-size:13px" data-aivsrv></span><span style="font-size:13px" data-aivout></span></div>` : ""; })() : ""}
-    ${bpicCan() ? `<div class="reply" style="display:flex;flex-direction:column;gap:6px;border-radius:12px;padding:10px 12px"><b>照片小幫手（只有你看得到）</b>${(BPICS.pending || []).length ? `<button class="btn primary" id="bpReview">📬 朋友提供了 ${BPICS.pending.length} 張照片，點這裡一張一張確認</button><span class="muted" style="font-size:12px">${[...new Set(BPICS.pending.map(x => x[1]))].slice(0, 8).map(esc).join("、")}${new Set(BPICS.pending.map(x => x[1])).size > 8 ? "…" : ""}</span>` : ""}<span class="muted" style="font-size:13px">第 1～5 次都可以放你的照片（按「放我的照片」選位置）；第 2、4 次沒指定時，自動依序用：自己拍的 → 朋友提供的 → AI 畫的 → Unsplash 照片 → 維基百科。照片不對就按照片下方的「這張不對」。AI 畫圖要 Gemini 付費（一張約 1 塊台幣）。</span><div class="row" style="flex-wrap:wrap;gap:6px"><button class="btn small" id="bpAll">${BPAI.on ? "停止" : "AI 幫每個沒照片的字畫一張"}</button><span style="font-size:13px" id="bpAllOut"></span></div></div>` : ""}
+    ${bpicCan() ? `<div class="reply" style="display:flex;flex-direction:column;gap:6px;border-radius:12px;padding:10px 12px"><b>作者小幫手（只有你看得到）</b><button class="btn small" id="famAdminBtn" style="align-self:flex-start">👪 家人群組${FAMG.admin ? `（${FAMG.admin.members.length} 人${FAMG.admin.pending.length ? `・${FAMG.admin.pending.length} 個申請` : ""}）` : ""}</button>${(BPICS.pending || []).length ? `<button class="btn primary" id="bpReview">📬 朋友提供了 ${BPICS.pending.length} 張照片，點這裡一張一張確認</button><span class="muted" style="font-size:12px">${[...new Set(BPICS.pending.map(x => x[1]))].slice(0, 8).map(esc).join("、")}${new Set(BPICS.pending.map(x => x[1])).size > 8 ? "…" : ""}</span>` : ""}<span class="muted" style="font-size:13px">第 1～5 次都可以放你的照片（按「放我的照片」選位置）；第 2、4 次沒指定時，自動依序用：自己拍的 → 家人放的 → 朋友提供的 → AI 畫的 → Unsplash 照片 → 維基百科。照片不對就按照片下方的「這張不對」。AI 畫圖要 Gemini 付費（一張約 1 塊台幣）。</span><div class="row" style="flex-wrap:wrap;gap:6px"><button class="btn small" id="bpAll">${BPAI.on ? "停止" : "AI 幫每個沒照片的字畫一張"}</button><span style="font-size:13px" id="bpAllOut"></span></div></div>` : ""}
     <p class="muted" style="margin:0;font-size:13px;text-align:center">點大圖可以再聽一次。建議爸媽陪著一起聽、跟著唸、指給寶寶看；自動播放 10 分鐘會自己停下來休息。</p>
     ${BB.dark ? `<button class="bbdark" id="bbLight">聲音播放中・點一下回到畫面</button>` : ""}`;
   bbSub(ph, zp, "");
   $("bbBack").onclick = () => { bbStopAll(); show("home"); renderHome(); };
-  bbBindTabs();
+  bbBindTabs(); chipCenter($("baby"));
   $("gPoint").onclick = () => { if (growToggle(w, "point")) renderBaby(false); };
   $("gSay").onclick = () => { if (growToggle(w, "say")) renderBaby(false); };
   $("bbRec").onclick = () => { bbStopAll(); renderBaby(false); openFamRec("w:" + w, `${e} ${w}`, `可以只唸「${w}」，也可以唸整句：${ph}`, 15, () => { if (bbView() === "listen") renderBaby(false); }); };
+  if ($("famJoinBtn")) $("famJoinBtn").onclick = openFamJoin;
+  if ($("famAdminBtn")) $("famAdminBtn").onclick = openFamAdmin;
+  if ($("gBabyRec")) $("gBabyRec").onclick = () => { bbStopAll(); renderBaby(false); openFamRec("b:" + w, `${e} ${w}`, `錄下寶寶說「${w}」的聲音，以後可以回味`, 20, () => { if (bbView() === "listen") renderBaby(false); }, null, true); };
   if ($("bbFam")) $("bbFam").onclick = () => { state.babyFam = state.babyFam === false; Store.save(); renderBaby(false); };
   $("baby").querySelectorAll("[data-bt]").forEach(b => b.onclick = () => { BB.t = Number(b.dataset.bt); BB.i = 0; prefetchBaby(); renderBaby(true); });
+  if ($("dailyGo")) $("dailyGo").onclick = () => { BB.tok++; BB.i = 0; BB.auto = true; BB.started = Date.now(); renderBaby(true); };
   $("bbCard").onclick = () => sayCard();
   $("bbPrev").onclick = () => { BB.i = (BB.i - 1 + items.length) % items.length; renderBaby(true); };
   $("bbNext").onclick = () => { BB.i = (BB.i + 1) % items.length; renderBaby(true); };
@@ -3875,7 +4109,7 @@ function renderBaby(say) {
   if (say) sayCard();
 }
 async function sayCard() {
-  const tok = ++BB.tok, [, , items] = BABY[BB.t], [w, , ph, zw, zp] = items[BB.i], zh = !!state.babyZh;
+  const tok = ++BB.tok, items = bbItems(), [w, , ph, zw, zp] = items[BB.i];
   const card = $("bbCard"); if (card) { card.classList.remove("pop"); void card.offsetWidth; card.classList.add("pop"); }
   const en = babyEn(w, ph), zt = babyZhT(zw, zp), slow = !!state.babySlow, steps = bbSteps();
   const frames = await bbFrames(w, items[BB.i][1]); if (tok !== BB.tok) return;
@@ -3912,9 +4146,350 @@ async function sayCard() {
   growMark(w, "heard");
   if (!BB.auto) return;
   if (Date.now() - BB.started > 10 * 60e3) { BB.auto = false; BB.dark = false; toast("聽了 10 分鐘了，休息一下吧！"); renderBaby(false); return; }
+  if (BB.t === BB_DAILY && BB.i === items.length - 1) {
+    BB.auto = false; BB.dark = false; const dp = dailyPlan(); if (!dp.done) { dp.done = true; Store.save(); }
+    toast("今天的 10 個字聽完了！🎉 明天會換新的"); renderBaby(false); return;
+  }
   await waitMs(2500); if (tok !== BB.tok || !BB.auto) return;
   BB.i = (BB.i + 1) % items.length;
   renderBaby(true);
+}
+
+/* ================= 情境口說公版：情境公版＋句型積木＋角色對話（每天 10 分鐘） ================= */
+const SPEAK = [{"id": "award", "ic": "🏆", "t": "得獎致詞", "en": "Award Speech", "desc": "上台領獎、被表揚時說的話", "b": [{"k": "Opening", "kz": "開場", "q": ["Congratulations! Please come up and say a few words.", "恭喜！請上台說幾句話。"], "v": [["Thank you so much.", "非常感謝。"], ["Wow, thank you, everyone.", "哇，謝謝大家。"], ["Thank you. I really didn't expect this.", "謝謝。我真的沒想到。"]]}, {"k": "Feeling", "kz": "表達心情", "q": ["How do you feel right now?", "你現在感覺如何？"], "v": [["I'm truly honored to be here.", "我真的很榮幸能來到這裡。"], ["I'm so happy and a little nervous.", "我好開心，也有點緊張。"], ["It's a dream come true for me.", "這對我來說是夢想成真。"]]}, {"k": "Thanks", "kz": "感謝對象", "q": ["Who would you like to thank?", "你想感謝誰？"], "v": [["I'd like to thank my team.", "我想感謝我的團隊。"], ["I want to thank my family for always supporting me.", "我想謝謝家人一直支持我。"], ["I couldn't have done it without my amazing coworkers.", "沒有我很棒的同事，我做不到。"]]}, {"k": "Meaning", "kz": "分享意義", "q": ["What does this award mean to you?", "這個獎對你有什麼意義？"], "v": [["This means a lot to me.", "這對我意義重大。"], ["This award shows that hard work really pays off.", "這個獎證明努力真的會有回報。"], ["It gives me the energy to keep going.", "它給我繼續前進的動力。"]]}, {"k": "Closing", "kz": "結尾", "q": ["Anything else you'd like to say?", "還有什麼想說的嗎？"], "v": [["Thank you, everyone.", "謝謝大家。"], ["Thank you again, and enjoy the rest of the night.", "再次謝謝，祝大家今晚愉快。"], ["Let's keep doing great things together. Thank you!", "讓我們一起繼續做很棒的事。謝謝！"]]}]}, {"id": "intro_work", "ic": "💼", "t": "自我介紹・工作", "en": "Introducing Yourself at Work", "desc": "新同事、新客戶、開會時介紹自己", "b": [{"k": "Greeting", "kz": "打招呼", "q": ["Hi, I don't think we've met.", "嗨，我們好像還沒見過。"], "v": [["Hi, nice to meet you.", "嗨，很高興認識你。"], ["Hello, everyone. Thanks for having me.", "大家好，謝謝邀請我。"], ["Good morning, everyone.", "大家早安。"]]}, {"k": "Name & Role", "kz": "名字和職位", "q": ["What's your name, and what do you do?", "你叫什麼名字？做什麼工作？"], "v": [["I'm Alex, and I'm an engineer at a tech company.", "我是 Alex，在一家科技公司當工程師。"], ["My name is Amy. I work in sales.", "我叫 Amy，我做業務。"], ["I'm Kevin. I'm in charge of marketing.", "我是 Kevin，負責行銷。"]]}, {"k": "Experience", "kz": "經歷", "q": ["How long have you been doing that?", "你做這行多久了？"], "v": [["I've been in this field for about five years.", "我在這個領域大約五年了。"], ["I joined the company last year.", "我去年加入公司。"], ["Before this, I worked in Taipei for a few years.", "在這之前，我在台北工作了幾年。"]]}, {"k": "Current Work", "kz": "現在在做什麼", "q": ["What are you working on these days?", "你最近在忙什麼？"], "v": [["Right now, I'm working on a new project.", "我現在在做一個新專案。"], ["These days, I'm focusing on our customers in Japan.", "最近我專注在日本的客戶。"], ["I'm trying to make our process faster.", "我正在努力讓我們的流程更快。"]]}, {"k": "Closing", "kz": "結尾", "q": ["Great. Anything else?", "很好，還有嗎？"], "v": [["I'm looking forward to working with you.", "很期待跟你一起合作。"], ["Feel free to reach out anytime.", "有任何事隨時找我。"], ["Nice to meet you all.", "很高興認識大家。"]]}]}, {"id": "intro_social", "ic": "🥂", "t": "自我介紹・聚會", "en": "Introducing Yourself at a Party", "desc": "朋友聚會、活動場合認識新朋友", "b": [{"k": "Greeting", "kz": "打招呼", "q": ["Hi! Are you a friend of Lisa's?", "嗨！你是 Lisa 的朋友嗎？"], "v": [["Hi, I'm Alex. Nice to meet you.", "嗨，我是 Alex，很高興認識你。"], ["Hey there! I don't think we've met.", "嗨！我們好像沒見過。"], ["Yes! Lisa and I work together.", "對！我跟 Lisa 是同事。"]]}, {"k": "Where From", "kz": "從哪裡來", "q": ["Where are you from?", "你從哪裡來？"], "v": [["I'm from Taiwan. I live in Taipei.", "我來自台灣，住在台北。"], ["I grew up in Tainan, but I live in Taipei now.", "我在台南長大，但現在住台北。"], ["I'm from Taichung, in the middle of Taiwan.", "我來自台中，在台灣中部。"]]}, {"k": "Work", "kz": "工作", "q": ["What do you do?", "你做什麼工作？"], "v": [["I work in tech.", "我在科技業工作。"], ["I'm a teacher.", "我是老師。"], ["I run a small business.", "我經營一間小公司。"]]}, {"k": "Hobby", "kz": "興趣", "q": ["What do you like to do for fun?", "你平常喜歡做什麼？"], "v": [["I love playing golf on weekends.", "我週末很愛打高爾夫。"], ["I'm really into hiking and coffee.", "我很喜歡爬山和咖啡。"], ["I spend most of my free time with my kids.", "我空閒時間大多陪小孩。"]]}, {"k": "Closing", "kz": "結尾", "q": ["It was nice talking to you.", "跟你聊天很開心。"], "v": [["Nice talking to you, too!", "我也很開心跟你聊天！"], ["Let's keep in touch.", "我們保持聯絡。"], ["Can I add you on LINE?", "我可以加你 LINE 嗎？"]]}]}, {"id": "meeting", "ic": "🗓️", "t": "會議開場", "en": "Opening a Meeting", "desc": "主持會議、線上會議的開頭", "b": [{"k": "Welcome", "kz": "歡迎", "q": ["Okay, everyone's here. Can you start?", "好，大家都到了，你可以開始嗎？"], "v": [["Good morning, everyone. Thanks for coming.", "大家早，謝謝大家來。"], ["Hi, everyone. Let's get started.", "大家好，我們開始吧。"], ["Thanks for joining the call today.", "謝謝大家今天上線。"]]}, {"k": "Purpose", "kz": "會議目的", "q": ["So, what's this meeting about?", "這次會議要談什麼？"], "v": [["Today, we're going to talk about the new project.", "今天我們要談新專案。"], ["The goal of this meeting is to make a decision.", "這次會議的目標是做出決定。"], ["I'd like to update you on our sales numbers.", "我想跟大家更新業績數字。"]]}, {"k": "Agenda", "kz": "議程", "q": ["What's on the agenda?", "議程有哪些？"], "v": [["First, I'll give a quick update. Then, we'll discuss the plan.", "首先我簡單報告，接著討論計畫。"], ["We have three things to cover today.", "今天有三件事要討論。"], ["Let's start with the schedule, and then talk about the budget.", "我們先談時程，再談預算。"]]}, {"k": "Time", "kz": "時間", "q": ["How long will it take?", "會開多久？"], "v": [["This should take about thirty minutes.", "大概三十分鐘。"], ["We'll finish by eleven.", "我們十一點前結束。"], ["I'll keep it short.", "我會長話短說。"]]}, {"k": "Hand Over", "kz": "交棒", "q": ["Who's going first?", "誰先開始？"], "v": [["Let's start with Amy.", "我們從 Amy 開始。"], ["Feel free to ask questions anytime.", "隨時可以發問。"], ["Okay, let's begin.", "好，我們開始吧。"]]}]}, {"id": "present", "ic": "📊", "t": "簡報開場", "en": "Starting a Presentation", "desc": "上台簡報、分享的前 30 秒", "b": [{"k": "Greeting", "kz": "打招呼", "q": ["You're up next. Go ahead.", "下一個是你，請開始。"], "v": [["Good afternoon, everyone.", "大家午安。"], ["Thank you for being here today.", "謝謝大家今天來。"], ["Hi, everyone. Can you all see my screen?", "大家好，看得到我的螢幕嗎？"]]}, {"k": "Topic", "kz": "主題", "q": ["What's your talk about?", "你要講什麼主題？"], "v": [["Today, I'm going to talk about our new app.", "今天我要介紹我們的新 App。"], ["My presentation is about saving time at work.", "我的簡報是關於如何在工作上省時間。"], ["I'd like to share what we learned this year.", "我想分享我們今年學到的事。"]]}, {"k": "Why It Matters", "kz": "為什麼重要", "q": ["Why is that important?", "為什麼這很重要？"], "v": [["This matters because it affects all of us.", "這很重要，因為它影響我們每一個人。"], ["It can help us save a lot of money.", "它可以幫我們省很多錢。"], ["Our customers keep asking about it.", "我們的客戶一直在問這件事。"]]}, {"k": "Roadmap", "kz": "內容安排", "q": ["How is your talk organized?", "你的簡報怎麼安排？"], "v": [["I'll cover three main points.", "我會講三個重點。"], ["First, the problem. Then, our idea. Finally, the next steps.", "首先是問題，接著是我們的點子，最後是下一步。"], ["I'll start with a short story.", "我先從一個小故事開始。"]]}, {"k": "Let's Start", "kz": "開始", "q": ["Sounds good.", "聽起來不錯。"], "v": [["Let's get started.", "我們開始吧。"], ["Please save your questions for the end.", "問題請留到最後再問。"], ["Feel free to stop me if you have questions.", "有問題可以隨時打斷我。"]]}]}, {"id": "yearend", "ic": "🎉", "t": "尾牙・慶功致詞", "en": "Year-End Party Speech", "desc": "尾牙、慶功宴上對團隊說的話", "b": [{"k": "Opening", "kz": "開場", "q": ["Please say a few words!", "說幾句話吧！"], "v": [["Good evening, everyone.", "大家晚安。"], ["Thank you all for coming tonight.", "謝謝大家今晚來。"], ["Can I have everyone's attention, please?", "可以請大家注意一下嗎？"]]}, {"k": "Look Back", "kz": "回顧", "q": ["How was this year?", "今年過得怎麼樣？"], "v": [["This year was not easy, but we did it.", "今年不容易，但我們做到了。"], ["We worked really hard this year.", "我們今年真的很努力。"], ["We hit our goals for the first time.", "我們第一次達成目標。"]]}, {"k": "Thanks", "kz": "感謝", "q": ["Who do you want to thank?", "你想感謝誰？"], "v": [["Thank you all for your hard work.", "謝謝大家的努力。"], ["I want to thank every one of you.", "我想謝謝在場的每一位。"], ["A big thank-you to our sales team.", "特別謝謝我們的業務團隊。"]]}, {"k": "Look Ahead", "kz": "展望", "q": ["What about next year?", "那明年呢？"], "v": [["Next year, let's aim even higher.", "明年我們目標再更高。"], ["I'm looking forward to another great year.", "很期待又是很棒的一年。"], ["Let's keep growing together.", "讓我們一起繼續成長。"]]}, {"k": "Toast", "kz": "乾杯", "q": ["Let's raise our glasses!", "我們舉杯吧！"], "v": [["Cheers, everyone!", "大家乾杯！"], ["Enjoy the food and have fun tonight!", "好好享用美食，今晚玩得開心！"], ["To a great year ahead. Cheers!", "敬美好的一年，乾杯！"]]}]}, {"id": "farewell", "ic": "👋", "t": "歡送同事", "en": "Farewell to a Coworker", "desc": "同事離職、調職時的道別", "b": [{"k": "Opening", "kz": "開場", "q": ["Would you like to say something to Amy?", "你想對 Amy 說些什麼嗎？"], "v": [["I'd like to say a few words.", "我想說幾句話。"], ["Amy, today is your last day with us.", "Amy，今天是你和我們一起的最後一天。"], ["I can't believe this is your last day.", "真不敢相信今天是你最後一天。"]]}, {"k": "Memory", "kz": "回憶", "q": ["Do you have a favorite memory?", "你有印象最深的回憶嗎？"], "v": [["I still remember your first day here.", "我還記得你來上班的第一天。"], ["You always made us laugh.", "你總是讓我們笑。"], ["You helped me so much when I was new.", "我剛來時你幫了我很多。"]]}, {"k": "Thanks", "kz": "感謝", "q": ["What do you want to thank her for?", "你想謝謝她什麼？"], "v": [["Thank you for everything.", "謝謝你做的一切。"], ["Thank you for being such a great teammate.", "謝謝你一直是這麼好的隊友。"], ["We learned so much from you.", "我們從你身上學到好多。"]]}, {"k": "Wish", "kz": "祝福", "q": ["What do you wish for her?", "你想祝福她什麼？"], "v": [["We wish you all the best.", "祝你一切順利。"], ["Good luck with your new job.", "新工作加油。"], ["I'm sure you'll do great.", "我相信你一定會很棒。"]]}, {"k": "Closing", "kz": "結尾", "q": ["Anything else?", "還有嗎？"], "v": [["Please keep in touch.", "要保持聯絡喔。"], ["We'll miss you.", "我們會想你的。"], ["Come visit us anytime.", "隨時回來看我們。"]]}]}, {"id": "toast", "ic": "🥂", "t": "敬酒祝福", "en": "Giving a Toast", "desc": "婚禮、生日、聚餐時舉杯祝福", "b": [{"k": "Attention", "kz": "引起注意", "q": ["Would you like to give a toast?", "你要來敬酒致詞嗎？"], "v": [["Can I have your attention, please?", "請大家注意一下好嗎？"], ["Hi, everyone. I'll keep this short.", "大家好，我長話短說。"], ["Good evening, everyone.", "大家晚安。"]]}, {"k": "Who I Am", "kz": "我是誰", "q": ["How do you know them?", "你怎麼認識他們的？"], "v": [["For those who don't know me, I'm Kevin's best friend.", "不認識我的人，我是 Kevin 最好的朋友。"], ["I've known Kevin since college.", "我從大學就認識 Kevin。"], ["I'm Lisa's sister.", "我是 Lisa 的姊姊。"]]}, {"k": "Story", "kz": "說說他們", "q": ["What are they like?", "他們是怎樣的人？"], "v": [["Kevin is the kindest person I know.", "Kevin 是我認識最善良的人。"], ["They make each other better.", "他們讓彼此變得更好。"], ["I knew they were perfect for each other.", "我就知道他們是天生一對。"]]}, {"k": "Wish", "kz": "祝福", "q": ["What do you wish them?", "你祝福他們什麼？"], "v": [["I wish you a lifetime of happiness.", "祝你們一輩子幸福。"], ["May every year be better than the last.", "願每一年都比前一年更好。"], ["Happy birthday, and many more to come!", "生日快樂，年年都有今日！"]]}, {"k": "Raise Glass", "kz": "舉杯", "q": ["Ready?", "準備好了嗎？"], "v": [["Please raise your glasses.", "請大家舉杯。"], ["To the happy couple!", "敬這對新人！"], ["Cheers!", "乾杯！"]]}]}, {"id": "golf", "ic": "⛳", "t": "高爾夫球場寒暄", "en": "Small Talk on the Golf Course", "desc": "跟球友、客戶下場時聊天", "b": [{"k": "Greeting", "kz": "打招呼", "q": ["Hi, are you in our group today?", "嗨，你今天跟我們同一組嗎？"], "v": [["Yes! I'm Alex. Nice to meet you.", "對！我是 Alex，很高興認識你。"], ["Hi, I think we're playing together today.", "嗨，我們今天好像同一組。"], ["Good morning! It's a great day for golf.", "早安！今天很適合打球。"]]}, {"k": "How Often", "kz": "多常打", "q": ["How often do you play?", "你多久打一次？"], "v": [["I play about twice a month.", "我大概一個月打兩次。"], ["I try to play every weekend.", "我盡量每個週末都打。"], ["Not very often. I'm still learning.", "不太常，我還在學。"]]}, {"k": "Score", "kz": "成績", "q": ["What do you usually shoot?", "你通常打幾桿？"], "v": [["I usually shoot around ninety.", "我通常打九十桿左右。"], ["I'm trying to break one hundred.", "我正在努力破百。"], ["It depends on the day.", "要看當天狀況。"]]}, {"k": "Compliment", "kz": "稱讚", "q": ["Did you see my last shot?", "你有看到我剛剛那一球嗎？"], "v": [["Nice shot!", "好球！"], ["That was a great drive.", "那一桿開得很好。"], ["Wow, right on the green!", "哇，直接上果嶺！"]]}, {"k": "Closing", "kz": "結尾", "q": ["Thanks for the round.", "謝謝你今天一起打球。"], "v": [["Thanks, I had a great time.", "謝謝，我今天很開心。"], ["Let's play again sometime.", "我們找時間再打。"], ["Good game! See you next time.", "打得好！下次見。"]]}]}, {"id": "client", "ic": "🤝", "t": "接待外國客戶", "en": "Welcoming a Client", "desc": "客戶來訪、帶參觀、安排行程", "b": [{"k": "Welcome", "kz": "歡迎", "q": ["Hello, I'm here to see Mr. Lin.", "你好，我來找林先生。"], "v": [["Welcome to Taiwan!", "歡迎來到台灣！"], ["Hi, you must be Mr. Smith. Welcome!", "你好，您一定是 Smith 先生，歡迎！"], ["It's nice to finally meet you in person.", "終於見到本人了，很高興。"]]}, {"k": "The Trip", "kz": "旅途", "q": ["It was a long flight.", "飛了好久。"], "v": [["How was your flight?", "您的航班還順利嗎？"], ["You must be tired. Would you like some coffee?", "您一定累了，要喝點咖啡嗎？"], ["Did you find the office okay?", "找辦公室還順利嗎？"]]}, {"k": "The Plan", "kz": "今天的安排", "q": ["So, what's the plan for today?", "那今天的安排是什麼？"], "v": [["First, we'll show you around the office.", "首先我們帶您參觀辦公室。"], ["We have a meeting at ten, and then lunch.", "十點開會，之後吃午餐。"], ["After the meeting, we'll take you to the factory.", "會後我們帶您去工廠。"]]}, {"k": "Offer Help", "kz": "主動幫忙", "q": ["This looks great.", "看起來很棒。"], "v": [["Please let me know if you need anything.", "需要什麼請跟我說。"], ["If you have any questions, just ask.", "有任何問題直接問。"], ["Is there anything you'd like to see?", "有什麼想看的嗎？"]]}, {"k": "Closing", "kz": "結尾", "q": ["Thank you for today.", "謝謝您今天的安排。"], "v": [["Thank you for coming all this way.", "謝謝您遠道而來。"], ["I hope you enjoy your stay in Taiwan.", "希望您在台灣玩得愉快。"], ["We look forward to working with you.", "期待與您合作。"]]}]}];
+let SP = null;
+function spkS() {
+  const s = state.spk && typeof state.spk === "object" ? state.spk : (state.spk = {});
+  ["done", "steps", "pick", "own", "more"].forEach(k => { if (!s[k] || typeof s[k] !== "object") s[k] = {}; });
+  if (!Array.isArray(s.custom)) s.custom = [];
+  return s;
+}
+const spkAll = () => SPEAK.concat(spkS().custom);
+const spkToday = () => SPEAK[ckDayNo(today()) % SPEAK.length];
+const spkGet = id => spkAll().find(t => t.id === id) || spkToday();
+const spkVoice = () => AIV_LIST[0][0], spkPartner = () => AIV_LIST[2][0];
+function spkVars(t, bi) { return t.b[bi].v.concat(((spkS().more[t.id] || {})[bi]) || []); }
+function spkLine(t, bi) {
+  const p = (spkS().pick[t.id] || [])[bi], own = ((spkS().own[t.id] || {})[bi]) || "";
+  if (p === -1 && own) return { en: own, zh: "（我自己寫的）", own: true };
+  const vs = spkVars(t, bi); return { en: vs[p >= 0 && p < vs.length ? p : 0][0], zh: vs[p >= 0 && p < vs.length ? p : 0][1] };
+}
+function spkStreak() { let n = 0, d = new Date(); const done = spkS().done; if (!done[ymd(d)]) d.setDate(d.getDate() - 1); while (done[ymd(d)]) { n++; d.setDate(d.getDate() - 1); } return n; }
+function spkMark(step) { const d = today(), s = spkS(); (s.steps[d] = s.steps[d] || {})[step] = 1; Store.save(); }
+async function sayVoice(text, v, slow) {
+  const u = AIV_ON() ? await raceMs(aiVoiceUrl(v, text), 2500) : "";
+  if (u && await playUrl(u, slow ? 0.85 : 1)) return;
+  if (AIV_ON()) aivQueue([[v, text]]);
+  await sayTTS(text, slow ? 0.72 : 0.9);
+}
+function spkAivItems() { const out = []; spkAll().forEach(t => t.b.forEach((b, bi) => { out.push([spkPartner(), b.q[0]]); spkVars(t, bi).forEach(v => out.push([spkVoice(), v[0]])); })); return out; }
+function spkStop() { if (SP) SP.tok++; stopHuman(); if (TTS) speechSynthesis.cancel(); }
+function openSpeak(tid) {
+  show("speak");
+  SP = SP || { tid: "", tab: 1, tok: 0, role: null, a: null };
+  if (tid) SP.tid = tid; if (!SP.tid || !spkAll().some(t => t.id === SP.tid)) SP.tid = spkToday().id;
+  renderSpeak();
+}
+const SPK_TABS = [[1, "① 聽範例"], [2, "② 跟讀"], [3, "③ 替換組句"], [4, "④ 不看稿"], ["role", "🎭 角色對話"]];
+function renderSpeak() {
+  spkStop();
+  const t = spkGet(SP.tid), d = today(), st = spkS().steps[d] || {}, td = spkToday(), doneToday = !!spkS().done[d];
+  $("speak").innerHTML = `
+    <header class="top"><button class="icon-btn" id="spBack" aria-label="離開">${ICON.x}</button><h2 style="font-size:22px;flex:1;min-width:0">情境口說</h2><span class="muted" style="font-size:13px">${spkStreak() ? `連續 ${spkStreak()} 天` : ""}</span></header>
+    <div class="bbthemes">${spkAll().map(x => `<button class="tchip${x.id === t.id ? " on" : ""}" data-spt="${esc(x.id)}"><span aria-hidden="true">${esc(x.ic)}</span>${esc(x.t)}${x.id === td.id ? " ⭐" : ""}</button>`).join("")}${AI.kind && KEY_MODE() ? `<button class="tchip" id="spNew"><span aria-hidden="true">🤖</span>自訂情境</button>` : ""}</div>
+    <section class="card" style="gap:8px">
+      <div class="row" style="gap:10px;align-items:center"><span style="font-size:34px" aria-hidden="true">${esc(t.ic)}</span><div style="flex:1;min-width:0"><h3 style="margin:0;font-size:20px">${esc(t.t)}</h3><div class="muted" style="font-size:13px">${esc(t.en)}・${esc(t.desc || "")}</div></div>${t.id.charAt(0) === "c" ? `<button class="btn small" id="spDel" aria-label="刪掉這個自訂情境">🗑</button>` : ""}</div>
+      <div class="spflow">${t.b.map((b, i) => `<span class="spk-chip c${i}">${i + 1} ${esc(b.kz)}</span>`).join("<span aria-hidden=\"true\">→</span>")}</div>
+      ${t.id === td.id ? `<div class="muted" style="font-size:13px">⭐ 今日口說・${doneToday ? "今天完成了 ✓" : `今天進度：${[1, 2, 3, 4].map(n => st[n] ? `${n} ✓` : n).join("・")}`}</div>` : ""}
+    </section>
+    <div class="seg" style="flex-wrap:wrap;justify-content:center" role="tablist">${SPK_TABS.map(([k, n]) => `<button data-sptab="${k}" aria-pressed="${String(SP.tab) === String(k)}">${n}</button>`).join("")}</div>
+    <div id="spBody" style="display:flex;flex-direction:column;gap:12px"></div>`;
+  $("spBack").onclick = () => { spkStop(); show("home"); renderHome(); };
+  $("speak").querySelectorAll("[data-spt]").forEach(b => b.onclick = () => { SP.tid = b.dataset.spt; SP.tab = 1; SP.role = null; renderSpeak(); });
+  $("speak").querySelectorAll("[data-sptab]").forEach(b => b.onclick = () => { SP.tab = /^\d$/.test(b.dataset.sptab) ? Number(b.dataset.sptab) : b.dataset.sptab; SP.role = null; renderSpeak(); });
+  if ($("spNew")) $("spNew").onclick = spkCustomNew;
+  if ($("spDel")) $("spDel").onclick = () => { if (!confirm("要刪掉這個自訂情境嗎？")) return; const s = spkS(); s.custom = s.custom.filter(x => x.id !== t.id); Store.save(); SP.tid = spkToday().id; renderSpeak(); };
+  chipCenter($("speak"));
+  ({ 1: spkStep1, 2: spkStep2, 3: spkStep3, 4: spkStep4, role: spkRole })[SP.tab](t);
+}
+function spkBlocksHtml(t, mine) {
+  return `<div class="spblocks">${t.b.map((b, i) => { const L = mine ? spkLine(t, i) : { en: b.v[0][0], zh: b.v[0][1] }; return `<div class="spblk c${i}" data-spb="${i}"><span class="spk-k">${i + 1} ${esc(b.k)}・${esc(b.kz)}</span><div class="en">${esc(L.en)}</div><div class="zh">${esc(L.zh)}</div></div>`; }).join("")}</div>`;
+}
+function spkHi(i) { $("spBody").querySelectorAll(".spblk.now").forEach(x => x.classList.remove("now")); const el = i >= 0 ? $("spBody").querySelector(`[data-spb="${i}"]`) : null; if (el) { el.classList.add("now"); try { el.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) { } } }
+/* ① 聽範例 */
+function spkStep1(t) {
+  $("spBody").innerHTML = `<p class="muted" style="margin:0">第 1–2 分鐘：先聽一段完整的範例，看看五塊積木各說了什麼。不用背，聽懂就好。</p>
+    ${spkBlocksHtml(t, false)}
+    <div class="spfull"><span class="eyebrow">五塊拼起來</span><div>${esc(t.b.map(b => b.v[0][0]).join(" "))}</div></div>
+    <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><button class="btn primary" id="spPlay">▶ 聽完整範例</button><button class="btn" id="spSlow">🐢 慢速再聽</button><button class="btn" id="spStop">⏹</button></div>
+    <button class="btn block" id="spNext">下一步：② 跟讀 ▶</button>`;
+  const run = async slow => {
+    spkStop(); const tok = SP.tok;
+    for (let i = 0; i < t.b.length; i++) { if (tok !== SP.tok) return; spkHi(i); await sayVoice(t.b[i].v[0][0], spkVoice(), slow); if (tok !== SP.tok) return; await waitMs(500); }
+    spkHi(-1); spkMark(1);
+  };
+  $("spPlay").onclick = () => run(false); $("spSlow").onclick = () => run(true); $("spStop").onclick = () => { spkStop(); spkHi(-1); };
+  $("spNext").onclick = () => { spkMark(1); SP.tab = 2; renderSpeak(); };
+  $("spBody").querySelectorAll("[data-spb]").forEach(el => el.onclick = () => { spkStop(); spkHi(Number(el.dataset.spb)); sayVoice(t.b[Number(el.dataset.spb)].v[0][0], spkVoice(), false); });
+}
+/* ② 跟讀：聽一句 → 換你說（倒數條） */
+function spkStep2(t) {
+  $("spBody").innerHTML = `<p class="muted" style="margin:0">第 3–5 分鐘：聽一塊，跟著說一塊。跟著語調和停頓模仿，倒數條跑完前把這一塊說出來。整段會跑兩輪。</p>
+    ${spkBlocksHtml(t, true)}
+    <div class="card" style="gap:8px;text-align:center"><div id="spCue" style="font-weight:800;font-size:18px">按「開始跟讀」</div><div class="spbar"><i id="spBar"></i></div></div>
+    <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><button class="btn primary" id="spGo">▶ 開始跟讀</button><button class="btn${state.babySlow ? " primary" : ""}" id="spSl" aria-pressed="${!!state.babySlow}">🐢 慢一點</button><button class="btn" id="spStop">⏹</button></div>
+    <button class="btn block" id="spNext">下一步：③ 替換組句 ▶</button>`;
+  const bar = $("spBar"), cue = $("spCue");
+  $("spGo").onclick = async () => {
+    spkStop(); const tok = SP.tok, slow = !!state.babySlow;
+    for (let round = 1; round <= 2; round++) for (let i = 0; i < t.b.length; i++) {
+      if (tok !== SP.tok) return;
+      const L = spkLine(t, i); spkHi(i); cue.textContent = `第 ${round} 輪・🎧 聽`; bar.style.transition = "none"; bar.style.width = "0";
+      await sayVoice(L.en, spkVoice(), slow); if (tok !== SP.tok) return;
+      const secs = Math.max(2.2, L.en.split(" ").length * 0.5) * (slow ? 1.4 : 1);
+      cue.textContent = `第 ${round} 輪・🗣 換你說！`; void bar.offsetWidth; bar.style.transition = `width ${secs}s linear`; bar.style.width = "100%";
+      await waitMs(secs * 1000); if (tok !== SP.tok) return;
+    }
+    spkHi(-1); cue.textContent = "跟讀完成！👏"; bar.style.width = "0"; spkMark(2);
+  };
+  $("spSl").onclick = () => { state.babySlow = !state.babySlow; Store.save(); renderSpeak(); };
+  $("spStop").onclick = () => { spkStop(); spkHi(-1); cue.textContent = "已停止"; bar.style.transition = "none"; bar.style.width = "0"; };
+  $("spNext").onclick = () => { spkMark(2); SP.tab = 3; renderSpeak(); };
+}
+/* ③ 替換組句：每一塊換一種說法，或自己寫 */
+function spkStep3(t) {
+  const s = spkS(), pick = s.pick[t.id] = s.pick[t.id] || [], own = s.own[t.id] = s.own[t.id] || {};
+  $("spBody").innerHTML = `<p class="muted" style="margin:0">第 6–8 分鐘：每一塊都可以換。點不同的說法，或按「✏️ 自己寫」換成你真正想說的話，組出你自己的版本。</p>
+    ${t.b.map((b, i) => { const vs = spkVars(t, i), p = pick[i] == null ? 0 : pick[i]; return `<div class="spblk c${i}"><span class="spk-k">${i + 1} ${esc(b.k)}・${esc(b.kz)}</span>
+      <div class="spchips">${vs.map((v, k) => `<button class="spchip" data-spv="${i}:${k}" aria-pressed="${p === k}"><b>${esc(v[0])}</b><span>${esc(v[1])}</span></button>`).join("")}<button class="spchip" data-spv="${i}:-1" aria-pressed="${p === -1}"><b>✏️ 自己寫</b><span>${own[i] ? esc(own[i]) : "換成我自己的話"}</span></button></div>
+      ${p === -1 ? `<input class="field" data-spown="${i}" maxlength="160" placeholder="用英文寫這一塊，例如換成你的名字、團隊" value="${esc(own[i] || "")}">` : ""}
+      ${AI.kind ? `<button class="btn small" data-spmore="${i}" style="align-self:flex-start">🤖 這一塊再多 3 種說法</button>` : ""}</div>`; }).join("")}
+    <div class="spfull"><span class="eyebrow">我的版本</span><div id="spMine">${esc(t.b.map((b, i) => spkLine(t, i).en).join(" "))}</div></div>
+    <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><button class="btn primary" id="spPlay">▶ 聽我的版本</button><button class="btn" id="spRand">🎲 隨機換一組</button></div>
+    <button class="btn block" id="spNext">下一步：④ 不看稿說一次 ▶</button>`;
+  const upd = () => { $("spMine").textContent = t.b.map((b, i) => spkLine(t, i).en).join(" "); };
+  $("spBody").querySelectorAll("[data-spv]").forEach(b => b.onclick = () => { const [i, k] = b.dataset.spv.split(":").map(Number); pick[i] = k; Store.save(); renderSpeak(); if (k >= 0) sayVoice(spkVars(t, i)[k][0], spkVoice(), false); });
+  $("spBody").querySelectorAll("[data-spown]").forEach(inp => inp.oninput = () => { const v = inp.value.replace(/[<>]/g, "").slice(0, 160); if (v.trim()) own[inp.dataset.spown] = v.trim(); else delete own[inp.dataset.spown]; Store.save(); upd(); });
+  $("spBody").querySelectorAll("[data-spmore]").forEach(b => b.onclick = () => spkMore(t, Number(b.dataset.spmore), b));
+  $("spPlay").onclick = async () => { spkStop(); const tok = SP.tok; spkMark(3); for (let i = 0; i < t.b.length; i++) { if (tok !== SP.tok) return; await sayVoice(spkLine(t, i).en, spkVoice(), !!state.babySlow); await waitMs(400); } };
+  $("spRand").onclick = () => { t.b.forEach((b, i) => { pick[i] = Math.floor(Math.random() * spkVars(t, i).length); }); Store.save(); renderSpeak(); };
+  $("spNext").onclick = () => { spkMark(3); SP.tab = 4; renderSpeak(); };
+}
+async function spkMore(t, bi, btn) {
+  const b = t.b[bi], have = spkVars(t, bi).map(v => v[0]);
+  const prompt = `You help a Taiwanese adult practice spoken English with reusable templates.\nSituation: ${t.en} (${t.t}).\nThis part of the speech: ${b.k} (${b.kz}).\nExisting lines:\n${have.map(x => "- " + x).join("\n")}\n` +
+    "Write 3 NEW natural alternatives for this part only. Short (at most 14 words), everyday spoken English, warm and polite. Give each a natural Traditional Chinese (Taiwan) translation.\n" +
+    'Reply with only a JSON array like [{"en":"...","zh":"..."}]';
+  const label = btn.textContent; btn.disabled = true; btn.textContent = "🤖 想說法中…";
+  try {
+    const res = await AI.json(prompt), m = spkS().more[t.id] = spkS().more[t.id] || {}, arr = m[bi] = m[bi] || []; let n = 0;
+    for (const x of Array.isArray(res) ? res : []) {
+      const en = String(x && x.en || "").replace(/[’‘]/g, "'").replace(/[“”]/g, '"').trim(), zh = String(x && x.zh || "").replace(/[<>]/g, "").slice(0, 60);
+      if (!en || en.length > 110 || !/^[A-Za-z0-9 ,.'!?;:"-]+$/.test(en) || have.includes(en)) continue;
+      arr.push([en, zh]); have.push(en); n++;
+    }
+    while (arr.length > 9) arr.shift();
+    if (!n) throw { code: "empty" };
+    Store.save(); toast(`多了 ${n} 種說法！`); renderSpeak();
+  } catch (e) { btn.disabled = false; btn.textContent = label; toast(e && e.code === "empty" ? "這次沒有新的說法，再按一次試試" : aiErrorText(e)); }
+}
+/* ④ 不看稿：只看提示，錄下來，再對照 */
+function spkStep4(t) {
+  SP.a = null;
+  $("spBody").innerHTML = `<p class="muted" style="margin:0">第 9–10 分鐘：不看稿，照著五塊的順序完整說一次。卡住就看一下中文提示。</p>
+    <div class="spblocks">${t.b.map((b, i) => `<div class="spblk c${i}"><span class="spk-k">${i + 1} ${esc(b.k)}・${esc(b.kz)}</span><button class="btn small" data-sphint="${i}" style="align-self:flex-start">💡 提示</button><div class="zh" data-sphz="${i}" hidden>${esc(spkLine(t, i).zh)}</div></div>`).join("")}</div>
+    <div id="spRec"></div>
+    <div id="spAfter" hidden style="display:flex;flex-direction:column;gap:10px">
+      <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><button class="btn" id="spMe">▶ 聽我說的</button><button class="btn" id="spRef">👀 對照我的版本</button>${AUDIO_AI() ? `<button class="btn primary" id="spAi">🤖 讓 AI 聽聽看</button>` : ""}</div>
+      <div id="spRefBox" hidden class="spfull"><span class="eyebrow">我的版本</span><div>${esc(t.b.map((b, i) => spkLine(t, i).en).join(" "))}</div></div>
+      <div id="spAiBox"></div>
+      <div class="card" style="gap:6px"><span class="eyebrow">自己檢查：五塊都說到了嗎？</span>${t.b.map((b, i) => `<label class="row" style="gap:8px"><input type="checkbox" data-spck="${i}"> ${i + 1} ${esc(b.kz)}</label>`).join("")}</div>
+    </div>
+    <button class="btn primary block" id="spDone">✅ 完成今天的口說</button>`;
+  $("spBody").querySelectorAll("[data-sphint]").forEach(b => b.onclick = () => { const z = $("spBody").querySelector(`[data-sphz="${b.dataset.sphint}"]`); z.hidden = !z.hidden; });
+  recorderUI($("spRec"), { maxSec: 90, hint: "按麥克風開始說，說完再按一次（最長 1 分 30 秒）", onAudio: a => { SP.a = a; $("spAfter").hidden = false; } });
+  $("spMe").onclick = () => { if (SP.a) playUrl(SP.a.url); };
+  $("spRef").onclick = () => { $("spRefBox").hidden = !$("spRefBox").hidden; };
+  if ($("spAi")) $("spAi").onclick = async () => {
+    if (!SP.a) return; const btn = $("spAi"); btn.disabled = true; btn.textContent = "AI 聽你說中…";
+    try {
+      const prompt = `A Taiwanese adult practiced a short ${t.en} in English from memory, using five parts: ` + t.b.map((b, i) => `${i + 1}. ${b.k} (for example: "${spkLine(t, i).en}")`).join("; ") + ".\n" +
+        "1) In \"heard\", write exactly what they said (do not correct it). 2) In \"parts\", give 5 true/false values: did they cover each part (any wording is fine). 3) In \"better\", write a natural, simple improved version of THEIR speech that keeps their own content. 4) In \"tips_zh\", give up to 3 short tips in Traditional Chinese (Taiwan) about grammar, a missing part, or pronunciation. 5) \"score\": 0 to 100 overall.\n" +
+        "If the audio is silent or not English, set heard to \"\".\n" + 'Reply with only JSON: {"heard":"...","parts":[true,true,true,true,true],"better":"...","tips_zh":["..."],"score":0}';
+      const r = await AI.audio(prompt, await toAudioPayload(SP.a));
+      const heard = cleanSent(r && r.heard);
+      if (!heard) { $("spAiBox").innerHTML = `<p class="muted">AI 沒有聽到英文，請再錄一次。</p>`; }
+      else {
+        const parts = Array.isArray(r.parts) ? r.parts : [];
+        $("spAiBox").innerHTML = `<div class="reply" style="display:flex;flex-direction:column;gap:6px"><b>AI 聽到的：</b><div>${esc(heard)}</div>
+          <div>${t.b.map((b, i) => `<span class="spk-chip c${i}" style="opacity:${parts[i] ? 1 : .35}">${parts[i] ? "✓" : "✗"} ${esc(b.kz)}</span>`).join(" ")}</div>
+          ${r.better ? `<b>更自然的說法：</b><div>${esc(cleanSent(r.better))} <button class="icon-btn" data-sayall="${esc(cleanSent(r.better))}" aria-label="播放">${ICON.spk}</button></div>` : ""}
+          ${(Array.isArray(r.tips_zh) ? r.tips_zh : []).slice(0, 3).map(x => `<div class="muted">💡 ${esc(String(x).slice(0, 120))}</div>`).join("")}
+          ${Number.isFinite(Number(r.score)) ? `<div class="muted">整體 ${Math.max(0, Math.min(100, Math.round(Number(r.score))))} 分</div>` : ""}</div>`;
+        $("spAiBox").querySelectorAll("[data-sayall]").forEach(x => x.onclick = () => sayVoice(x.dataset.sayall, spkVoice(), false));
+        parts.forEach((v, i) => { const c = $("spBody").querySelector(`[data-spck="${i}"]`); if (c && v) c.checked = true; });
+      }
+    } catch (e) { toast(aiErrorText(e)); }
+    btn.disabled = false; btn.textContent = "🤖 讓 AI 聽聽看";
+  };
+  $("spDone").onclick = () => {
+    const s = spkS(), d = today(); spkMark(4);
+    if (!s.done[d]) { s.done[d] = t.id; addXp(20); Store.save(); logEvent("情境口說", { title: t.t, total: 5, correct: 5, xp: 20 }); }
+    toast(`今天的口說完成了！🎉 ${spkStreak() > 1 ? `連續 ${spkStreak()} 天` : ""}`); renderSpeak();
+  };
+}
+/* 🎭 角色對話：對方說一句 → 你用那一塊回答 */
+function spkRole(t) {
+  const R = SP.role = SP.role || { i: 0, open: false, zh: false };
+  if (R.i >= t.b.length) {
+    $("spBody").innerHTML = `<p class="muted" style="margin:0">完成！這是整段對話：</p>
+      <div class="spchat">${t.b.map((b, i) => `<div class="bubble">${esc(b.q[0])}<div class="zh">${esc(b.q[1])}</div></div><div class="bubble me">${esc(spkLine(t, i).en)}</div>`).join("")}</div>
+      <div class="row bbctl" style="gap:8px"><button class="btn primary" id="spAgain">再來一次</button><button class="btn" id="spPlayAll">▶ 聽整段對話</button></div>`;
+    $("spAgain").onclick = () => { SP.role = null; renderSpeak(); };
+    $("spPlayAll").onclick = async () => { spkStop(); const tok = SP.tok; for (let i = 0; i < t.b.length; i++) { if (tok !== SP.tok) return; await sayVoice(t.b[i].q[0], spkPartner(), false); if (tok !== SP.tok) return; await waitMs(300); await sayVoice(spkLine(t, i).en, spkVoice(), false); await waitMs(400); } };
+    return;
+  }
+  const b = t.b[R.i], L = spkLine(t, R.i);
+  $("spBody").innerHTML = `<p class="muted" style="margin:0">對方會先說一句，你用第 ${R.i + 1} 塊「${esc(b.kz)}」回答。先自己說，再看參考。</p>
+    <div class="spchat">${t.b.slice(0, R.i).map((x, i) => `<div class="bubble">${esc(x.q[0])}</div><div class="bubble me">${esc(spkLine(t, i).en)}</div>`).join("")}
+      <div class="bubble now">${esc(b.q[0])} <button class="icon-btn" id="spQ" aria-label="再聽一次">${ICON.spk}</button>${R.zh ? `<div class="zh">${esc(b.q[1])}</div>` : ""}</div>
+      ${R.open ? `<div class="bubble me">${esc(L.en)}<div class="zh">${esc(L.zh)}</div><div class="muted" style="font-size:12px;margin-top:4px">其他說法：${spkVars(t, R.i).filter(v => v[0] !== L.en).slice(0, 3).map(v => esc(v[0])).join("／")}</div></div>` : `<div class="bubble me hint">🗣 換你說：${R.i + 1} ${esc(b.kz)}</div>`}</div>
+    <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><button class="btn small" id="spZh">${R.zh ? "隱藏中文" : "看對方說什麼（中文）"}</button><button class="btn small" id="spHint">💡 中文提示</button><button class="btn small" id="spOpen">👀 參考說法</button></div>
+    <div id="spRoleHint" class="muted" hidden style="text-align:center">提示：${esc(L.zh)}</div>
+    ${AUDIO_AI() ? `<div id="spRoleRec"></div><div id="spRoleAi"></div>` : ""}
+    <button class="btn primary block" id="spNextQ">${R.i + 1 < t.b.length ? "下一句 ▶" : "完成對話 ✓"}</button>`;
+  $("spQ").onclick = () => sayVoice(b.q[0], spkPartner(), !!state.babySlow);
+  $("spZh").onclick = () => { R.zh = !R.zh; renderSpeak(); };
+  $("spHint").onclick = () => { $("spRoleHint").hidden = !$("spRoleHint").hidden; };
+  $("spOpen").onclick = () => { R.open = true; renderSpeak(); sayVoice(L.en, spkVoice(), false); };
+  $("spNextQ").onclick = () => { R.i++; R.open = false; renderSpeak(); };
+  if ($("spRoleRec")) recorderUI($("spRoleRec"), { maxSec: 20, hint: "可以錄下你的回答，讓 AI 聽聽看", onAudio: async a => {
+    $("spRoleAi").innerHTML = `<p class="muted">AI 聽你說中…</p>`;
+    try {
+      const r = await AI.audio(`Role-play (${t.en}). The other person said: "${b.q[0]}". The learner replied in the attached audio. Expected idea: ${b.k}, for example: ${spkVars(t, R.i).slice(0, 3).map(v => '"' + v[0] + '"').join(", ")}.\n` +
+        'Write exactly what the learner said in "heard". Say whether it is a fitting reply in "ok". Give a natural, simple reply that keeps their idea in "better", and one short tip in Traditional Chinese (Taiwan) in "tip_zh". If silent, heard is "".\nReply with only JSON: {"heard":"...","ok":true,"better":"...","tip_zh":"..."}', await toAudioPayload(a));
+      const heard = cleanSent(r && r.heard);
+      $("spRoleAi").innerHTML = heard ? `<div class="reply"><b>${r.ok ? "回答得很好！" : "可以這樣說："}</b><div class="muted">AI 聽到：${esc(heard)}</div>${r.better ? `<div>${esc(cleanSent(r.better))}</div>` : ""}${r.tip_zh ? `<div class="muted">💡 ${esc(String(r.tip_zh).slice(0, 120))}</div>` : ""}</div>` : `<p class="muted">AI 沒有聽到英文，請再錄一次。</p>`;
+    } catch (e) { $("spRoleAi").innerHTML = ""; toast(aiErrorText(e)); }
+  } });
+  if (!R.spoke || R.spoke !== R.i + ":" + t.id) { R.spoke = R.i + ":" + t.id; setTimeout(() => sayVoice(b.q[0], spkPartner(), !!state.babySlow), 250); }
+}
+/* 🤖 自訂情境：輸入一個情境，AI 做出一套五塊公版 */
+function spkCustomNew() {
+  openModal(`<div class="row"><h2 style="font-size:20px;flex:1;min-width:0">🤖 自訂情境</h2><button class="icon-btn" id="scClose" aria-label="關閉">${ICON.x}</button></div>
+    <p class="muted" style="margin:0;font-size:14px">寫下你想練的情境，AI 會做出一套「五塊積木」公版，每塊有 3 種說法，也能做角色對話。</p>
+    <textarea class="field" id="scText" maxlength="120" style="min-height:70px" placeholder="例如：在家長會上自我介紹、向客戶道歉延遲出貨、在球敘後感謝主辦人"></textarea>
+    <button class="btn primary block" id="scGo">做出公版</button>`);
+  $("scClose").onclick = closeModal;
+  $("scGo").onclick = async () => {
+    const desc = $("scText").value.replace(/[<>]/g, "").trim(); if (!desc) { $("scText").focus(); return; }
+    $("scGo").disabled = true; $("scGo").textContent = "AI 製作中，大約 10 秒…";
+    const prompt = `Create a reusable English speaking template for a Taiwanese adult. Situation (Traditional Chinese): ${desc}\nLevel: ${D().ai}.\n` +
+      "Exactly 5 parts in a natural order. For each part give: k (English label, 1 to 3 words), kz (short Traditional Chinese label), q (what the other person might say to prompt this part: [English, Traditional Chinese]), v (3 alternative short lines for the learner, each [English, Traditional Chinese], at most 14 words, everyday spoken English).\n" +
+      "Also give t (short Traditional Chinese title, at most 10 characters), en (English title), ic (one emoji), desc (one short Traditional Chinese sentence).\n" +
+      'Reply with only JSON: {"t":"...","en":"...","ic":"🙂","desc":"...","b":[{"k":"Opening","kz":"開場","q":["...","..."],"v":[["...","..."],["...","..."],["...","..."]]}]}';
+    try {
+      const r = await AI.json(prompt), ok = s => typeof s === "string" && s.trim() && s.length < 140;
+      const b = (Array.isArray(r && r.b) ? r.b : []).filter(x => x && ok(x.k) && ok(x.kz) && Array.isArray(x.q) && ok(x.q[0]) && Array.isArray(x.v)).map(x => ({
+        k: x.k.slice(0, 30), kz: x.kz.slice(0, 12), q: [cleanSent(x.q[0]).slice(0, 120), String(x.q[1] || "").slice(0, 60)],
+        v: x.v.filter(v => Array.isArray(v) && ok(v[0]) && /^[A-Za-z0-9 ,.'’!?;:"-]+$/.test(v[0])).slice(0, 4).map(v => [cleanSent(v[0]).slice(0, 110), String(v[1] || "").replace(/[<>]/g, "").slice(0, 60)]) })).filter(x => x.v.length);
+      if (b.length < 4) throw { code: "empty" };
+      const t = { id: "c" + Date.now().toString(36), ic: ok(r.ic) ? r.ic.slice(0, 4) : "🗣️", t: ok(r.t) ? r.t.slice(0, 12) : desc.slice(0, 10), en: ok(r.en) ? r.en.slice(0, 60) : "My Situation", desc: ok(r.desc) ? r.desc.slice(0, 60) : desc.slice(0, 60), b: b.slice(0, 5) };
+      const s = spkS(); s.custom = s.custom.concat(t).slice(-20); Store.save(); closeModal(); SP.tid = t.id; SP.tab = 1; renderSpeak(); toast("做好了！先從「聽範例」開始");
+    } catch (e) { $("scGo").disabled = false; $("scGo").textContent = "做出公版"; toast(e && e.code === "empty" ? "AI 這次做得不完整，再按一次試試" : aiErrorText(e)); }
+  };
+}
+
+/* ================= 時事英文：最新新聞（RSS 標題）→ AI 用你的程度改寫，練聽力和閱讀 ================= */
+const NW = { items: null, saved: null, cat: "all", tab: "head", cache: {}, err: "" };
+const NEWS_CATS = [["all", "全部"], ["top", "焦點"], ["world", "國際"], ["tw", "台灣"], ["sci", "科學"], ["tech", "科技"], ["health", "健康"]];
+const newsCan = () => Store.backend === "sheet" || Store.backend === "computer";
+async function newsApi(fn, ...args) {
+  if (Store.backend === "sheet") return gs(fn, ...args);
+  const r = await apiFetch("api/news", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fn, args }) });
+  const j = await r.json().catch(() => null);
+  if (!r.ok) throw new Error((j && (j.code || j.error)) || "HTTP " + r.status);
+  return j;
+}
+const okLink = u => /^https:\/\/[^\s"'<>]+$/.test(String(u || ""));
+function agoText(t) { if (!t) return ""; const m = Math.round((Date.now() - t) / 60000); return m < 60 ? `${Math.max(1, m)} 分鐘前` : m < 1440 ? `${Math.round(m / 60)} 小時前` : `${Math.round(m / 1440)} 天前`; }
+async function openNews() {
+  show("news");
+  if (!newsCan()) { $("news").innerHTML = `<header class="top"><button class="icon-btn" id="nwBack" aria-label="離開">${ICON.x}</button><h2 style="font-size:22px;flex:1">時事英文</h2></header><section class="card"><p style="margin:0">時事英文需要後台抓新聞：請用 Google 試算表版或電腦版打開。</p></section>`; $("nwBack").onclick = () => { show("home"); renderHome(); }; return; }
+  renderNews();
+  if (!NW.items || Date.now() - (NW.at || 0) > 20 * 60000) {
+    try { const r = await newsApi("newsHeadlines"); NW.items = Array.isArray(r && r.items) ? r.items : []; NW.saved = Array.isArray(r && r.saved) ? r.saved : []; NW.at = Date.now(); NW.err = ""; }
+    catch (e) { NW.err = backendError(e); }
+    if (!$("news").hidden) renderNews();
+  }
+}
+function renderNews() {
+  const items = (NW.items || []).filter(x => NW.cat === "all" || x.cat === NW.cat), saved = NW.saved || [], byLink = {};
+  saved.forEach(s => { if (!byLink[s.link]) byLink[s.link] = s; });
+  const owner = AI.kind && KEY_MODE();
+  $("news").innerHTML = `
+    <header class="top"><button class="icon-btn" id="nwBack" aria-label="離開">${ICON.x}</button><h2 style="font-size:22px;flex:1;min-width:0">時事英文</h2><button class="btn small" id="nwRe">↻</button></header>
+    <p class="muted" style="margin:0;font-size:13px">最新新聞標題來自 NPR、Taipei Times。${owner ? "按「改寫成我的程度」，AI 會用你現在的難度（" + esc(D().name) + "）重寫成短文，附中文、聽力朗讀和理解題，存起來大家都能讀。" : "作者改寫過的文章可以直接讀，附中文、朗讀和理解題。"}</p>
+    <div class="seg" style="align-self:center"><button data-nwtab="head" aria-pressed="${NW.tab === "head"}">📰 最新新聞</button><button data-nwtab="lib" aria-pressed="${NW.tab === "lib"}">📚 文章庫（${saved.length}）</button></div>
+    ${NW.tab === "head" ? `<div class="bbthemes">${NEWS_CATS.map(([k, n]) => `<button class="tchip${NW.cat === k ? " on" : ""}" data-nwcat="${k}">${n}</button>`).join("")}</div>
+      ${NW.err ? `<p class="muted">讀不到新聞：${esc(NW.err)}</p>` : !NW.items ? `<p class="muted">讀取最新新聞中…</p>` : !items.length ? `<p class="muted">這個分類目前沒有新聞。</p>` : ""}
+      <div style="display:flex;flex-direction:column;gap:10px">${items.slice(0, 40).map((x, i) => { const s = byLink[x.link]; return `<div class="nwitem"><div class="nwmeta">${esc(x.src)}・${esc((NEWS_CATS.find(c => c[0] === x.cat) || [0, ""])[1])}${x.t ? "・" + agoText(x.t) : ""}</div><div class="nwt">${esc(x.title)}</div>${x.desc ? `<div class="nwd">${esc(x.desc)}</div>` : ""}
+        <div class="row" style="gap:8px;flex-wrap:wrap">${s ? `<button class="btn small primary" data-nwopen="${esc(s.id)}">📖 讀改寫版${s.lv ? `（${esc(s.lvName || "")}）` : ""}</button>` : ""}${owner ? `<button class="btn small${s ? "" : " primary"}" data-nwmake="${esc(x.id)}">🤖 ${s ? "再改寫一次" : "改寫成我的程度"}</button>` : s ? "" : `<span class="muted" style="font-size:12px">作者改寫後就能讀</span>`}${okLink(x.link) ? `<a class="btn small" href="${esc(x.link)}" target="_blank" rel="noopener">原文 ↗</a>` : ""}</div></div>`; }).join("")}</div>`
+    : `${saved.length ? `<div style="display:flex;flex-direction:column;gap:10px">${saved.map(s => `<button class="tipcard" data-nwopen="${esc(s.id)}"><span style="flex:1;min-width:0"><span class="en">${esc(s.title)}</span><br><span class="zh">${esc(s.zh || "")}・${esc(s.src || "")}・${esc(s.d || "")}${s.lvName ? "・" + esc(s.lvName) : ""}</span></span><span aria-hidden="true">›</span></button>`).join("")}</div>` : `<p class="muted">還沒有改寫過的文章。</p>`}`}`;
+  $("nwBack").onclick = () => { show("home"); renderHome(); };
+  $("nwRe").onclick = () => { NW.at = 0; NW.items = null; openNews(); };
+  $("news").querySelectorAll("[data-nwtab]").forEach(b => b.onclick = () => { NW.tab = b.dataset.nwtab; renderNews(); });
+  $("news").querySelectorAll("[data-nwcat]").forEach(b => b.onclick = () => { NW.cat = b.dataset.nwcat; renderNews(); });
+  $("news").querySelectorAll("[data-nwopen]").forEach(b => b.onclick = () => newsOpen(b.dataset.nwopen));
+  $("news").querySelectorAll("[data-nwmake]").forEach(b => b.onclick = () => newsMake((NW.items || []).find(x => x.id === b.dataset.nwmake), b));
+  chipCenter($("news"));
+}
+async function newsMake(item, btn) {
+  if (!item) return;
+  btn.disabled = true; btn.textContent = "🤖 AI 改寫中，約 15 秒…";
+  let src = "";
+  try { const r = await newsApi("newsSource", item.link); src = String((r && r.text) || ""); } catch (e) { }
+  const len = ["", "60 to 90", "100 to 140", "140 to 200", "200 to 260"][state.diff] || "100 to 140";
+  const prompt = "Rewrite this news story for a Taiwanese adult learning English.\n" + `Level: ${D().ai}. Length: ${len} words.\n` +
+    "Write it IN YOUR OWN WORDS as a clear, neutral news report. Use ONLY facts from the headline, summary and source text below. Do not invent names, numbers, dates or quotes. If the source is short, keep the article short and explain background only in general terms. Do not copy sentences from the source.\n" +
+    `Headline: ${item.title}\nSummary: ${item.desc || "(none)"}\nSource: ${item.src}\n` + (src ? `Source text:\n"""\n${src.slice(0, 6000)}\n"""\n` : "") +
+    "Split the article into sentences, each with a natural Traditional Chinese (Taiwan) translation. Write 3 multiple-choice comprehension questions in simple English, 4 options each, with the index of the correct option and a short explanation in Traditional Chinese. List 5 to 8 useful words with Chinese meanings, and 3 to 5 useful chunks (multi-word phrases from the article) with Chinese meanings.\n" +
+    'Also give "title" (a simple English headline), "title_zh", and "summary_zh" (two short sentences in Traditional Chinese).\n' +
+    'Reply with only JSON: {"title":"...","title_zh":"...","summary_zh":"...","sentences":[{"en":"...","zh":"..."}],"questions":[{"q":"...","options":["...","...","...","..."],"answer":0,"explain_zh":"..."}],"words":[{"en":"...","zh":"..."}],"chunks":[{"en":"...","zh":"..."}]}';
+  let data;
+  try { data = await AI.json(prompt); } catch (e) { btn.disabled = false; btn.textContent = "🤖 改寫成我的程度"; toast(aiErrorText(e)); return; }
+  const sents = (data && Array.isArray(data.sentences) ? data.sentences : []).filter(x => x && typeof x.en === "string");
+  const qs = (data && Array.isArray(data.questions) ? data.questions : []).filter(q => q && typeof q.q === "string" && Array.isArray(q.options) && q.options.length === 4 && Number.isInteger(q.answer) && q.answer >= 0 && q.answer < 4);
+  if (!sents.length || !qs.length) { btn.disabled = false; btn.textContent = "🤖 改寫成我的程度"; toast("AI 回傳的格式不完整，請再試一次"); return; }
+  data.src = item.src; data.link = item.link; data.pub = item.t ? ymd(new Date(item.t)) : today(); data.lvName = D().name;
+  const meta = { title: String(data.title || item.title).slice(0, 200), zh: String(data.title_zh || "").slice(0, 100), src: item.src, link: item.link, lv: state.diff, lvName: D().name };
+  try { NW.saved = await newsApi("newsSave", meta, JSON.stringify(data)); } catch (e) { toast("文章沒有存起來：" + backendError(e)); }
+  prefetchSents(sents.map(x => x.en));
+  newsRead(data);
+}
+async function newsOpen(id) {
+  let data = NW.cache[id];
+  if (!data) { toast("讀取文章中…"); try { const r = await newsApi("newsGet", id); data = typeof r === "string" ? JSON.parse(r) : r; } catch (e) { toast(backendError(e)); return; } }
+  if (!data || !Array.isArray(data.sentences)) { toast("這篇文章打不開"); return; }
+  NW.cache[id] = data; newsRead(data);
+}
+function newsRead(data) {
+  Q = { kind: "reading", title: "時事英文", items: [], i: 0, correct: 0, combo: 0, best: 0, gained: 0, missed: [] };
+  show("quiz");
+  $("qtype").textContent = "時事英文"; $("qcount").textContent = ""; $("qcombo").textContent = ""; $("qbar").style.width = "0";
+  renderReading(data);
+  const sec = $("qbody").querySelector("section"); if (!sec) return;
+  const chunks = (Array.isArray(data.chunks) ? data.chunks : []).filter(x => x && typeof x.en === "string").slice(0, 5);
+  sec.insertAdjacentHTML("afterbegin", `<div class="nwmeta">${esc(data.src || "")}${data.pub ? "・" + esc(data.pub) : ""}${data.lvName ? "・難度：" + esc(data.lvName) : ""}${okLink(data.link) ? `・<a href="${esc(data.link)}" target="_blank" rel="noopener">原文 ↗</a>` : ""}</div>`);
+  const h = sec.querySelector("h2"); if (h && data.title_zh) h.insertAdjacentHTML("afterend", `<div class="muted" style="margin-top:-6px">${esc(data.title_zh)}</div>`);
+  const pas = sec.querySelector(".passage");
+  if (pas) {
+    pas.insertAdjacentHTML("beforebegin", `<div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn small primary" id="nwListen">🎧 先只聽（字遮起來）</button>${data.summary_zh ? `<button class="btn small" id="nwSum">📝 中文重點</button>` : ""}</div><div class="reply" id="nwSumBox" hidden>${esc(data.summary_zh || "")}</div>`);
+    $("nwListen").onclick = () => { const on = pas.classList.toggle("nwblur"); $("nwListen").textContent = on ? "👀 顯示文章" : "🎧 先只聽（字遮起來）"; if (on) $("rdAll").click(); };
+    if ($("nwSum")) $("nwSum").onclick = () => { $("nwSumBox").hidden = !$("nwSumBox").hidden; };
+  }
+  if (chunks.length) sec.insertAdjacentHTML("beforeend", `<div><span class="eyebrow">這篇的好用積木</span><div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">${chunks.map(c => `<button class="wchip" data-sayall="${esc(c.en)}" style="justify-content:flex-start"><b>${esc(c.en)}</b><span>${esc(c.zh || "")}</span></button>`).join("")}</div></div>`);
+  sec.querySelectorAll("[data-sayall]").forEach(b => b.onclick = () => speak(b.dataset.sayall));
 }
 
 /* ================= memory cards ================= */
@@ -4561,6 +5136,8 @@ const MODES = {
   ckBuild: { name: "句型組合器", desc: "主詞＋動作＋補充，一個句型組出很多句" },
   ckListen: { name: "區塊聽力", desc: "聽整句，認出一塊一塊的區塊" },
   ckTalk: { name: "情境輸出", desc: "工作、生活、打球：挑區塊說出想說的話" },
+  spkDaily: { name: "情境口說公版", desc: "得獎、自我介紹、開會、敬酒…五塊積木組成一段話，每天 10 分鐘" },
+  news: { name: "時事英文", desc: "最新國際、台灣新聞，AI 改寫成你的程度，練聽力和閱讀" },
   ckGram: { name: "生活文法", desc: "12 個最常用的文法觀念：看規則、做練習" },
   wish: { name: "許願池", desc: "想要什麼新功能？許願、幫別人 +1" },
   support: { name: "贊助與感謝", desc: "隨喜支持、感謝名單" },
@@ -4612,6 +5189,8 @@ function startPractice(mode) {
   if (mode === "blitz") return startBlitz();
   if (mode === "assess") return startAssess();
   if (mode === "reading") return startReading();
+  if (mode === "spkDaily") return openSpeak();
+  if (mode === "news") return openNews();
   if (mode === "writing") return startWriting();
   if (mode === "chat") return openChat();
   if (mode === "due") return startDue();
@@ -4652,7 +5231,8 @@ function startPractice(mode) {
 function openQuiz() { show("quiz"); try { preloadQuiz(Q.items); } catch (e) { } renderItem(); }
 function show(view) { if (rainState && view !== "rain") stopRain();
   if (DI && DI.on && view !== "diary") diaryStop();
-  for (const v of ["home", "quiz", "result", "stats", "assess", "chat", "notes", "rain", "subs", "pairs", "travel", "map", "mis", "ladder", "dialog", "diary", "coach", "baby", "chunk"]) $(v).hidden = v !== view;
+  for (const v of ["home", "quiz", "result", "stats", "assess", "chat", "notes", "rain", "subs", "pairs", "travel", "map", "mis", "ladder", "dialog", "diary", "coach", "baby", "chunk", "speak", "news"]) $(v).hidden = v !== view;
+  if (view !== "speak" && typeof SP !== "undefined" && SP) SP.tok++;
   if (view !== "baby" && typeof BB !== "undefined" && BB) { BB.tok++; BB.auto = false; } closeSheet(); window.scrollTo(0, 0); }
 
 function renderHeader() {
@@ -5112,6 +5692,7 @@ function renderHome() {
   { const done = !!(ckState().days || {})[today()], t = ckState().today, mid = t && t.date === today() && t.i > 0 && !done;
     $("ckDayBtn").textContent = done ? `🧱 今日積木完成 ✓・連續 ${ckStreak()} 天` : mid ? `🧱 繼續今日積木（${t.i} / ${t.steps.length}）` : `🧱 今日積木・5 分鐘${ckStreak() ? `（已連續 ${ckStreak()} 天）` : ""}`;
     $("ckDayBtn").onclick = () => openChunk("daily"); }
+  { const st = spkToday(), dn = !!spkS().done[today()]; $("spkDayBtn").textContent = dn ? `🎤 今日口說完成 ✓・連續 ${spkStreak()} 天` : `🎤 今日口說・10 分鐘：${st.ic} ${st.t}`; $("spkDayBtn").onclick = () => openSpeak(); }
   const dueN = dueItems().length;
   $("dueBtn").hidden = !dueN; $("dueBtn").textContent = `今日複習：${dueN} 個字句到期了`;
   $("watchBtn").textContent = state.watched[state.week] ? "這集看完了 ✓" : "這集我看完了";
@@ -5162,14 +5743,14 @@ function renderHome() {
     ["片語積木・像寫程式一樣學英文", [["ckDaily", ckDailyTag(), ckDailyDesc()], ["ckLearn", ckRead() ? `${ckRead()} / 6 堂` : "從這裡開始", ""], ["ckLib", ckLearned() ? `會了 ${ckLearned()} 個` : "", ""], ["ckBuild"], ["ckGram", ckGramDone() ? `練過 ${ckGramDone()} / 12` : "", ""], ["ckListen"], ["ckTalk"]]],
     ["親子", [["baby", "", "給 1–3 歲：看大圖、聽真人發音，不用讀寫"]]],
     ["每天練", [["due", dueN ? `${dueN} 個到期` : "", dueN ? "" : "今天沒有到期的，很好"], ["cards", "", ""], ["trans", AI.kind ? "AI 批改" : "", ""], ["mistakes", (state.mistakes || []).length ? `${state.mistakes.length} 句` : "", (state.mistakes || []).length ? "" : "被改過的句子會自動收進來"], ["mc"], ["listen"], ["cloze"], ["build"], ["spell"], ["dictation"], ["review", weak ? `${weak} 個字` : "", weak ? "答錯過的字，答對兩次就畢業" : "目前沒有錯題"]]],
-    ["口說練習", [["coach", AUDIO_AI() ? "AI 聽發音" : needAiTag, AUDIO_AI() ? "" : GUEST ? "分享版沒有開放" : "設定 Gemini 金鑰後可以用"], ["speak", "", AUDIO_AI() ? "跟讀句子，AI 聽你的發音" : CAN_SPEAK ? "錄音、辨識、打分數" : "跟讀自評（設定 AI 後可錄音評分）"], ["diary", (state.diary || []).some(e => e.d === today()) ? "今天完成" : GUEST ? "" : needAiTag, AUDIO_AI() ? "說 1 分鐘，AI 改文法和發音" : GUEST ? "用打字寫，沒有 AI 批改" : CAN_SPEAK ? "" : "先用打字寫"], ["chat", needAiTag, AUDIO_AI() ? "可以用說的回覆" : needAiDesc]]],
+    ["口說練習", [["spkDaily", spkS().done[today()] ? "今天完成 ✓" : spkStreak() ? `連續 ${spkStreak()} 天` : "每天 10 分鐘", ""], ["coach", AUDIO_AI() ? "AI 聽發音" : needAiTag, AUDIO_AI() ? "" : GUEST ? "分享版沒有開放" : "設定 Gemini 金鑰後可以用"], ["speak", "", AUDIO_AI() ? "跟讀句子，AI 聽你的發音" : CAN_SPEAK ? "錄音、辨識、打分數" : "跟讀自評（設定 AI 後可錄音評分）"], ["diary", (state.diary || []).some(e => e.d === today()) ? "今天完成" : GUEST ? "" : needAiTag, AUDIO_AI() ? "說 1 分鐘，AI 改文法和發音" : GUEST ? "用打字寫，沒有 AI 批改" : CAN_SPEAK ? "" : "先用打字寫"], ["chat", needAiTag, AUDIO_AI() ? "可以用說的回覆" : needAiDesc]]],
     ["聽力加強", [["ladder"], ["dialog", AI.kind ? "" : (state.dialogues || []).length ? `題庫 ${state.dialogues.length} 段` : needAiTag, AI.kind ? "" : (state.dialogues || []).length ? "從對話庫挑一段來聽" : needAiDesc], ["pairs"]]],
     ["看片學", [["subs", state.episodes.length ? `${state.episodes.length} 集` : "", ""], ["notes", state.notes.length ? `${state.notes.length} 句` : "", ""], ["map", `${litCount()} / 32 集`, ""]]],
-    ["AI 讀寫", [ ["reading", AI.kind ? "" : (state.readings || []).length ? `題庫 ${state.readings.length} 篇` : needAiTag, AI.kind ? "" : (state.readings || []).length ? "從短文庫挑一篇來讀" : needAiDesc], ["writing", needAiTag, needAiDesc]]],
+    ["AI 讀寫", [["news", "聽力・閱讀", newsCan() ? "" : "Google 版或電腦版可以用"], ["reading", AI.kind ? "" : (state.readings || []).length ? `題庫 ${state.readings.length} 篇` : needAiTag, AI.kind ? "" : (state.readings || []).length ? "從短文庫挑一篇來讀" : needAiDesc], ["writing", needAiTag, needAiDesc]]],
     ["遊戲", [["match"], ["blitz", state.best.blitz ? `紀錄 ${state.best.blitz} 題` : ""], ["rain", state.best.rain ? `紀錄 ${state.best.rain} 個` : "", ""]]],
     ["生活與測驗", [["travel"], ["assess", lastA ? `上次 ${lastA.cefr}` : "", "6 分鐘，看得懂和用得出來都測"]]],
   ];
-  const SKILL = { ckDaily: "每天固定", ckGram: "文法", ckLearn: "觀念", ckLib: "模組", ckBuild: "組合", ckListen: "聽", ckTalk: "說・寫", baby: "聽・親子", wish: "一起變更好", support: "一起變更好", cards: "讀・記憶", pic: "讀", mc: "讀", listen: "聽", cloze: "讀", build: "寫", spell: "寫", dictation: "聽・寫", match: "讀", blitz: "讀", speak: "說", review: "複習", assess: "測驗", reading: "讀", writing: "寫", chat: "說・寫", notes: "台詞", rain: "寫・遊戲", due: "複習", coach: "說", trans: "寫", mistakes: "寫・複習", ladder: "聽・說", dialog: "聽", diary: "說", subs: "聽・說", pairs: "聽・說", travel: "說", map: "進度" };
+  const SKILL = { spkDaily: "說", news: "聽・讀", ckDaily: "每天固定", ckGram: "文法", ckLearn: "觀念", ckLib: "模組", ckBuild: "組合", ckListen: "聽", ckTalk: "說・寫", baby: "聽・親子", wish: "一起變更好", support: "一起變更好", cards: "讀・記憶", pic: "讀", mc: "讀", listen: "聽", cloze: "讀", build: "寫", spell: "寫", dictation: "聽・寫", match: "讀", blitz: "讀", speak: "說", review: "複習", assess: "測驗", reading: "讀", writing: "寫", chat: "說・寫", notes: "台詞", rain: "寫・遊戲", due: "複習", coach: "說", trans: "寫", mistakes: "寫・複習", ladder: "聽・說", dialog: "聽", diary: "說", subs: "聽・說", pairs: "聽・說", travel: "說", map: "進度" };
   $("modeGrid").outerHTML = `<div id="modeGrid" style="display:flex;flex-direction:column;gap:10px">${groups.map(([g, cards]) => `<div class="group-h">${g}</div><div class="grid">${cards.map(([k, tag, desc]) => `<button class="mode" data-m="${k}"><span class="tagline">${esc(SKILL[k] + (tag ? " · " + tag : ""))}</span><b>${esc(MODES[k].name)}</b><small>${esc(desc || MODES[k].desc)}</small></button>`).join("")}</div>`).join("")}</div>`;
   $("modeGrid").querySelectorAll(".mode").forEach(b => b.onclick = () => startPractice(b.dataset.m));
   renderStorage();
@@ -5233,7 +5814,9 @@ function openSupport() {
 function renderWishBar() {
   const bar = $("togetherBar"); if (!bar) return;
   const w = CAN_WISH(), sp = SHOW_SUPPORT(), pc = typeof BPICS !== "undefined" && bpicCan() ? (BPICS.pending || []).length : 0;
-  bar.hidden = !w && !sp && !pc;
+  const fc = typeof FAMG !== "undefined" && typeof bpicCan === "function" && bpicCan() ? FAMG.pending : 0;
+  bar.hidden = !w && !sp && !pc && !fc;
+  $("tbFam").hidden = !fc; $("tbFamN").textContent = fc ? String(fc) : ""; $("tbFam").onclick = openFamAdmin;
   $("tbPic").hidden = !pc; $("tbPicN").textContent = pc ? String(pc) : ""; $("tbPic").onclick = () => openPicReview(0);
   $("tbWish").hidden = !w; $("tbWishN").textContent = WISH_COUNT ? String(WISH_COUNT) : "";
   $("tbSup").hidden = !sp;
