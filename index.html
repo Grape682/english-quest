@@ -171,6 +171,43 @@ button.chip:hover{border-color:var(--primary)}
 /* practice grid */
 .bbord{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
 .bbord .seg{flex-wrap:wrap;justify-content:center}
+.bbviews{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;background:var(--surface-2);border-radius:16px;padding:4px}
+.bbviews .vt{border:0;background:none;border-radius:12px;padding:6px 0;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap;cursor:pointer}
+.bbviews .vt span{font-size:20px;line-height:1.2}
+.bbviews .vt.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.bbview{display:flex;flex-direction:column;gap:14px}
+.ptq{display:block;width:100%;border:0;background:var(--surface);border-radius:18px;padding:12px 14px;text-align:center;box-shadow:var(--shadow);cursor:pointer;color:inherit}
+.ptgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ptgrid.n3{grid-template-columns:1fr 1fr 1fr}
+.ptcard{position:relative;border:4px solid transparent;border-radius:22px;background:var(--surface);box-shadow:var(--shadow);aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px;cursor:pointer;color:inherit;overflow:visible}
+.ptem{font-size:min(22vw,92px);line-height:1}
+.ptgrid.n2 .ptem{font-size:min(28vw,120px)}
+.ptgrid.n3 .ptem{font-size:min(17vw,72px)}
+.ptw{font-weight:800;font-size:18px}
+.ptcard.ok{border-color:var(--good);animation:bbpop .5s ease}
+.ptcard.no{animation:ptshake .4s}
+.ptcard.hint{border-color:var(--primary);animation:ptpulse 1s ease-in-out infinite}
+@keyframes ptshake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@keyframes ptpulse{50%{transform:scale(1.05)}}
+.burst{position:absolute;left:50%;top:50%;margin:-16px 0 0 -14px;font-size:28px;pointer-events:none;animation:burst 1s ease-out forwards}
+@keyframes burst{to{transform:translate(var(--dx),var(--dy)) scale(1.3);opacity:0}}
+.sglines{display:flex;flex-direction:column;gap:4px}
+.sgl{padding:8px 12px;border-radius:12px;transition:background .2s}
+.sgl.now{background:var(--primary-soft)}
+.sgl .en{font-size:18px;font-weight:700}
+.sgl .zh{font-size:14px;color:var(--muted)}
+.gtiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gtile{background:var(--surface);border-radius:16px;padding:12px;text-align:center;box-shadow:var(--shadow);font-size:14px}
+.gtile b{display:block;font-size:26px}
+.gtile small{font-size:14px;color:var(--muted)}
+.gwords{display:flex;flex-wrap:wrap;gap:6px}
+.gw{display:inline-flex;align-items:center;gap:4px;background:var(--surface);border-radius:999px;padding:4px 6px 4px 10px;font-size:14px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.gw button{border:0;background:var(--surface-2);border-radius:999px;padding:3px 7px;font-size:13px;opacity:.4;cursor:pointer}
+.gw button[aria-pressed="true"]{opacity:1;background:var(--primary-soft)}
+.tipcard{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow);text-align:left;border:0;width:100%;cursor:pointer;color:inherit}
+.tipcard .en{font-size:18px;font-weight:800}
+.tipcard .zh{font-size:14px;color:var(--muted)}
+.tipcard.now{outline:3px solid var(--primary)}
 .seg{display:inline-flex;background:var(--surface-2);border-radius:12px;padding:3px;gap:2px}
 .seg button{border:0;background:none;border-radius:9px;padding:6px 12px;font-size:14px;font-weight:700;color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
@@ -604,8 +641,8 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
-const EQ_BUILD = "b7173e";
-const EQ_WEB = "05f6";
+const EQ_BUILD = "1b01f5";
+const EQ_WEB = "fea6";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -1043,7 +1080,7 @@ function aivUi() {
 }
 const babyEn = (w, ph) => w.charAt(0).toUpperCase() + w.slice(1) + "! ... " + ph;
 const babyZhT = (zw, zp) => zw + "。" + zp;
-function babyAivItems() { const out = []; BABY.forEach(t => t[2].forEach(([w, , ph, zw, zp]) => { AIV_LIST.forEach(([v]) => out.push([v, babyEn(w, ph)])); out.push(["zh", babyZhT(zw, zp)]); })); return out; }
+function babyAivItems() { const out = []; BABY.forEach(t => t[2].forEach(([w, , ph, zw, zp]) => { AIV_LIST.forEach(([v]) => out.push([v, babyEn(w, ph)])); out.push(["zh", babyZhT(zw, zp)]); })); return out.concat(babyExtraAivItems()); }
 function courseAivItems() {
   const set = new Set(), out = [];
   const add = t => { t = ckPlain(String(t || "")).trim(); if (!t || t.length > 200 || set.has(t) || !/[a-z]/i.test(t)) return; if (canHumanSent(t)) { const v = sentCached(normSent(t)); if (v && v.u) return; } set.add(t); out.push([aivFor(t), t]); };
@@ -3423,37 +3460,393 @@ function prefetchBaby() {
     splitSents(ph).forEach(sn => { const v = canHumanSent(sn) && sentCached(normSent(sn)); if (v && v.u) preloadAudio(v.u); });
   }, 150 * k));
 }
+/* ================= 寶寶聽力的分頁：聽單字・指指看・兒歌・爸媽小抄・成長紀錄 ================= */
+const TIPS = [["起床", "🌅", "早上打開窗簾時說，每天同一句，寶寶很快就會認得。", [["Good morning, sweetie!", "早安，寶貝！"], ["Did you sleep well?", "你睡得好嗎？"], ["Time to wake up.", "該起床囉。"], ["Let's open the curtains.", "我們把窗簾打開。"], ["Look, the sun is up!", "你看，太陽出來了！"], ["Stretch your arms up high!", "手舉高高，伸懶腰！"], ["Let's change your clothes.", "我們來換衣服。"], ["Give me a morning hug!", "給我一個早安抱抱！"]]], ["換尿布", "🧷", "換尿布時寶寶正好看著你的臉，是說英文的好時機。", [["Let's change your diaper.", "我們來換尿布。"], ["Lie down, please.", "請躺下來。"], ["Are you wet?", "你尿尿了嗎？"], ["Pee-yew! Stinky!", "哇，臭臭！"], ["Wipe, wipe, wipe.", "擦擦擦。"], ["Hold still, please.", "請不要動喔。"], ["A clean diaper!", "換上乾淨的尿布！"], ["All done! So fresh!", "好了！好清爽！"]]], ["吃飯", "🥣", "一邊餵一邊說，說到食物時指給寶寶看。", [["Are you hungry?", "你肚子餓了嗎？"], ["Time to eat!", "吃飯時間到了！"], ["Open your mouth.", "嘴巴張開。"], ["One more bite.", "再吃一口。"], ["Is it yummy?", "好吃嗎？"], ["Chew, chew, chew.", "嚼一嚼。"], ["Do you want some water?", "你要喝水嗎？"], ["All gone! Good job!", "吃光光了！好棒！"]]], ["洗澡", "🛁", "洗澡時間輕鬆好玩，配合動作說，寶寶最容易記住。", [["Bath time!", "洗澡時間到了！"], ["Let's take off your clothes.", "我們把衣服脫掉。"], ["Is the water warm?", "水溫溫的嗎？"], ["Splash, splash!", "嘩啦嘩啦！"], ["Let's wash your hair.", "我們來洗頭髮。"], ["Close your eyes.", "眼睛閉起來。"], ["Where's the duck?", "小鴨子在哪裡？"], ["Let's dry you off.", "我們把身體擦乾。"]]], ["穿衣服", "👕", "穿到哪裡就說到哪裡，例如手伸進去時說 Put your arm in.", [["Let's get dressed.", "我們來穿衣服。"], ["Arms up!", "手舉起來！"], ["Where's your head? Peekaboo!", "頭在哪裡？躲貓貓！"], ["Put your arm in.", "手伸進去。"], ["Put on your socks.", "穿上襪子。"], ["Which shirt do you want?", "你想穿哪件衣服？"], ["Red or blue?", "紅色還是藍色？"], ["You look great!", "你看起來好棒！"]]], ["出門", "🚪", "出門看到什麼就說什麼，Look! A dog! 很好用。", [["Let's go outside!", "我們出去吧！"], ["Put on your shoes.", "穿上鞋子。"], ["Hold my hand.", "牽著我的手。"], ["Let's go for a walk.", "我們去散步。"], ["Look! A dog!", "你看！一隻狗！"], ["Say bye-bye!", "說掰掰！"], ["Get in your car seat.", "坐進汽車座椅。"], ["We're home!", "我們到家了！"]]], ["玩耍", "🧸", "玩的時候輪流說 Your turn / My turn，寶寶會慢慢學會輪流。", [["Let's play!", "我們來玩！"], ["Roll the ball to me.", "把球滾給我。"], ["Your turn!", "換你了！"], ["My turn!", "換我了！"], ["Peekaboo! I see you!", "躲貓貓！看到你了！"], ["Let's build a tower.", "我們來疊高高。"], ["Uh-oh! It fell down!", "哎呀！倒下來了！"], ["Let's clean up.", "我們來收玩具。"]]], ["稱讚鼓勵", "👏", "寶寶做到一件小事就說，語氣誇張一點更好。", [["Good job!", "做得好！"], ["Well done!", "很棒！"], ["You did it!", "你做到了！"], ["I'm so proud of you.", "我好以你為榮。"], ["Try again!", "再試一次！"], ["You can do it!", "你可以的！"], ["High five!", "擊掌！"], ["Clap, clap, clap!", "拍拍手！"]]], ["安撫", "💗", "寶寶哭的時候先抱抱，用溫柔的聲音慢慢說。", [["It's okay.", "沒關係。"], ["I'm right here.", "我就在這裡。"], ["Are you hurt?", "你受傷了嗎？"], ["Let me kiss it better.", "我親一下就不痛了。"], ["Don't cry, sweetie.", "別哭，寶貝。"], ["Take a deep breath.", "深呼吸。"], ["You're safe.", "你很安全。"], ["I love you so much.", "我好愛你。"]]], ["睡覺", "🌙", "睡前固定說同樣幾句，寶寶會知道「要睡覺了」。", [["It's time for bed.", "該睡覺了。"], ["Let's brush your teeth.", "我們來刷牙。"], ["Which book do you want?", "你想看哪本書？"], ["Are you sleepy?", "你想睡了嗎？"], ["Close your eyes.", "眼睛閉起來。"], ["Sweet dreams.", "祝你好夢。"], ["Good night. I love you.", "晚安，我愛你。"], ["See you in the morning.", "明天早上見。"]]]];
+const SONGS = [{"id": "twinkle", "t": "Twinkle, Twinkle, Little Star", "zh": "小星星", "ic": "⭐", "beat": 0.55, "note": "1806 年的英國童詩", "lines": [["Twinkle, twinkle, little star,", "一閃一閃小星星，", "C C G G A A G:2"], ["How I wonder what you are!", "我好想知道你是什麼！", "F F E E D D C:2"], ["Up above the world so high,", "高高掛在天空上，", "G G F F E E D:2"], ["Like a diamond in the sky.", "好像天上的鑽石。", "G G F F E E D:2"], ["Twinkle, twinkle, little star,", "一閃一閃小星星，", "C C G G A A G:2"], ["How I wonder what you are!", "我好想知道你是什麼！", "F F E E D D C:2"]]}, {"id": "abc", "t": "The ABC Song", "zh": "ABC 字母歌", "ic": "🔤", "beat": 0.5, "note": "旋律跟〈小星星〉一樣，1835 年出版", "lines": [["A B C D E F G,", "英文字母 A 到 G，", "C C G G A A G:2"], ["H I J K L M N O P,", "H 到 P，", "F F E E D:.5 D:.5 D:.5 D:.5 C:2"], ["Q R S, T U V,", "Q R S，T U V，", "G G F:2 E E D:2"], ["W, X, Y and Z.", "W、X、Y 和 Z。", "G G F:2 E E:.5 E:.5 D:2"], ["Now I know my A B Cs,", "現在我會唸 ABC 了，", "C C G G A A G:2"], ["Next time won't you sing with me?", "下次要不要跟我一起唱？", "F F E E D D C:2"]]}, {"id": "baa", "t": "Baa, Baa, Black Sheep", "zh": "咩咩黑綿羊", "ic": "🐑", "beat": 0.5, "note": "1744 年就有的英國童謠", "lines": [["Baa, baa, black sheep, have you any wool?", "咩咩黑綿羊，你有羊毛嗎？", "C C G G A:.5 A:.5 A:.5 A:.5 G:2"], ["Yes sir, yes sir, three bags full!", "有的先生，有的先生，滿滿三大袋！", "F F E E D D C:2"], ["One for the master, and one for the dame,", "一袋給主人，一袋給女主人，", "G G:.5 G:.5 F F E:.5 E:.5 E:.5 E:.5 D:2"], ["And one for the little boy who lives down the lane.", "還有一袋給住在巷子那頭的小男孩。", "G:.5 G:.5 G:.5 G:.5 F:.5 F:.5 F E:.5 E:.5 E:.5 E:.5 D:2"]]}, {"id": "macdonald", "t": "Old MacDonald Had a Farm", "zh": "王老先生有塊地", "ic": "🐮", "beat": 0.42, "note": "傳統美國民謠；裡面的動物都是寶寶聽力學過的字", "lines": [["Old MacDonald had a farm, E-I-E-I-O!", "王老先生有塊地，咿呀咿呀喲！", "C C C G3 A3 A3 G3:2 E E D D C:2"], ["And on his farm he had a cow, E-I-E-I-O!", "他的農場養了一隻牛，咿呀咿呀喲！", "G3:.5 G3:.5 C C C G3 A3 A3 G3:2 E E D D C:2"], ["With a moo moo here, and a moo moo there,", "這邊哞哞，那邊哞哞，", "G3:.5 G3:.5 C C C:2 G3:.5 G3:.5 C C C:2"], ["Here a moo, there a moo, everywhere a moo moo.", "這裡哞，那裡哞，到處都哞哞。", "C:.5 C:.5 C C:.5 C:.5 C C:.5 C:.5 C:.5 C:.5 C C"], ["Old MacDonald had a farm, E-I-E-I-O!", "王老先生有塊地，咿呀咿呀喲！", "C C C G3 A3 A3 G3:2 E E D D C:2"], ["And on his farm he had a duck, E-I-E-I-O!", "他的農場養了一隻鴨子，咿呀咿呀喲！", "G3:.5 G3:.5 C C C G3 A3 A3 G3:2 E E D D C:2"], ["With a quack quack here, and a quack quack there,", "這邊呱呱，那邊呱呱，", "G3:.5 G3:.5 C C C:2 G3:.5 G3:.5 C C C:2"], ["Here a quack, there a quack, everywhere a quack quack.", "這裡呱，那裡呱，到處都呱呱。", "C:.5 C:.5 C C:.5 C:.5 C C:.5 C:.5 C:.5 C:.5 C C"], ["Old MacDonald had a farm, E-I-E-I-O!", "王老先生有塊地，咿呀咿呀喲！", "C C C G3 A3 A3 G3:2 E E D D C:2"], ["And on his farm he had a pig, E-I-E-I-O!", "他的農場養了一隻豬，咿呀咿呀喲！", "G3:.5 G3:.5 C C C G3 A3 A3 G3:2 E E D D C:2"], ["With a oink oink here, and a oink oink there,", "這邊齁齁，那邊齁齁，", "G3:.5 G3:.5 C C C:2 G3:.5 G3:.5 C C C:2"], ["Here a oink, there a oink, everywhere a oink oink.", "這裡齁，那裡齁，到處都齁齁。", "C:.5 C:.5 C C:.5 C:.5 C C:.5 C:.5 C:.5 C:.5 C C"], ["Old MacDonald had a farm, E-I-E-I-O!", "王老先生有塊地，咿呀咿呀喲！", "C C C G3 A3 A3 G3:2 E E D D C:2"]]}, {"id": "row", "t": "Row, Row, Row Your Boat", "zh": "划小船", "ic": "🚣", "beat": 0.42, "note": "1852 年出版的美國童謠", "lines": [["Row, row, row your boat,", "划，划，划小船，", "C:1.5 C:1.5 C D:.5 E:1.5"], ["Gently down the stream.", "輕輕順著小河流。", "E D:.5 E F:.5 G:3"], ["Merrily, merrily, merrily, merrily,", "快快樂樂，開開心心，", "C5:.5 C5:.5 C5:.5 G:.5 G:.5 G:.5 E:.5 E:.5 E:.5 C:.5 C:.5 C:.5"], ["Life is but a dream.", "人生就像一場夢。", "G F:.5 E D:.5 C:3"]]}, {"id": "mary", "t": "Mary Had a Little Lamb", "zh": "瑪莉有隻小綿羊", "ic": "🐏", "beat": 0.5, "note": "1830 年的美國童詩", "lines": [["Mary had a little lamb,", "瑪莉有隻小綿羊，", "E D C D E E E:2"], ["Little lamb, little lamb.", "小綿羊，小綿羊。", "D D D:2 E G G:2"], ["Mary had a little lamb,", "瑪莉有隻小綿羊，", "E D C D E E E"], ["Its fleece was white as snow.", "牠的毛像雪一樣白。", "E D D E D C:4"], ["Everywhere that Mary went,", "瑪莉走到哪裡，", "E D C D E E E:2"], ["Mary went, Mary went.", "走到哪，走到哪。", "D D D:2 E G G:2"], ["Everywhere that Mary went,", "瑪莉走到哪裡，", "E D C D E E E"], ["The lamb was sure to go.", "小綿羊就跟到哪裡。", "E D D E D C:4"]]}, {"id": "brotherjohn", "t": "Are You Sleeping?", "zh": "你在睡覺嗎（兩隻老虎的旋律）", "ic": "🔔", "beat": 0.5, "note": "法國傳統兒歌；旋律跟〈兩隻老虎〉一樣，爸媽一定會唱", "lines": [["Are you sleeping, are you sleeping,", "你在睡覺嗎？你在睡覺嗎？", "C D E C C D E C"], ["Brother John, Brother John?", "約翰哥哥，約翰哥哥？", "E F G:2 E F G:2"], ["Morning bells are ringing, morning bells are ringing.", "早上的鐘聲響了，早上的鐘聲響了。", "G:.5 A:.5 G:.5 F:.5 E C G:.5 A:.5 G:.5 F:.5 E C"], ["Ding, dang, dong. Ding, dang, dong.", "叮，噹，咚。叮，噹，咚。", "C G3 C:2 C G3 C:2"]]}, {"id": "london", "t": "London Bridge Is Falling Down", "zh": "倫敦鐵橋垮下來", "ic": "🌉", "beat": 0.45, "note": "1744 年就有的英國童謠", "lines": [["London Bridge is falling down,", "倫敦鐵橋垮下來，", "G:1.5 A:.5 G F E F G:2"], ["Falling down, falling down.", "垮下來，垮下來。", "D E F:2 E F G:2"], ["London Bridge is falling down,", "倫敦鐵橋垮下來，", "G:1.5 A:.5 G F E F G:2"], ["My fair lady.", "我美麗的姑娘。", "D:2 G:2 E C:3"]]}, {"id": "hotcross", "t": "Hot Cross Buns", "zh": "熱十字麵包", "ic": "🍞", "beat": 0.5, "note": "1798 年就有的英國叫賣歌；只有三個音，最好學", "lines": [["Hot cross buns! Hot cross buns!", "熱熱的十字麵包！熱熱的十字麵包！", "E D C:2 E D C:2"], ["One a penny, two a penny,", "一便士一個，一便士兩個，", "C:.5 C:.5 C:.5 C:.5 D:.5 D:.5 D:.5 D:.5"], ["Hot cross buns!", "熱熱的十字麵包！", "E D C:2"]]}];
+const BB_VIEWS = [["listen", "🎧", "聽單字"], ["point", "👆", "指指看"], ["song", "🎵", "兒歌"], ["tips", "📝", "爸媽小抄"], ["grow", "🌱", "成長紀錄"]];
+const bbView = () => BB && BB_VIEWS.some(v => v[0] === BB.view) ? BB.view : "listen";
+function bbTabs() { return `<nav class="bbviews" role="tablist" aria-label="寶寶聽力的功能">${BB_VIEWS.map(([k, ic, n]) => `<button class="vt${bbView() === k ? " on" : ""}" data-bview="${k}" role="tab" aria-selected="${bbView() === k}"><span aria-hidden="true">${ic}</span>${n}</button>`).join("")}</nav>`; }
+function bbStopAll() { if (BB) { BB.tok++; BB.auto = false; BB.dark = false; } PT.tok++; SG.tok++; TP.tok++; mbStop(); stopHuman(); if (TTS) speechSynthesis.cancel(); }
+function bbBindTabs() { $("baby").querySelectorAll("[data-bview]").forEach(b => b.onclick = () => { bbStopAll(); BB.view = b.dataset.bview; renderBaby(false); try { window.scrollTo(0, 0); } catch (e) { } }); }
+function renderBabyView() {
+  $("baby").innerHTML = `<header class="top"><button class="icon-btn" id="bbBack" aria-label="離開">${ICON.x}</button><h2 style="font-size:22px;flex:1;min-width:0">寶寶聽力</h2></header>${bbTabs()}<div id="bbView" class="bbview"></div>`;
+  $("bbBack").onclick = () => { bbStopAll(); show("home"); renderHome(); };
+  bbBindTabs();
+  ({ point: renderPoint, song: renderSongs, tips: renderTips, grow: renderGrow })[bbView()]();
+}
+/* 唸一句英文：有 AI 語音就用 AI，沒有就用電腦語音（作者那邊會排隊產生） */
+async function sayLine(text, slow) {
+  const v = aivFor(text), u = AIV_ON() ? await raceMs(aiVoiceUrl(v, text), 2500) : "";
+  if (u && await playUrl(u, slow ? 0.85 : 1)) return;
+  if (AIV_ON()) aivQueue([[v, text]]);
+  await sayTTS(text, slow ? 0.72 : 0.9);
+}
+function babyExtraAivItems() {
+  const out = [], add = t => out.push([aivFor(t), t]);
+  TIPS.forEach(s => s[3].forEach(p => add(p[0])));
+  SONGS.forEach(s => s.lines.forEach(l => add(l[0])));
+  PT_THEMES.forEach(ti => BABY[ti][2].forEach(([w]) => add(pointQ(w, ti))));
+  PT_CHEER.concat(PT_RETRY).forEach(add);
+  return out;
+}
+const mdDate = d => { const m = /^\d{4}-(\d{2})-(\d{2})$/.exec(String(d || "")); return m ? `${Number(m[1])}/${Number(m[2])}` : ""; };
+
+/* ---------- 家人錄音：存在這台裝置；作者另外備份到自己的雲端硬碟（訪客聽不到） ---------- */
+const FV_WHO = [["mom", "媽媽"], ["dad", "爸爸"], ["fam", "家人"]];
+const FV = { idx: null, url: {}, synced: false };
+const fvName = w => (FV_WHO.find(x => x[0] === w) || [0, "家人"])[1];
+const fvCloud = () => KEY_MODE() && Store.backend === "sheet";
+const fvPath = (key, who, t) => "/fv/" + encodeURIComponent(key) + "/" + who + "/" + t;
+function fvIdx() { if (!FV.idx) { try { FV.idx = JSON.parse(localStorage.getItem("eq-fv") || "{}") || {}; } catch (e) { FV.idx = {}; } } return FV.idx; }
+function fvSaveIdx() { try { localStorage.setItem("eq-fv", JSON.stringify(FV.idx || {})); } catch (e) { } }
+function fvList(key) { const m = fvIdx()[key] || {}; return FV_WHO.filter(([k]) => m[k]).map(([k, n]) => Object.assign({ who: k, name: n }, m[k])); }
+const fvAnyWord = () => Object.keys(fvIdx()).some(k => k.indexOf("w:") === 0 && Object.keys(fvIdx()[k] || {}).length);
+async function fvUrl(key, who) {
+  const e = (fvIdx()[key] || {})[who]; if (!e) return "";
+  const p = fvPath(key, who, e.t); if (FV.url[p]) return FV.url[p];
+  try {
+    const c = await caches.open("eq-famvoice"), r = await c.match(p); let blob = r ? await r.blob() : null;
+    if (!blob && e.id && fvCloud()) { const g = await gs("famVoiceGet", e.id); if (g && g.b64) { blob = b64ToBlob(g.b64, g.mime); try { await c.put(p, new Response(blob, { headers: { "Content-Type": g.mime || "audio/webm" } })); } catch (x) { } } }
+    if (blob && blob.size) return (FV.url[p] = URL.createObjectURL(blob));
+  } catch (x) { }
+  return "";
+}
+async function fvSave(key, who, blob) {
+  const mime = AUDIO_OK[String(blob.type || "").split(";")[0]] || "audio/webm", t = Date.now(), b2 = new Blob([blob], { type: mime });
+  const old = (fvIdx()[key] || {})[who];
+  try { const c = await caches.open("eq-famvoice"); await c.put(fvPath(key, who, t), new Response(b2, { headers: { "Content-Type": mime } })); if (old) c.delete(fvPath(key, who, old.t)); } catch (e) { }
+  FV.url[fvPath(key, who, t)] = URL.createObjectURL(b2);
+  const ent = { t, mime };
+  (fvIdx()[key] = fvIdx()[key] || {})[who] = ent; fvSaveIdx();
+  if (!fvCloud()) return "local";
+  try { const r = await gs("famVoiceSave", key, who, await blobToB64(b2), mime, t); if (r && r.id) { ent.id = r.id; fvSaveIdx(); } return "cloud"; }
+  catch (e) { toast("已存在這台裝置；備份到雲端硬碟失敗：" + backendError(e)); return "local"; }
+}
+async function fvDelete(key, who) {
+  const e = (fvIdx()[key] || {})[who]; if (!e) return;
+  try { const c = await caches.open("eq-famvoice"); await c.delete(fvPath(key, who, e.t)); } catch (x) { }
+  delete fvIdx()[key][who]; if (!Object.keys(fvIdx()[key]).length) delete fvIdx()[key]; fvSaveIdx();
+  if (e.id && fvCloud()) { try { await gs("famVoiceDelete", e.id); } catch (x) { toast(backendError(x)); } }
+}
+/* 作者：把雲端硬碟裡的錄音清單同步過來（真正的聲音檔要播的時候才下載） */
+async function fvSync() {
+  if (FV.synced || !fvCloud()) return; FV.synced = true;
+  let rows; try { rows = await gs("famVoiceList"); } catch (e) { FV.synced = false; return; }
+  if (!Array.isArray(rows)) return;
+  const idx = fvIdx(), seen = {};
+  rows.forEach(([key, who, id, mime, t]) => {
+    seen[key + "|" + who] = 1; const cur = (idx[key] || {})[who];
+    if (!cur || (cur.t || 0) < t || (!cur.id && cur.t === t)) (idx[key] = idx[key] || {})[who] = { t, mime, id };
+  });
+  Object.keys(idx).forEach(key => Object.keys(idx[key]).forEach(who => { if (idx[key][who].id && !seen[key + "|" + who]) delete idx[key][who]; }));
+  Object.keys(idx).forEach(key => { if (!Object.keys(idx[key]).length) delete idx[key]; });
+  fvSaveIdx();
+  if (!$("baby").hidden) renderBaby(false);
+}
+const FR = { a: null };
+function openFamRec(key, title, sub, maxSec, after, song) {
+  FR.a = null; const who0 = FV_WHO.some(x => x[0] === state.fvWho) ? state.fvWho : "mom";
+  const draw = () => {
+    const have = fvList(key);
+    $("frHave").innerHTML = have.length ? `<span class="eyebrow">已經錄好的</span><div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">${have.map(h => `<div class="row" style="gap:8px;align-items:center"><span style="flex:1;min-width:0">🎙 ${esc(h.name)}${h.id ? ` <span class="muted" style="font-size:12px">☁️ 已備份</span>` : ""}</span><button class="btn small" data-frp="${h.who}">▶ 播放</button><button class="btn small" data-frd="${h.who}">🗑</button></div>`).join("")}</div>` : "";
+    $("frHave").querySelectorAll("[data-frp]").forEach(b => b.onclick = async () => { const u = await fvUrl(key, b.dataset.frp); if (u) playUrl(u); else toast("找不到這段錄音"); });
+    $("frHave").querySelectorAll("[data-frd]").forEach(b => b.onclick = async () => { if (!confirm(`要刪掉${fvName(b.dataset.frd)}的錄音嗎？`)) return; await fvDelete(key, b.dataset.frd); draw(); toast("已刪掉"); });
+  };
+  openModal(`
+    <div class="row"><h2 style="font-size:20px;flex:1;min-width:0">🎙 錄家人的聲音</h2><button class="icon-btn" id="frClose" aria-label="關閉">${ICON.x}</button></div>
+    <div style="text-align:center"><div style="font-size:24px;font-weight:800">${esc(title)}</div><div class="muted">${esc(sub)}</div></div>
+    <div class="row" style="justify-content:center;gap:8px;flex-wrap:wrap"><span class="muted" style="font-size:13px">誰在錄？</span><div class="seg">${FV_WHO.map(([k, n]) => `<button data-frwho="${k}" aria-pressed="${k === who0}">${n}</button>`).join("")}</div></div>
+    ${song ? `<div class="row" style="justify-content:center"><button class="btn small" id="frMb">🎵 放音樂盒當伴奏</button></div>` : ""}
+    <div id="frRec"></div>
+    <div class="row" style="justify-content:center;gap:8px" id="frAct" hidden><button class="btn" id="frPlay">▶ 聽聽看</button><button class="btn primary" id="frSave">✅ 存起來</button></div>
+    <div id="frHave"></div>
+    <p class="muted" style="margin:0;font-size:12px">${fvCloud() ? "錄音存在這台裝置，並備份到你的雲端硬碟「English Quest 家人錄音」。只有你（作者）登入的裝置聽得到，訪客聽不到。" : "錄音只存在這台手機或電腦，不會上傳到任何地方。"}同一個人再錄一次會換掉舊的。</p>`);
+  let who = who0;
+  $("gPanel").querySelectorAll("[data-frwho]").forEach(b => b.onclick = () => { who = b.dataset.frwho; state.fvWho = who; Store.save(); $("gPanel").querySelectorAll("[data-frwho]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
+  $("frClose").onclick = () => { mbStop(); stopHuman(); closeModal(); if (after) after(); };
+  if ($("frMb")) $("frMb").onclick = () => mbPlay(song, () => { });
+  recorderUI($("frRec"), { maxSec, hint: song ? "按麥克風開始唱，唱完再按一次" : "按麥克風，清楚地唸一次，唸完再按一次", onAudio: a => { mbStop(); FR.a = a; $("frAct").hidden = false; } });
+  $("frPlay").onclick = () => { if (FR.a) playUrl(FR.a.url); };
+  $("frSave").onclick = async () => {
+    if (!FR.a) return; const btn = $("frSave"); btn.disabled = true; btn.textContent = "儲存中…";
+    const where = await fvSave(key, who, FR.a.blob);
+    FR.a = null; $("frAct").hidden = true; btn.disabled = false; btn.textContent = "✅ 存起來";
+    toast(where === "cloud" ? `存好了！${fvName(who)}的聲音也備份到雲端硬碟了` : `存好了！${fvName(who)}的聲音存在這台裝置`);
+    draw();
+  };
+  draw();
+}
+
+/* ---------- 成長紀錄 ---------- */
+function growLog() { if (!state.babyLog || typeof state.babyLog !== "object" || Array.isArray(state.babyLog)) state.babyLog = {}; return state.babyLog; }
+function growMark(w, k) { const e = growLog()[w] = growLog()[w] || {}; e[k] = (Number(e[k]) || 0) + 1; if (k === "pt" && !e.pt1) e.pt1 = today(); Store.save(); }
+function growToggle(w, k) {
+  const e = growLog()[w] = growLog()[w] || {};
+  if (e[k]) { if (!confirm(`要取消「${w}・${k === "point" ? "會指了" : "會說了"}」的紀錄嗎？`)) return false; delete e[k]; }
+  else { e[k] = today(); toast(k === "point" ? `記下來了：${w} 會指了 👆` : `記下來了：${w} 會說了 🗣`); }
+  Store.save(); return true;
+}
+function ageText(birth, d) {
+  const b = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(birth || "")), x = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(d || "")); if (!b || !x) return "";
+  let m = (x[1] - b[1]) * 12 + (x[2] - b[2]); if (Number(x[3]) < Number(b[3])) m--; if (m < 0) return "";
+  return m < 12 ? `${m} 個月` : `${Math.floor(m / 12)} 歲${m % 12 ? ` ${m % 12} 個月` : ""}`;
+}
+function renderGrow() {
+  const L = growLog(), all = BABY.flatMap(t => t[2]), get = w => L[w] || {};
+  const nPoint = all.filter(x => get(x[0]).point).length, nSay = all.filter(x => get(x[0]).say).length;
+  const nHeard = all.filter(x => get(x[0]).heard).length, ptSum = all.reduce((a, x) => a + (Number(get(x[0]).pt) || 0), 0);
+  const ev = []; all.forEach(x => { const e = get(x[0]); if (e.say) ev.push([e.say, "say", x]); if (e.point) ev.push([e.point, "point", x]); });
+  ev.sort((a, b) => a[0] < b[0] ? 1 : a[0] > b[0] ? -1 : 0);
+  const firstSay = ev.filter(e => e[1] === "say").slice(-1)[0], birth = state.babyBirth || "";
+  const showAll = !!GROW.all;
+  $("bbView").innerHTML = `
+    <div class="reply" style="display:flex;flex-direction:column;gap:8px;border-radius:14px;padding:12px 14px">
+      <label class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><span style="font-size:14px">寶寶生日</span><input type="date" id="grBirth" value="${esc(birth)}" style="flex:1;min-width:150px"></label>
+      <span class="muted" style="font-size:12px">填了生日，紀錄會顯示寶寶當時幾個月大。資料只存在你的進度裡。</span></div>
+    <div class="gtiles">
+      <div class="gtile"><b>${nPoint}</b>👆 會指了</div><div class="gtile"><b>${nSay}</b>🗣 會說了</div>
+      <div class="gtile"><b>${nHeard}<small> / ${all.length}</small></b>🎧 聽過的字</div><div class="gtile"><b>${ptSum}</b>👆 指指看答對</div></div>
+    ${firstSay ? `<div class="reply" style="border-radius:14px;padding:12px 14px;text-align:center"><span class="eyebrow">第一個會說的英文字</span><div style="font-size:28px;font-weight:800">${firstSay[2][1]} ${esc(firstSay[2][0])}</div><div class="muted">${esc(firstSay[0])}${ageText(birth, firstSay[0]) ? `・${ageText(birth, firstSay[0])}` : ""}</div></div>` : ""}
+    <section><h3 style="font-size:17px;margin:0 0 6px">時間軸</h3>
+      ${ev.length ? `<div style="display:flex;flex-direction:column;gap:6px">${(showAll ? ev : ev.slice(0, 12)).map(([d, k, x]) => `<div class="row" style="gap:10px;align-items:center"><span class="muted" style="font-size:13px;width:44px">${mdDate(d)}</span><span style="font-size:22px">${x[1]}</span><span style="flex:1;min-width:0">${k === "say" ? "🗣 會說" : "👆 會指"} <b>${esc(x[0])}</b>（${esc(x[3])}）</span>${ageText(birth, d) ? `<span class="muted" style="font-size:12px">${ageText(birth, d)}</span>` : ""}</div>`).join("")}${ev.length > 12 && !showAll ? `<button class="btn small" id="grMore">顯示全部 ${ev.length} 筆</button>` : ""}</div>`
+        : `<p class="muted" style="margin:0">還沒有紀錄。寶寶會指出某個東西、或說出某個字的時候，在下面點 👆 或 🗣，就會記下日期。</p>`}
+    </section>
+    <section style="display:flex;flex-direction:column;gap:10px"><h3 style="font-size:17px;margin:0">每個字的紀錄</h3>
+      <p class="muted" style="margin:0;font-size:12px">點 👆＝會指了、🗣＝會說了（再點一次可以取消）。🎧 後面是聽過幾次。</p>
+      ${BABY.map(([tn, ic, items]) => `<div><span class="eyebrow">${ic} ${esc(tn)}</span><div class="gwords" style="margin-top:4px">${items.map(x => { const e = get(x[0]); return `<span class="gw"><span aria-hidden="true">${x[1]}</span>${esc(x[0])}${e.heard ? `<small class="muted">🎧${e.heard}</small>` : ""}<button data-gw="${esc(x[0])}" data-gk="point" aria-pressed="${!!e.point}" aria-label="${esc(x[0])} 會指了">👆</button><button data-gw="${esc(x[0])}" data-gk="say" aria-pressed="${!!e.say}" aria-label="${esc(x[0])} 會說了">🗣</button></span>`; }).join("")}</div></div>`).join("")}
+    </section>
+    <div class="row bbctl"><button class="btn small" id="grCopy">📋 複製成文字（分享給家人）</button></div>`;
+  $("grBirth").onchange = e => { const v = String(e.target.value || ""); state.babyBirth = /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : ""; Store.save(); renderGrow(); };
+  if ($("grMore")) $("grMore").onclick = () => { GROW.all = true; renderGrow(); };
+  $("bbView").querySelectorAll("[data-gw]").forEach(b => b.onclick = () => { if (growToggle(b.dataset.gw, b.dataset.gk)) renderGrow(); });
+  $("grCopy").onclick = () => {
+    const lines = ["寶寶的英文成長紀錄（English Quest）", `會指 ${nPoint} 個字・會說 ${nSay} 個字・聽過 ${nHeard} 個字`];
+    ev.slice().reverse().forEach(([d, k, x]) => lines.push(`${d}${ageText(birth, d) ? `（${ageText(birth, d)}）` : ""} ${k === "say" ? "會說" : "會指"} ${x[0]}（${x[3]}）`));
+    const txt = lines.join("\n");
+    (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("複製好了，可以貼到 LINE 給家人")).catch(() => { prompt("請複製下面的文字", txt); });
+  };
+}
+const GROW = { all: false };
+
+/* ---------- 指指看 ---------- */
+const PT_THEMES = [0, 1, 2, 3, 4, 5, 7];
+const PT_CHEER = ["Yay! Good job!", "Yes! You found it!", "Great job!", "Wow! You got it!"];
+const PT_RETRY = ["Try again!"];
+const PT_NAME = { mommy: "Mommy", daddy: "Daddy", grandma: "Grandma", grandpa: "Grandpa", brother: "your brother", sister: "your sister", baby: "the baby", family: "the family" };
+const PT_PL = { eyes: 1, ears: 1, hands: 1, feet: 1, teeth: 1, shoes: 1 };
+const PT = { tok: 0, t: -1, target: null, opts: [], miss: 0, last: "", score: 0, done: false };
+function pointQ(w, ti) {
+  if (ti === 3) return `Which one is ${w}?`;
+  if (PT_NAME[w]) return `Where is ${PT_NAME[w]}?`;
+  if (ti === 2) return PT_PL[w] ? `Where are your ${w}?` : `Where is your ${w}?`;
+  return PT_PL[w] ? `Where are the ${w}?` : `Where is the ${w}?`;
+}
+const pointZh = (x, ti) => ti === 3 ? `哪一個是${x[3]}？` : `${x[3]}在哪裡？`;
+function ptNew() {
+  if (!PT_THEMES.includes(PT.t)) PT.t = PT_THEMES.includes(BB.t) ? BB.t : 0;
+  const items = BABY[PT.t][2], n = Math.min([2, 3, 4].includes(state.ptN) ? state.ptN : 2, items.length);
+  const pool = items.filter(x => x[0] !== PT.last), target = pool[Math.floor(Math.random() * pool.length)];
+  const others = items.filter(x => x[0] !== target[0]).sort(() => Math.random() - 0.5).slice(0, n - 1);
+  PT.target = target; PT.opts = others.concat([target]).sort(() => Math.random() - 0.5); PT.miss = 0; PT.last = target[0]; PT.done = false;
+}
+async function ptAsk() { const tok = ++PT.tok; await waitMs(250); if (tok !== PT.tok || bbView() !== "point") return; await sayLine(pointQ(PT.target[0], PT.t), !!state.babySlow); }
+function renderPoint(fresh) {
+  if (fresh || !PT.target || !PT_THEMES.includes(PT.t)) ptNew();
+  const x = PT.target;
+  $("bbView").innerHTML = `
+    <div class="bbthemes">${PT_THEMES.map(k => `<button class="tchip${k === PT.t ? " on" : ""}" data-ptt="${k}"><span aria-hidden="true">${BABY[k][1]}</span>${esc(BABY[k][0])}</button>`).join("")}</div>
+    <button class="ptq" id="ptQ" aria-label="再問一次"><div class="bbsen">${esc(pointQ(x[0], PT.t))}</div><div class="bbszh">${esc(pointZh(x, PT.t))}</div></button>
+    <div class="ptgrid n${PT.opts.length}">${PT.opts.map((o, i) => `<button class="ptcard" data-pt="${i}" aria-label="${esc(o[0])}"><span class="ptem" aria-hidden="true">${o[1]}</span>${state.ptWords ? `<span class="ptw">${esc(o[0])}</span>` : ""}</button>`).join("")}</div>
+    <div class="row bbctl"><button class="btn" id="ptAgain">🔊 再問一次</button><button class="btn primary" id="ptNext">下一題 ▶</button></div>
+    <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><span class="muted" style="font-size:13px">圖片</span><div class="seg">${[2, 3, 4].map(n => `<button data-ptn="${n}" aria-pressed="${([2, 3, 4].includes(state.ptN) ? state.ptN : 2) === n}">${n} 張</button>`).join("")}</div><button class="btn small${state.ptWords ? " primary" : ""}" id="ptWords" aria-pressed="${!!state.ptWords}">顯示英文字</button></div>
+    <p class="muted" style="margin:0;font-size:13px;text-align:center">這次答對 <b id="ptScore">${PT.score}</b> 題。適合 1 歲半以上：爸媽先示範指給寶寶看，再讓寶寶自己點。答錯兩次，正確的那張會閃一閃提示。</p>`;
+  $("bbView").querySelectorAll("[data-ptt]").forEach(b => b.onclick = () => { PT.t = Number(b.dataset.ptt); PT.last = ""; renderPoint(true); });
+  $("bbView").querySelectorAll("[data-pt]").forEach(b => b.onclick = () => ptTap(Number(b.dataset.pt), b));
+  $("bbView").querySelectorAll("[data-ptn]").forEach(b => b.onclick = () => { state.ptN = Number(b.dataset.ptn); Store.save(); renderPoint(true); });
+  $("ptWords").onclick = () => { state.ptWords = !state.ptWords; Store.save(); renderPoint(false); };
+  $("ptAgain").onclick = $("ptQ").onclick = () => ptAsk();
+  $("ptNext").onclick = () => renderPoint(true);
+  aivPrefetch([[aivFor(pointQ(x[0], PT.t)), pointQ(x[0], PT.t)]].concat(PT_CHEER.concat(PT_RETRY).map(t => [aivFor(t), t])));
+  ptAsk();
+}
+function ptBurst(el) {
+  ["⭐", "🎉", "✨", "💛", "🌟", "🎈"].forEach((s, i) => {
+    const sp = document.createElement("span"); sp.className = "burst"; sp.textContent = s; sp.setAttribute("aria-hidden", "true");
+    const a = (i / 6) * Math.PI * 2; sp.style.setProperty("--dx", Math.round(Math.cos(a) * 70) + "px"); sp.style.setProperty("--dy", Math.round(Math.sin(a) * 70) + "px");
+    el.appendChild(sp); setTimeout(() => sp.remove(), 1100);
+  });
+}
+async function ptTap(i, el) {
+  if (PT.done) return;
+  const o = PT.opts[i];
+  if (o[0] === PT.target[0]) {
+    PT.done = true; PT.score++; el.classList.add("ok"); ptBurst(el); growMark(o[0], "pt");
+    const sc = $("ptScore"); if (sc) sc.textContent = PT.score;
+    const tok = ++PT.tok; stopHuman(); if (TTS) speechSynthesis.cancel();
+    await sayLine(PT_CHEER[Math.floor(Math.random() * PT_CHEER.length)], false); if (tok !== PT.tok) return;
+    await sayBabyWord(o[0]); if (tok !== PT.tok) return;
+    await waitMs(1300); if (tok !== PT.tok || bbView() !== "point") return;
+    renderPoint(true);
+  } else {
+    PT.miss++; el.classList.remove("no"); void el.offsetWidth; el.classList.add("no");
+    if (PT.miss >= 2) { const c = $("bbView").querySelector(`[data-pt="${PT.opts.indexOf(PT.target)}"]`); if (c) c.classList.add("hint"); }
+    const tok = ++PT.tok; await sayLine(PT_RETRY[0], false); if (tok !== PT.tok) return;
+    await sayLine(pointQ(PT.target[0], PT.t), !!state.babySlow);
+  }
+}
+
+/* ---------- 爸媽英語小抄 ---------- */
+const TP = { s: 0, tok: 0 };
+async function tpSay(el, text) {
+  const tok = ++TP.tok; $("bbView").querySelectorAll(".tipcard.now").forEach(x => x.classList.remove("now")); if (el) el.classList.add("now");
+  await sayLine(text, !!state.babySlow); if (tok === TP.tok && el) el.classList.remove("now");
+}
+function renderTips() {
+  const s = TIPS[TP.s] || TIPS[0], all = TIPS.flatMap(x => x[3].map(p => [p, x])), d = all[hashStr(today()) % all.length];
+  $("bbView").innerHTML = `
+    <div class="reply" style="display:flex;flex-direction:column;gap:6px;border-radius:14px;padding:12px 14px"><span class="eyebrow">今日一句・${d[1][1]} ${esc(d[1][0])}</span>
+      <button class="tipcard" data-tipd="1"><span style="flex:1;min-width:0"><span class="en">${esc(d[0][0])}</span><br><span class="zh">${esc(d[0][1])}</span></span><span aria-hidden="true">🔊</span></button>
+      <span class="muted" style="font-size:12px">今天找機會對寶寶說這一句，說三次就算完成！</span></div>
+    <div class="bbthemes">${TIPS.map((x, i) => `<button class="tchip${i === TP.s ? " on" : ""}" data-tps="${i}"><span aria-hidden="true">${x[1]}</span>${esc(x[0])}</button>`).join("")}</div>
+    <p class="muted" style="margin:0;font-size:13px">💡 ${esc(s[2])}</p>
+    <div style="display:flex;flex-direction:column;gap:8px">${s[3].map((p, i) => `<button class="tipcard" data-tip="${i}"><span style="flex:1;min-width:0"><span class="en">${esc(p[0])}</span><br><span class="zh">${esc(p[1])}</span></span><span aria-hidden="true">🔊</span></button>`).join("")}</div>
+    <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><button class="btn" id="tpAll">▶ 整組播一次</button><button class="btn small${state.babySlow ? " primary" : ""}" id="tpSlow" aria-pressed="${!!state.babySlow}">🐢 慢一點</button></div>
+    <p class="muted" style="margin:0;font-size:13px;text-align:center">先按一下聽發音，再看著寶寶的眼睛說出來。說得不標準也沒關係，重點是每天在同一個時刻說同一句。</p>`;
+  $("bbView").querySelectorAll("[data-tps]").forEach(b => b.onclick = () => { TP.tok++; TP.s = Number(b.dataset.tps); renderTips(); });
+  $("bbView").querySelectorAll("[data-tip]").forEach(b => b.onclick = () => tpSay(b, s[3][Number(b.dataset.tip)][0]));
+  $("bbView").querySelector("[data-tipd]").onclick = e => tpSay(e.currentTarget, d[0][0]);
+  $("tpSlow").onclick = () => { state.babySlow = !state.babySlow; Store.save(); renderTips(); };
+  $("tpAll").onclick = async () => {
+    const tok = ++TP.tok;
+    for (let i = 0; i < s[3].length; i++) {
+      const el = $("bbView").querySelector(`[data-tip="${i}"]`); if (!el || tok !== TP.tok) return;
+      $("bbView").querySelectorAll(".tipcard.now").forEach(x => x.classList.remove("now")); el.classList.add("now");
+      try { el.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) { }
+      await sayLine(s[3][i][0], !!state.babySlow); if (tok !== TP.tok) return;
+      await waitMs(1200);
+    }
+    $("bbView").querySelectorAll(".tipcard.now").forEach(x => x.classList.remove("now"));
+  };
+  aivPrefetch(s[3].map(p => [aivFor(p[0]), p[0]]).concat([[aivFor(d[0][0]), d[0][0]]]));
+}
+
+/* ---------- 兒歌：音樂盒旋律（自己用程式產生，不是錄音）＋歌詞字幕＋爸媽錄唱 ---------- */
+const MB = { ctx: null, out: null, tok: 0, timers: [] };
+const NOTE_I = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+function parseNotes(s) {
+  return String(s).trim().split(/\s+/).map(tk => {
+    const m = /^([A-GR])([#b]?)([0-9]?)(?::([0-9.]+))?$/.exec(tk); if (!m) return null;
+    const d = m[4] ? parseFloat(m[4]) : 1; if (m[1] === "R") return [0, d];
+    return [12 * ((m[3] ? Number(m[3]) : 4) + 1) + NOTE_I[m[1]] + (m[2] === "#" ? 1 : m[2] === "b" ? -1 : 0), d];
+  }).filter(Boolean);
+}
+function mbStop() { MB.tok++; MB.timers.forEach(clearTimeout); MB.timers = []; if (MB.out) { try { MB.out.disconnect(); } catch (e) { } MB.out = null; } }
+function mbTone(ctx, out, t, midi, dur) {
+  const f = 440 * Math.pow(2, (midi - 69) / 12), len = Math.min(2.2, Math.max(0.5, dur * 2));
+  [[1, "triangle", 0.22], [2, "sine", 0.05]].forEach(([mul, type, vol]) => {
+    const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.value = f * mul;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    o.connect(g); g.connect(out); o.start(t); o.stop(t + len + 0.05);
+  });
+}
+function mbPlay(song, onLine) {
+  mbStop(); stopHuman(); if (TTS) speechSynthesis.cancel();
+  const AC = window.AudioContext || window.webkitAudioContext; if (!AC) { toast("這個瀏覽器不能播放音樂盒"); return Promise.resolve(false); }
+  const ctx = MB.ctx = MB.ctx || new AC(); try { ctx.resume(); } catch (e) { }
+  const tok = MB.tok, out = MB.out = ctx.createGain(); out.gain.value = 0.9; out.connect(ctx.destination);
+  const beat = (song.beat || 0.5) * (state.babySlow ? 1.35 : 1); let t = ctx.currentTime + 0.25;
+  song.lines.forEach((L, i) => {
+    const at = (t - ctx.currentTime) * 1000; MB.timers.push(setTimeout(() => { if (tok === MB.tok) onLine(i); }, at));
+    parseNotes(L[2]).forEach(([m, d]) => { if (m) mbTone(ctx, out, t, m + 12, d * beat); t += d * beat; });
+  });
+  return new Promise(res => MB.timers.push(setTimeout(() => res(tok === MB.tok), (t - ctx.currentTime) * 1000 + 700)));
+}
+const SG = { cur: "", tok: 0, mode: "" };
+function sgLine(i) {
+  $("bbView").querySelectorAll(".sgl.now").forEach(x => x.classList.remove("now"));
+  const el = i >= 0 ? $("bbView").querySelector(`[data-sgl="${i}"]`) : null;
+  if (el) { el.classList.add("now"); try { el.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) { } }
+}
+function sgSetMode(m) { SG.mode = m; const b1 = $("sgBox"), b2 = $("sgRead"); if (b1) b1.textContent = m === "box" ? "⏹ 停止" : "🎵 音樂盒（跟著唱）"; if (b2) b2.textContent = m === "read" ? "⏹ 停止" : "🗣 唸歌詞"; }
+function renderSongs() {
+  const song = SONGS.find(s => s.id === SG.cur);
+  if (!song) {
+    $("bbView").innerHTML = `
+      <p class="muted" style="margin:0;font-size:13px">都是 1929 年以前就流傳的傳統兒歌（公眾領域）。音樂盒旋律是程式即時產生的，爸媽可以跟著唱，也可以錄下自己唱的版本。</p>
+      <div style="display:flex;flex-direction:column;gap:8px">${SONGS.map(s => { const n = fvList("s:" + s.id).length; return `<button class="tipcard" data-sg="${s.id}"><span style="font-size:32px" aria-hidden="true">${s.ic}</span><span style="flex:1;min-width:0"><span class="en">${esc(s.t)}</span><br><span class="zh">${esc(s.zh)}${n ? `・🎙 已錄 ${n} 段` : ""}</span></span><span aria-hidden="true">›</span></button>`; }).join("")}</div>`;
+    $("bbView").querySelectorAll("[data-sg]").forEach(b => b.onclick = () => { SG.cur = b.dataset.sg; renderSongs(); });
+    return;
+  }
+  const key = "s:" + song.id, recs = fvList(key);
+  $("bbView").innerHTML = `
+    <div class="row" style="gap:8px;align-items:center"><button class="btn small" id="sgBack">◀ 全部兒歌</button></div>
+    <div style="text-align:center"><div style="font-size:44px" aria-hidden="true">${song.ic}</div><h3 style="margin:0;font-size:22px">${esc(song.t)}</h3><div class="muted">${esc(song.zh)}</div></div>
+    <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><button class="btn primary" id="sgBox">🎵 音樂盒（跟著唱）</button><button class="btn" id="sgRead">🗣 唸歌詞</button></div>
+    <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><button class="btn small${state.babySlow ? " primary" : ""}" id="sgSlow" aria-pressed="${!!state.babySlow}">🐢 慢一點</button><button class="btn small${state.sgZh !== false ? " primary" : ""}" id="sgZh" aria-pressed="${state.sgZh !== false}">中文意思</button></div>
+    <div class="sglines">${song.lines.map((l, i) => `<div class="sgl" data-sgl="${i}"><div class="en">${esc(l[0])}</div>${state.sgZh !== false ? `<div class="zh">${esc(l[1])}</div>` : ""}</div>`).join("")}</div>
+    <div class="reply" style="display:flex;flex-direction:column;gap:8px;border-radius:14px;padding:12px 14px"><b>🎙 爸媽唱給寶寶聽</b>
+      <span class="muted" style="font-size:13px">寶寶最喜歡聽家人的聲音。錄一次，以後隨時可以播。</span>
+      <div class="row" style="flex-wrap:wrap;gap:8px">${recs.map(r => `<button class="btn small" data-sgp="${r.who}">▶ ${esc(r.name)}唱的</button>`).join("")}<button class="btn small" id="sgRec">🎙 ${recs.length ? "再錄一段／管理錄音" : "錄爸媽唱"}</button></div></div>
+    <p class="muted" style="margin:0;font-size:12px;text-align:center">${esc(song.note)}。iPhone 沒聲音的話，請把側邊的靜音開關打開。</p>`;
+  $("sgBack").onclick = () => { bbStopAll(); SG.cur = ""; renderSongs(); };
+  $("sgSlow").onclick = () => { state.babySlow = !state.babySlow; Store.save(); bbStopAll(); renderSongs(); };
+  $("sgZh").onclick = () => { state.sgZh = state.sgZh === false; Store.save(); renderSongs(); };
+  $("sgBox").onclick = async () => {
+    if (SG.mode === "box") { bbStopAll(); sgSetMode(""); sgLine(-1); return; }
+    bbStopAll(); sgSetMode("box");
+    const ok = await mbPlay(song, sgLine); if (ok) { sgSetMode(""); sgLine(-1); }
+  };
+  $("sgRead").onclick = async () => {
+    if (SG.mode === "read") { bbStopAll(); sgSetMode(""); sgLine(-1); return; }
+    bbStopAll(); sgSetMode("read"); const tok = SG.tok;
+    for (let i = 0; i < song.lines.length; i++) { if (tok !== SG.tok) return; sgLine(i); await sayLine(song.lines[i][0], !!state.babySlow); if (tok !== SG.tok) return; await waitMs(500); }
+    sgSetMode(""); sgLine(-1);
+  };
+  $("bbView").querySelectorAll("[data-sgp]").forEach(b => b.onclick = async () => { bbStopAll(); sgSetMode(""); const u = await fvUrl(key, b.dataset.sgp); if (u) playUrl(u); else toast("找不到這段錄音"); });
+  $("sgRec").onclick = () => { bbStopAll(); sgSetMode(""); openFamRec(key, song.t, "跟著音樂盒唱，或自己清唱都可以（最長 2 分鐘）", 120, () => { if (bbView() === "song") renderSongs(); }, song); };
+  aivPrefetch(song.lines.slice(0, 6).map(l => [aivFor(l[0]), l[0]]));
+}
+
 function openBaby(t) {
   show("baby");
   BB = BB || { t: 0, i: 0, auto: false, dark: false, tok: 0, started: 0 };
   if (t != null) { BB.t = t; BB.i = 0; }
+  fvSync();
   prefetchBaby();
   renderBaby(true);
 }
 function renderBaby(say) {
-  const [, , items] = BABY[BB.t], [w, e, ph, zw, zp] = items[BB.i];
+  if (bbView() !== "listen") { renderBabyView(); return; }
+  const [, , items] = BABY[BB.t], [w, e, ph, zw, zp] = items[BB.i], gl = growLog()[w] || {}, fvn = fvList("w:" + w).length;
   $("baby").innerHTML = `
     <header class="top"><button class="icon-btn" id="bbBack" aria-label="離開">${ICON.x}</button><h2 style="font-size:22px;flex:1;min-width:0">寶寶聽力</h2><span class="muted" style="font-size:14px">${BB.i + 1} / ${items.length}</span></header>
+    ${bbTabs()}
     ${bpicCan() && (BPICS.pending || []).length ? `<button class="btn small block" id="bpTop" style="background:var(--primary-soft)">📬 朋友提供了 ${BPICS.pending.length} 張照片等你確認</button>` : ""}
     <div class="bbthemes">${BABY.map(([n, ic], k) => `<button class="tchip${k === BB.t ? " on" : ""}" data-bt="${k}"><span aria-hidden="true">${ic}</span>${esc(n)}</button>`).join("")}</div>
     <button class="bbcard" id="bbCard" aria-label="再聽一次 ${esc(w)}"><span class="bbvis" id="bbVis" aria-hidden="true"><span class="bbem">${e}</span></span><span class="bbw">${esc(w)}</span>${state.babySub === false ? "" : `<span class="bbzh">${esc(zw)}</span>`}</button>
     <p class="muted" id="bbCredit" hidden style="margin:-6px 0 0;font-size:11px;text-align:center"></p>
+    <div class="row bbctl" style="flex-wrap:wrap;gap:6px"><button class="btn small${gl.point ? " primary" : ""}" id="gPoint" aria-pressed="${!!gl.point}">👆 會指了${gl.point ? " " + mdDate(gl.point) : ""}</button><button class="btn small${gl.say ? " primary" : ""}" id="gSay" aria-pressed="${!!gl.say}">🗣 會說了${gl.say ? " " + mdDate(gl.say) : ""}</button><button class="btn small" id="bbRec">🎙 錄家人的聲音${fvn ? `（${fvn}）` : ""}</button></div>
     ${bpicCan() ? (() => { const mine = (BPICS.pics[w] || []), c = k => mine.filter(x => x[1] === k).length; return `<div class="row bbctl" style="flex-wrap:wrap;gap:6px"><button class="btn small" id="bbUpBtn">📷 放我的照片（可選第 1～5 次）</button><input type="file" accept="image/*" id="bbUp" hidden><button class="btn small" id="bbAi">🎨 AI 產生照片</button>${mine.length ? `<span class="muted" style="font-size:12px">這個字：自己拍 ${c("mine")}・朋友 ${c("guest")}・AI ${c("ai")}</span>` : ""}</div>`; })()
       : Store.backend === "sheet" ? `<div class="row bbctl"><label class="btn small" style="cursor:pointer">📷 幫忙提供照片<input type="file" accept="image/*" id="bbUp" hidden></label><span class="muted" style="font-size:12px">作者確認後才會出現</span></div>` : ""}
     <div class="bbsub" id="bbSub" aria-live="polite" ${state.babySub === false ? "hidden" : ""}><div class="bbsen">${esc(ph)}</div><div class="bbszh">${esc(zp)}</div></div>
     <div class="row bbctl"><button class="btn" id="bbPrev" aria-label="上一個">◀</button><button class="btn primary" id="bbAuto">${BB.auto ? "⏸ 暫停" : "▶ 自動播放"}</button><button class="btn" id="bbNext" aria-label="下一個">▶</button></div>
     <div class="row bbctl"><button class="btn small" id="bbDark">只放聲音（螢幕變暗）</button><button class="btn small${state.babySlow ? " primary" : ""}" id="bbSlow" aria-pressed="${state.babySlow ? "true" : "false"}">🐢 慢一點</button></div>
-    <div class="row bbctl"><button class="btn small${state.babySub !== false ? " primary" : ""}" id="bbSubT" aria-pressed="${state.babySub !== false}">字幕（英＋中）</button><button class="btn small${state.babyPhoto !== false ? " primary" : ""}" id="bbPhoto" aria-pressed="${state.babyPhoto !== false}">真實照片</button></div>
+    <div class="row bbctl"><button class="btn small${state.babySub !== false ? " primary" : ""}" id="bbSubT" aria-pressed="${state.babySub !== false}">字幕（英＋中）</button><button class="btn small${state.babyPhoto !== false ? " primary" : ""}" id="bbPhoto" aria-pressed="${state.babyPhoto !== false}">真實照片</button>${fvAnyWord() ? `<button class="btn small${state.babyFam !== false ? " primary" : ""}" id="bbFam" aria-pressed="${state.babyFam !== false}">家人聲音</button>` : ""}</div>
     <div class="bbord"><span class="muted" style="font-size:13px">播放順序</span><div class="seg" id="bbOrder">${BB_ORDERS.map(([k, t]) => `<button data-bord="${k}" aria-pressed="${bbOrder() === k}">${t}</button>`).join("")}</div>
       ${bbOrder() === "zhfirst" || bbOrder() === "zh" ? `<div class="row" style="gap:8px;justify-content:center"><span class="muted" style="font-size:13px">中文唸</span><div class="seg">${[1, 2, 3, 4, 5].map(n => `<button data-zhn="${n}" aria-pressed="${bbZhN() === n}">${n}</button>`).join("")}</div><span class="muted" style="font-size:13px">次</span></div>` : ""}
       ${bbOrder() !== "zh" ? `<div class="row" style="gap:8px;justify-content:center"><span class="muted" style="font-size:13px">${bbOrder() === "alt" ? "英＋中各唸" : "英文唸"}</span><div class="seg" id="bbReps">${[1, 2, 3, 4, 5].map(n => `<button data-reps="${n}" aria-pressed="${bbEnN() === n}">${n}</button>`).join("")}</div><span class="muted" style="font-size:13px">次</span></div>` : ""}
       <span class="muted" style="font-size:12px">${(() => { const o = bbOrder(), z = bbZhN(), e = bbEnN(); return o === "zhfirst" ? `先講中文 ${z} 次，再講英文 ${e} 次` : o === "alt" ? `英文、中文輪流，共 ${e} 輪` : o === "zh" ? `只講中文 ${z} 次` : `只講英文 ${e} 次`; })()}</span></div>
-    ${AIV_CAN_MAKE() && AIV_ON() ? (() => { const its = babyAivItems(), todo = aivTodo(its); return todo ? `<div class="reply" style="display:flex;flex-direction:column;gap:6px;border-radius:12px;padding:10px 12px"><b>AI 語音（4 種聲音＋中文）還有 ${todo} / ${its.length} 段沒產生</b><span class="muted" style="font-size:13px">還沒產生的先用原本的聲音。按一次「一鍵產生全部」，${Store.backend === "sheet" ? "後台會自己慢慢做（先做這個主題），關掉網頁也會繼續" : "這頁開著就會慢慢做"}。</span><div class="row" style="flex-wrap:wrap"><button class="btn small primary" id="bbGen">一鍵產生全部</button><button class="btn small" data-aivstop hidden>停止</button></div><span style="font-size:13px" data-aivsrv></span><span style="font-size:13px" data-aivout></span></div>` : ""; })() : ""}
+    ${AIV_CAN_MAKE() && AIV_ON() ? (() => { const its = babyAivItems(), todo = aivTodo(its); return todo ? `<div class="reply" style="display:flex;flex-direction:column;gap:6px;border-radius:12px;padding:10px 12px"><b>AI 語音（單字 4 種聲音＋中文、兒歌、小抄）還有 ${todo} / ${its.length} 段沒產生</b><span class="muted" style="font-size:13px">還沒產生的先用原本的聲音。按一次「一鍵產生全部」，${Store.backend === "sheet" ? "後台會自己慢慢做（先做這個主題），關掉網頁也會繼續" : "這頁開著就會慢慢做"}。</span><div class="row" style="flex-wrap:wrap"><button class="btn small primary" id="bbGen">一鍵產生全部</button><button class="btn small" data-aivstop hidden>停止</button></div><span style="font-size:13px" data-aivsrv></span><span style="font-size:13px" data-aivout></span></div>` : ""; })() : ""}
     ${bpicCan() ? `<div class="reply" style="display:flex;flex-direction:column;gap:6px;border-radius:12px;padding:10px 12px"><b>照片小幫手（只有你看得到）</b>${(BPICS.pending || []).length ? `<button class="btn primary" id="bpReview">📬 朋友提供了 ${BPICS.pending.length} 張照片，點這裡一張一張確認</button><span class="muted" style="font-size:12px">${[...new Set(BPICS.pending.map(x => x[1]))].slice(0, 8).map(esc).join("、")}${new Set(BPICS.pending.map(x => x[1])).size > 8 ? "…" : ""}</span>` : ""}<span class="muted" style="font-size:13px">第 1～5 次都可以放你的照片（按「放我的照片」選位置）；第 2、4 次沒指定時，自動依序用：自己拍的 → 朋友提供的 → AI 畫的 → Unsplash 照片 → 維基百科。照片不對就按照片下方的「這張不對」。AI 畫圖要 Gemini 付費（一張約 1 塊台幣）。</span><div class="row" style="flex-wrap:wrap;gap:6px"><button class="btn small" id="bpAll">${BPAI.on ? "停止" : "AI 幫每個沒照片的字畫一張"}</button><span style="font-size:13px" id="bpAllOut"></span></div></div>` : ""}
     <p class="muted" style="margin:0;font-size:13px;text-align:center">點大圖可以再聽一次。建議爸媽陪著一起聽、跟著唸、指給寶寶看；自動播放 10 分鐘會自己停下來休息。</p>
     ${BB.dark ? `<button class="bbdark" id="bbLight">聲音播放中・點一下回到畫面</button>` : ""}`;
   bbSub(ph, zp, "");
-  $("bbBack").onclick = () => { BB.tok++; BB.auto = false; BB.dark = false; stopHuman(); if (TTS) speechSynthesis.cancel(); show("home"); renderHome(); };
+  $("bbBack").onclick = () => { bbStopAll(); show("home"); renderHome(); };
+  bbBindTabs();
+  $("gPoint").onclick = () => { if (growToggle(w, "point")) renderBaby(false); };
+  $("gSay").onclick = () => { if (growToggle(w, "say")) renderBaby(false); };
+  $("bbRec").onclick = () => { bbStopAll(); renderBaby(false); openFamRec("w:" + w, `${e} ${w}`, `可以只唸「${w}」，也可以唸整句：${ph}`, 15, () => { if (bbView() === "listen") renderBaby(false); }); };
+  if ($("bbFam")) $("bbFam").onclick = () => { state.babyFam = state.babyFam === false; Store.save(); renderBaby(false); };
   $("baby").querySelectorAll("[data-bt]").forEach(b => b.onclick = () => { BB.t = Number(b.dataset.bt); BB.i = 0; prefetchBaby(); renderBaby(true); });
   $("bbCard").onclick = () => sayCard();
   $("bbPrev").onclick = () => { BB.i = (BB.i - 1 + items.length) % items.length; renderBaby(true); };
@@ -3486,11 +3879,19 @@ async function sayCard() {
   const card = $("bbCard"); if (card) { card.classList.remove("pop"); void card.offsetWidth; card.classList.add("pop"); }
   const en = babyEn(w, ph), zt = babyZhT(zw, zp), slow = !!state.babySlow, steps = bbSteps();
   const frames = await bbFrames(w, items[BB.i][1]); if (tok !== BB.tok) return;
+  const fam = [];
+  if (state.babyFam !== false && steps.some(x => !x.zh)) for (const f of fvList("w:" + w)) { const u = await raceMs(fvUrl("w:" + w, f.who), 3000); if (u) fam.push({ u, name: f.name }); }
+  if (tok !== BB.tok) return;
   for (let i = 0; i < steps.length; i++) {
     const st = steps[i];
     bbShowFrame(frames[st.f % 5], w, items[BB.i][1]);
-    if (!st.zh) {
-      const [vid, vname] = AIV_LIST[st.r % 4];
+    const fj = st.zh ? -1 : st.r % (fam.length + 4);
+    if (fj >= 0 && fj < fam.length) {
+      BB.rep = `英文 第 ${st.r + 1} / ${st.n} 次・${fam[fj].name}的聲音`;
+      bbSub(en.replace(" ... ", " "), `${zw}。${zp}`, "en");
+      if (!(await playUrl(fam[fj].u, slow ? 0.9 : 1)) && tok === BB.tok) await bbOldEn(w, ph, tok);
+    } else if (!st.zh) {
+      const [vid, vname] = AIV_LIST[(fj - fam.length) % 4];
       BB.rep = `英文 第 ${st.r + 1} / ${st.n} 次・${AIV_ON() ? vname : "電腦語音"}`;
       const u = AIV_ON() ? await raceMs(aiVoiceUrl(vid, en), 2500) : "";
       if (tok !== BB.tok) return;
@@ -3508,6 +3909,7 @@ async function sayCard() {
     if (i + 1 < steps.length) { await waitMs(steps[i + 1].tight ? 300 : 900); if (tok !== BB.tok) return; }
   }
   BB.rep = ""; bbShowFrame(frames[0], w, items[BB.i][1]);
+  growMark(w, "heard");
   if (!BB.auto) return;
   if (Date.now() - BB.started > 10 * 60e3) { BB.auto = false; BB.dark = false; toast("聽了 10 分鐘了，休息一下吧！"); renderBaby(false); return; }
   await waitMs(2500); if (tok !== BB.tok || !BB.auto) return;
