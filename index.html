@@ -595,7 +595,7 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
-const EQ_BUILD = "15e236";
+const EQ_BUILD = "287b45";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -913,17 +913,17 @@ function preloadAudio(url) {
 }
 const canHuman = t => state.human !== false && /^[a-z]+(?:[- ][a-z]+)?$/i.test(String(t || "").trim());
 async function humanUrl(word) {
-  const k = String(word || "").trim().toLowerCase();
+  const w0 = String(word || "").trim().toLowerCase(), k = UK() ? "uk:" + w0 : w0;
   if (k in HUMAN.mem) return HUMAN.mem[k];
   let cache = {}; try { cache = JSON.parse(localStorage.getItem("eq-human") || "{}"); } catch (e) { }
   if (cache[k] || (("@" + k) in cache && Date.now() - cache["@" + k] < 7 * 864e5)) return (HUMAN.mem[k] = cache[k] || "");
   let url = "";
   try {
-    const r = await fetch("https:\/\/api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(k));
+    const r = await fetch("https:\/\/api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(w0));
     if (r.ok) {
       const j = await r.json(), all = [];
       (Array.isArray(j) ? j : []).forEach(e => (e.phonetics || []).forEach(p => { if (p && typeof p.audio === "string" && p.audio) all.push(p.audio); }));
-      url = all.find(a => /-us\.mp3$/i.test(a)) || all.find(a => /\.mp3$/i.test(a)) || all[0] || "";
+      url = UK() ? (all.find(a => /-uk\.mp3$/i.test(a)) || "") : (all.find(a => /-us\.mp3$/i.test(a)) || all.find(a => /\.mp3$/i.test(a)) || all[0] || "");
       if (url.slice(0, 2) === "\/\/") url = "https:" + url;
       if (!/^https:\/\/[^\s"'<>]+$/.test(url)) url = "";
     } else if (r.status !== 404) return "";
@@ -951,12 +951,15 @@ function playUrl(url, rate) {
   });
 }
 /* ================= AI 語音（Gemini）：每段只產生一次，存在後台大家共用 ================= */
-const AIV_LIST = [["gf", "溫柔女聲"], ["lf", "活潑女聲"], ["gm", "溫柔男聲"], ["lm", "活潑男聲"]];
+const AIV_BASE = [["gf", "溫柔女聲"], ["lf", "活潑女聲"], ["gm", "溫柔男聲"], ["lm", "活潑男聲"]];
+const UK = () => state.aiAccent === "uk";
+/* 美式用 gf…，英式用 gfb…（同一個聲音、不同口音，各自存一份） */
+const AIV_LIST = new Proxy([], { get: (t, prop) => { const arr = AIV_BASE.map(([k, n]) => [UK() ? k + "b" : k, n]); const v = arr[prop]; return typeof v === "function" ? v.bind(arr) : v; } });
 const AIV = { have: new Set(), url: {}, wait: {}, q: [], busy: false, stop: false, made: 0, fail: 0, err: "" };
 const aiKey = (v, t) => v + "_" + hashStr(v + "|" + String(t).trim()).toString(36);
 const AIV_ON = () => state.aiVoice !== false;
 const AIV_CAN_MAKE = () => KEY_MODE() && !!AI.kind;
-const aivFor = t => state.aiVoiceId && state.aiVoiceId !== "mix" ? state.aiVoiceId : AIV_LIST[hashStr(String(t).trim()) % 4][0];
+const aivFor = t => state.aiVoiceId && state.aiVoiceId !== "mix" ? state.aiVoiceId.replace(/b$/, "") + (UK() ? "b" : "") : AIV_LIST[hashStr(String(t).trim()) % 4][0];
 function b64Blob(b64) { const bin = atob(b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new Blob([u], { type: "audio/wav" }); }
 async function aivCacheGet(k) { try { const c = await caches.open("eq-aivoice"), r = await c.match("/aiv/" + k); return r ? await r.blob() : null; } catch (e) { return null; } }
 async function aivCachePut(k, blob) { try { const c = await caches.open("eq-aivoice"); await c.put("/aiv/" + k, new Response(blob, { headers: { "Content-Type": "audio/wav" } })); } catch (e) { } }
@@ -1084,7 +1087,7 @@ function aivStatusUi() {
 const HS = { mem: {}, wait: {}, told: {} };
 try { localStorage.removeItem("eq-human-s"); } catch (e) { }
 const normSent = t => String(t || "").toLowerCase().replace(/[\u2018\u2019`\u00b4]/g, "'").replace(/[^a-z0-9' ]+/g, " ").split(" ").map(w => w.replace(/^'+|'+$/g, "")).filter(Boolean).join(" ");
-const canHumanSent = t => { t = String(t || "").trim(); if (state.human === false || state.humanSent === false || canHuman(t) || t.length > 140 || !/[a-z]/i.test(t) || /[^\x20-\x7E\u2018\u2019\u201c\u201d\u2014\u2013\u2026]/.test(t)) return false; const n = normSent(t).split(" ").length; return n >= 2 && n <= 16; };
+const canHumanSent = t => { t = String(t || "").trim(); if (state.human === false || state.humanSent === false || UK() || canHuman(t) || t.length > 140 || !/[a-z]/i.test(t) || /[^\x20-\x7E\u2018\u2019\u201c\u201d\u2014\u2013\u2026]/.test(t)) return false; const n = normSent(t).split(" ").length; return n >= 2 && n <= 16; };
 function hsCache() { try { return JSON.parse(localStorage.getItem("eq-human-s2") || "{}"); } catch (e) { return {}; } }
 function hsSave(k, v) { try { const c = hsCache(); c[k] = v; const ks = Object.keys(c); if (ks.length > 800) ks.slice(0, ks.length - 800).forEach(x => delete c[x]); localStorage.setItem("eq-human-s2", JSON.stringify(c)); } catch (e) { } }
 const TATOEBA = "https:\/\/tatoeba.org";
@@ -4702,7 +4705,8 @@ function renderStats(focus) {
       <p class="muted" style="margin:0;font-size:12px">單字真人錄音來自 Wiktionary 志工（CC BY-SA，透過 Free Dictionary API）；句子真人錄音來自 Tatoeba 志工（例如 CK），依各錄音者的 CC 授權使用。找不到的句子才用下面選的語音；Edge 的「Natural」聲音、iPhone 下載的「增強版」聲音最接近真人。</p>
       <div class="reply" style="display:flex;flex-direction:column;gap:8px;border-radius:12px;padding:10px 12px">
         <label class="row" style="gap:8px;font-size:15px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="aivOn" style="margin-top:4px" ${AIV_ON() ? "checked" : ""}><span>沒有真人錄音時，用 <b>Gemini AI 語音</b>（聽起來像真人）</span></label>
-        <div class="row" style="flex-wrap:wrap;gap:6px"><span class="muted" style="font-size:13px">英文聲音</span><div class="seg" id="aivSeg" style="flex-wrap:wrap">${[["mix", "四種輪流"]].concat(AIV_LIST).map(([k, n]) => `<button data-aiv="${k}" aria-pressed="${(state.aiVoiceId || "mix") === k}">${n}</button>`).join("")}</div></div>
+        <div class="row" style="flex-wrap:wrap;gap:6px"><span class="muted" style="font-size:13px">英文聲音</span><div class="seg" id="aivSeg" style="flex-wrap:wrap">${[["mix", "四種輪流"]].concat(AIV_BASE).map(([k, n]) => `<button data-aiv="${k}" aria-pressed="${(state.aiVoiceId || "mix") === k}">${n}</button>`).join("")}</div></div>
+        <div class="row" style="flex-wrap:wrap;gap:6px"><span class="muted" style="font-size:13px">口音</span><div class="seg" id="accSeg">${[["us", "美式（建議）"], ["uk", "英式"]].map(([k, n]) => `<button data-acc="${k}" aria-pressed="${(UK() ? "uk" : "us") === k}">${n}</button>`).join("")}</div></div>
         <span class="muted" style="font-size:13px">已經產生 ${AIV.have.size} 段。產生好的語音存在你的雲端硬碟「English Quest AI 語音」，朋友打開也直接用，不會再花額度。</span>
         ${AIV_CAN_MAKE() ? (() => { const tc = aivTodo(courseAivItems()), tb = aivTodo(babyAivItems()); return `<button class="btn primary block" id="aivAll" ${tc + tb ? "" : "disabled"}>${tc + tb ? `一鍵產生全部（寶寶聽力 ${tb} 段＋課程句子 ${tc} 句）` : "全部都產生好了 ✓"}</button>
           <span style="font-size:13px" data-aivsrv></span><span style="font-size:13px" data-aivout></span>
@@ -4876,6 +4880,7 @@ function renderStats(focus) {
   $("humanOn").onchange = e => { state.human = e.target.checked; Store.save(); const hs = $("humanSentOn"); if (hs) { hs.disabled = !state.human; hs.checked = state.human && state.humanSent !== false; } speak("family"); };
   if ($("scanBtn")) { $("scanBtn").onclick = scanVoices; scanUi(SCAN.on ? "掃描中…" : ""); }
   $("aivOn").onchange = e => { state.aiVoice = e.target.checked; Store.save(); };
+  $("stats").querySelectorAll("[data-acc]").forEach(b => b.onclick = () => { state.aiAccent = b.dataset.acc; Store.save(); HUMAN.mem = {}; renderStats(); toast(UK() ? "改成英式口音：單字用英式真人錄音，句子用英式 AI 語音（要另外產生）" : "改回美式口音"); });
   $("stats").querySelectorAll("[data-aiv]").forEach(b => b.onclick = () => { state.aiVoiceId = b.dataset.aiv; Store.save(); $("stats").querySelectorAll("[data-aiv]").forEach(x => x.setAttribute("aria-pressed", x === b)); });
   if ($("aivAll")) $("aivAll").onclick = () => aivGenAll(false);
   if ($("aivRef")) $("aivRef").onclick = () => aivRefresh();
