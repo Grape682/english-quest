@@ -106,6 +106,10 @@ button.chip:hover{border-color:var(--primary)}
 .bbcard{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;min-height:50vh;border:0;border-radius:28px;background:var(--surface);box-shadow:0 10px 30px -18px rgba(0,0,0,.35);cursor:pointer;color:var(--ink)}
 .bbem{font-size:min(44vw,210px);line-height:1.05}
 .bbw{font-size:clamp(34px,9vw,52px);font-weight:800;font-family:var(--f-display);letter-spacing:-.01em}
+.bbzh{font-size:clamp(22px,6vw,30px);font-weight:700;color:var(--muted)}
+.bbsub{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px 14px;text-align:center;display:flex;flex-direction:column;gap:2px}
+.bbsen{font-size:20px;font-weight:700}.bbszh{font-size:17px;color:var(--muted)}
+.bbsub .now{color:var(--primary)}
 .bbcard.pop .bbem{animation:bbpop .6s ease}
 @keyframes bbpop{35%{transform:scale(1.16) rotate(-4deg)}70%{transform:scale(.97)}}
 .bbctl{justify-content:center}
@@ -2985,7 +2989,7 @@ function ckAiTasks() {
 }
 
 /* ================= 寶寶聽力（1–3 歲） ================= */
-const BABY = [["動物", "🐾", [["dog", "🐶", "Woof woof! A dog."], ["cat", "🐱", "Meow! A cat."], ["cow", "🐮", "Moo! A cow."], ["duck", "🦆", "Quack quack! A duck."], ["pig", "🐷", "Oink oink! A pig."], ["sheep", "🐑", "Baa! A sheep."], ["bird", "🐦", "Tweet tweet! A bird."], ["fish", "🐟", "A fish. Swim, swim!"], ["rabbit", "🐰", "Hop hop! A rabbit."], ["elephant", "🐘", "A big elephant!"]]], ["吃東西", "🍎", [["apple", "🍎", "Yummy! An apple."], ["banana", "🍌", "A yellow banana."], ["milk", "🥛", "Drink your milk."], ["water", "💧", "Some water, please."], ["bread", "🍞", "Yummy bread."], ["egg", "🥚", "An egg."], ["rice", "🍚", "Eat your rice."], ["cookie", "🍪", "A cookie for you!"]]], ["身體", "👀", [["eyes", "👀", "Where are your eyes?"], ["nose", "👃", "Touch your nose."], ["mouth", "👄", "Open your mouth. Ahh!"], ["ears", "👂", "Where are your ears?"], ["hands", "👏", "Clap your hands!"], ["feet", "🦶", "Stomp your feet!"], ["teeth", "🦷", "Brush your teeth."], ["hair", "💇", "Brush your hair."]]], ["顏色", "🎨", [["red", "🔴", "Red! It is red."], ["blue", "🔵", "Blue! It is blue."], ["yellow", "🟡", "Yellow! It is yellow."], ["green", "🟢", "Green! It is green."], ["orange", "🟠", "Orange! It is orange."], ["purple", "🟣", "Purple! It is purple."], ["black", "⚫", "Black! It is black."], ["white", "⚪", "White! It is white."]]], ["家人", "👪", [["mommy", "👩", "Hi, Mommy!"], ["daddy", "👨", "Hi, Daddy!"], ["baby", "👶", "A happy baby."], ["grandma", "👵", "Hi, Grandma!"], ["grandpa", "👴", "Hi, Grandpa!"], ["brother", "👦", "My big brother."], ["sister", "👧", "My big sister."], ["family", "👨‍👩‍👧", "I love my family."]]], ["玩具東西", "🧸", [["ball", "⚽", "Roll the ball!"], ["teddy bear", "🧸", "Hug the teddy bear."], ["book", "📖", "Let's read a book."], ["car", "🚗", "Beep beep! A car."], ["bus", "🚌", "The bus goes round and round."], ["shoes", "👟", "Put on your shoes."], ["hat", "👒", "Put on your hat."], ["cup", "🥤", "A cup of water."]]], ["每一天", "☀️", [["hello", "👋", "Hello! Good morning."], ["bye-bye", "👋", "Bye-bye! See you soon."], ["eat", "🥣", "It's time to eat."], ["bath", "🛁", "Bath time! Splash splash."], ["sleep", "😴", "Time to sleep. Good night."], ["walk", "🚶", "Let's go for a walk."], ["hug", "🤗", "Give me a hug!"], ["kiss", "😘", "A big kiss for you!"]]], ["大自然", "🌈", [["sun", "☀️", "The sun is up!"], ["moon", "🌙", "Hello, moon! Good night."], ["star", "⭐", "A little star."], ["rain", "🌧️", "Rain, rain. Pitter patter."], ["flower", "🌸", "Smell the flower."], ["tree", "🌳", "A big green tree."], ["cloud", "☁️", "A white cloud."], ["rainbow", "🌈", "Look! A rainbow!"]]]];
+const BABY = [["動物", "🐾", [["dog", "🐶", "Woof woof! A dog.", "狗狗", "汪汪！是狗狗。"], ["cat", "🐱", "Meow! A cat.", "貓咪", "喵～是貓咪。"], ["cow", "🐮", "Moo! A cow.", "牛", "哞～是牛。"], ["duck", "🦆", "Quack quack! A duck.", "鴨鴨", "呱呱！是鴨鴨。"], ["pig", "🐷", "Oink oink! A pig.", "豬豬", "齁齁！是豬豬。"], ["sheep", "🐑", "Baa! A sheep.", "綿羊", "咩～是綿羊。"], ["bird", "🐦", "Tweet tweet! A bird.", "小鳥", "啾啾！是小鳥。"], ["fish", "🐟", "A fish. Swim, swim!", "魚", "是魚，游呀游！"], ["rabbit", "🐰", "Hop hop! A rabbit.", "兔兔", "跳跳！是兔兔。"], ["elephant", "🐘", "A big elephant!", "大象", "好大的大象！"]]], ["吃東西", "🍎", [["apple", "🍎", "Yummy! An apple.", "蘋果", "好好吃！是蘋果。"], ["banana", "🍌", "A yellow banana.", "香蕉", "黃色的香蕉。"], ["milk", "🥛", "Drink your milk.", "牛奶", "來喝牛奶。"], ["water", "💧", "Some water, please.", "水", "請給我一點水。"], ["bread", "🍞", "Yummy bread.", "麵包", "好吃的麵包。"], ["egg", "🥚", "An egg.", "蛋", "一顆蛋。"], ["rice", "🍚", "Eat your rice.", "飯", "來吃飯飯。"], ["cookie", "🍪", "A cookie for you!", "餅乾", "給你一片餅乾！"]]], ["身體", "👀", [["eyes", "👀", "Where are your eyes?", "眼睛", "你的眼睛在哪裡？"], ["nose", "👃", "Touch your nose.", "鼻子", "摸摸你的鼻子。"], ["mouth", "👄", "Open your mouth. Ahh!", "嘴巴", "嘴巴張開，啊～"], ["ears", "👂", "Where are your ears?", "耳朵", "你的耳朵在哪裡？"], ["hands", "👏", "Clap your hands!", "手", "拍拍手！"], ["feet", "🦶", "Stomp your feet!", "腳", "跺跺腳！"], ["teeth", "🦷", "Brush your teeth.", "牙齒", "刷刷牙。"], ["hair", "💇", "Brush your hair.", "頭髮", "梳梳頭髮。"]]], ["顏色", "🎨", [["red", "🔴", "Red! It is red.", "紅色", "紅色！這是紅色。"], ["blue", "🔵", "Blue! It is blue.", "藍色", "藍色！這是藍色。"], ["yellow", "🟡", "Yellow! It is yellow.", "黃色", "黃色！這是黃色。"], ["green", "🟢", "Green! It is green.", "綠色", "綠色！這是綠色。"], ["orange", "🟠", "Orange! It is orange.", "橘色", "橘色！這是橘色。"], ["purple", "🟣", "Purple! It is purple.", "紫色", "紫色！這是紫色。"], ["black", "⚫", "Black! It is black.", "黑色", "黑色！這是黑色。"], ["white", "⚪", "White! It is white.", "白色", "白色！這是白色。"]]], ["家人", "👪", [["mommy", "👩", "Hi, Mommy!", "媽媽", "媽媽好！"], ["daddy", "👨", "Hi, Daddy!", "爸爸", "爸爸好！"], ["baby", "👶", "A happy baby.", "寶寶", "開心的寶寶。"], ["grandma", "👵", "Hi, Grandma!", "奶奶", "奶奶好！"], ["grandpa", "👴", "Hi, Grandpa!", "爺爺", "爺爺好！"], ["brother", "👦", "My big brother.", "哥哥", "我的哥哥。"], ["sister", "👧", "My big sister.", "姊姊", "我的姊姊。"], ["family", "👨‍👩‍👧", "I love my family.", "家人", "我愛我的家人。"]]], ["玩具東西", "🧸", [["ball", "⚽", "Roll the ball!", "球", "滾滾球！"], ["teddy bear", "🧸", "Hug the teddy bear.", "泰迪熊", "抱抱泰迪熊。"], ["book", "📖", "Let's read a book.", "書", "我們來看書。"], ["car", "🚗", "Beep beep! A car.", "車車", "叭叭！是車車。"], ["bus", "🚌", "The bus goes round and round.", "公車", "公車轉呀轉。"], ["shoes", "👟", "Put on your shoes.", "鞋子", "穿上鞋子。"], ["hat", "👒", "Put on your hat.", "帽子", "戴上帽子。"], ["cup", "🥤", "A cup of water.", "杯子", "一杯水。"]]], ["每一天", "☀️", [["hello", "👋", "Hello! Good morning.", "你好", "你好！早安。"], ["bye-bye", "👋", "Bye-bye! See you soon.", "掰掰", "掰掰！待會見。"], ["eat", "🥣", "It's time to eat.", "吃", "吃飯時間到了。"], ["bath", "🛁", "Bath time! Splash splash.", "洗澡", "洗澡囉！嘩啦嘩啦。"], ["sleep", "😴", "Time to sleep. Good night.", "睡覺", "該睡覺了，晚安。"], ["walk", "🚶", "Let's go for a walk.", "散步", "我們去散步吧。"], ["hug", "🤗", "Give me a hug!", "抱抱", "抱抱我！"], ["kiss", "😘", "A big kiss for you!", "親親", "給你一個大親親！"]]], ["大自然", "🌈", [["sun", "☀️", "The sun is up!", "太陽", "太陽出來了！"], ["moon", "🌙", "Hello, moon! Good night.", "月亮", "月亮你好！晚安。"], ["star", "⭐", "A little star.", "星星", "一顆小星星。"], ["rain", "🌧️", "Rain, rain. Pitter patter.", "下雨", "下雨了，滴答滴答。"], ["flower", "🌸", "Smell the flower.", "花", "聞聞花。"], ["tree", "🌳", "A big green tree.", "樹", "一棵綠色的大樹。"], ["cloud", "☁️", "A white cloud.", "雲", "一朵白雲。"], ["rainbow", "🌈", "Look! A rainbow!", "彩虹", "你看！彩虹！"]]]];
 let BB = null;
 const waitMs = ms => new Promise(r => setTimeout(r, ms));
 function sayTTS(text, rate) {
@@ -3009,6 +3013,29 @@ async function sayBabyPhrase(ph, tok) {
     if (!(v && v.u && await playUrl(v.u, bbRate(true)))) { if (tok !== BB.tok) return; await sayTTS(sn, bbRate(false)); }
   }
 }
+function zhVoice() {
+  if (!TTS) return null;
+  const vs = speechSynthesis.getVoices();
+  return vs.find(v => /zh[-_]TW/i.test(v.lang)) || vs.find(v => /zh[-_](Hant|HK)/i.test(v.lang)) || vs.find(v => /^zh|cmn/i.test(v.lang)) || null;
+}
+function sayZh(text, rate) {
+  return new Promise(res => {
+    if (!TTS || !text) return res();
+    stopHuman(); speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text), v = zhVoice();
+    if (v) u.voice = v; u.lang = (v && v.lang) || "zh-TW"; u.rate = rate || 0.9;
+    let fin = false; const end = () => { if (!fin) { fin = true; res(); } };
+    u.onend = end; u.onerror = end; setTimeout(end, 9000);
+    setTimeout(() => speechSynthesis.speak(u), 60);
+  });
+}
+/* 字幕：現在唸的英文＋中文 */
+function bbSub(en, zh, lang) {
+  const el = $("bbSub"); if (!el) return;
+  if (state.babySub === false) { el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = `<div class="bbsen${lang === "en" ? " now" : ""}">${esc(en)}</div><div class="bbszh${lang === "zh" ? " now" : ""}">${esc(zh)}</div>`;
+}
 async function sayBabyWord(w) {
   let url = "";
   if (canHuman(w)) url = await raceMs(humanUrl(w), 1200) || "";
@@ -3031,15 +3058,18 @@ function openBaby(t) {
   renderBaby(true);
 }
 function renderBaby(say) {
-  const [, , items] = BABY[BB.t], [w, e] = items[BB.i];
+  const [, , items] = BABY[BB.t], [w, e, ph, zw, zp] = items[BB.i];
   $("baby").innerHTML = `
     <header class="top"><button class="icon-btn" id="bbBack" aria-label="離開">${ICON.x}</button><h2 style="font-size:22px;flex:1;min-width:0">寶寶聽力</h2><span class="muted" style="font-size:14px">${BB.i + 1} / ${items.length}</span></header>
     <div class="bbthemes">${BABY.map(([n, ic], k) => `<button class="tchip${k === BB.t ? " on" : ""}" data-bt="${k}"><span aria-hidden="true">${ic}</span>${esc(n)}</button>`).join("")}</div>
-    <button class="bbcard" id="bbCard" aria-label="再聽一次 ${esc(w)}"><span class="bbem" aria-hidden="true">${e}</span><span class="bbw">${esc(w)}</span></button>
+    <button class="bbcard" id="bbCard" aria-label="再聽一次 ${esc(w)}"><span class="bbem" aria-hidden="true">${e}</span><span class="bbw">${esc(w)}</span>${state.babySub === false ? "" : `<span class="bbzh">${esc(zw)}</span>`}</button>
+    <div class="bbsub" id="bbSub" aria-live="polite" ${state.babySub === false ? "hidden" : ""}><div class="bbsen">${esc(ph)}</div><div class="bbszh">${esc(zp)}</div></div>
     <div class="row bbctl"><button class="btn" id="bbPrev" aria-label="上一個">◀</button><button class="btn primary" id="bbAuto">${BB.auto ? "⏸ 暫停" : "▶ 自動播放"}</button><button class="btn" id="bbNext" aria-label="下一個">▶</button></div>
     <div class="row bbctl"><button class="btn small" id="bbDark">只放聲音（螢幕變暗）</button><button class="btn small${state.babySlow ? " primary" : ""}" id="bbSlow" aria-pressed="${state.babySlow ? "true" : "false"}">🐢 慢一點</button></div>
+    <div class="row bbctl"><button class="btn small${state.babySub !== false ? " primary" : ""}" id="bbSubT" aria-pressed="${state.babySub !== false}">字幕（英＋中）</button><button class="btn small${state.babyZh ? " primary" : ""}" id="bbZh" aria-pressed="${!!state.babyZh}">中文語音</button></div>
     <p class="muted" style="margin:0;font-size:13px;text-align:center">點大圖可以再聽一次。建議爸媽陪著一起聽、跟著唸、指給寶寶看；自動播放 10 分鐘會自己停下來休息。</p>
     ${BB.dark ? `<button class="bbdark" id="bbLight">聲音播放中・點一下回到畫面</button>` : ""}`;
+  bbSub(ph, zp, "");
   $("bbBack").onclick = () => { BB.tok++; BB.auto = false; BB.dark = false; stopHuman(); if (TTS) speechSynthesis.cancel(); show("home"); renderHome(); };
   $("baby").querySelectorAll("[data-bt]").forEach(b => b.onclick = () => { BB.t = Number(b.dataset.bt); BB.i = 0; prefetchBaby(); renderBaby(true); });
   $("bbCard").onclick = () => sayCard();
@@ -3048,17 +3078,21 @@ function renderBaby(say) {
   $("bbAuto").onclick = () => { BB.auto = !BB.auto; if (BB.auto) BB.started = Date.now(); renderBaby(BB.auto); if (!BB.auto) { BB.tok++; stopHuman(); if (TTS) speechSynthesis.cancel(); } };
   $("bbDark").onclick = () => { BB.dark = true; if (!BB.auto) { BB.auto = true; BB.started = Date.now(); renderBaby(true); } else renderBaby(false); };
   $("bbSlow").onclick = () => { state.babySlow = !state.babySlow; Store.save(); renderBaby(true); };
+  $("bbSubT").onclick = () => { state.babySub = state.babySub === false; Store.save(); renderBaby(false); };
+  $("bbZh").onclick = () => { state.babyZh = !state.babyZh; Store.save(); if (state.babyZh && TTS && !zhVoice()) toast("這台裝置找不到中文語音，請到系統設定加入「中文（台灣）」語音"); renderBaby(true); };
   if ($("bbLight")) $("bbLight").onclick = () => { BB.dark = false; renderBaby(false); };
   if (say) sayCard();
 }
 async function sayCard() {
-  const tok = ++BB.tok, [, , items] = BABY[BB.t], [w, , ph] = items[BB.i];
+  const tok = ++BB.tok, [, , items] = BABY[BB.t], [w, , ph, zw, zp] = items[BB.i], zh = !!state.babyZh;
   const card = $("bbCard"); if (card) { card.classList.remove("pop"); void card.offsetWidth; card.classList.add("pop"); }
-  await sayBabyWord(w); if (tok !== BB.tok) return;
+  bbSub(w, zw, "en"); await sayBabyWord(w); if (tok !== BB.tok) return;
+  if (zh) { await waitMs(300); bbSub(w, zw, "zh"); await sayZh(zw, state.babySlow ? 0.75 : 0.9); if (tok !== BB.tok) return; }
   await waitMs(700); if (tok !== BB.tok) return;
-  await sayBabyPhrase(ph, tok); if (tok !== BB.tok) return;
+  bbSub(ph, zp, "en"); await sayBabyPhrase(ph, tok); if (tok !== BB.tok) return;
+  if (zh) { await waitMs(300); bbSub(ph, zp, "zh"); await sayZh(zp, state.babySlow ? 0.75 : 0.9); if (tok !== BB.tok) return; }
   await waitMs(800); if (tok !== BB.tok) return;
-  await sayBabyWord(w); if (tok !== BB.tok) return;
+  bbSub(w, zw, "en"); await sayBabyWord(w); if (tok !== BB.tok) return;
   if (!BB.auto) return;
   if (Date.now() - BB.started > 10 * 60e3) { BB.auto = false; BB.dark = false; toast("聽了 10 分鐘了，休息一下吧！"); renderBaby(false); return; }
   await waitMs(2500); if (tok !== BB.tok || !BB.auto) return;
