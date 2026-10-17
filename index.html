@@ -413,6 +413,7 @@ a.btn{text-decoration:none}
     <span class="tlabel">一起讓它變更好</span>
     <button class="tchip" id="tbWish"><span aria-hidden="true">💬</span>許願池<b id="tbWishN"></b></button>
     <button class="tchip" id="tbSup" hidden><span aria-hidden="true">💛</span>贊助與感謝</button>
+    <button class="tchip" id="tbPic" hidden><span aria-hidden="true">📬</span>朋友的照片<b id="tbPicN"></b></button>
   </nav>
 
   <section class="card" id="assessCard" hidden>
@@ -597,8 +598,8 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
-const EQ_BUILD = "46ff9f";
-const EQ_WEB = "2646";
+const EQ_BUILD = "cb6c37";
+const EQ_WEB = "75a2";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -724,7 +725,8 @@ function mergeLibrary(lib) {
   if (typeof lib.wishCount === "number") WISH_COUNT = lib.wishCount;
   if (lib.voices && typeof lib.voices === "object") mergeVoices(lib.voices);
   if (Array.isArray(lib.tts)) lib.tts.forEach(k => typeof k === "string" && AIV.have.add(k));
-  if (lib.babyPics && typeof lib.babyPics === "object") BPICS = { pics: lib.babyPics.pics || {}, hide: lib.babyPics.hide || [] };
+  if (lib.babyPics && typeof lib.babyPics === "object") BPICS = { pics: lib.babyPics.pics || {}, hide: lib.babyPics.hide || [], pending: lib.babyPics.pending || [] };
+  try { renderWishBar(); } catch (e) { }
   if (typeof renderSponsorWall === "function") renderSponsorWall();
 }
 function logEvent(type, data) {
@@ -3223,7 +3225,7 @@ function babyPhoto(title) {
 /* 5 次的畫面：1 原本卡通 → 2 照片 → 3 另一張卡通 → 4 第二張照片 → 5 再換一張卡通（沒照片就用卡通補上，不重複） */
 /* 自己拍的、AI 畫的照片（存在雲端硬碟，大家共用）＋不要的維基照片 */
 const BPIC_DESC = {"dog": "a friendly golden puppy sitting on grass", "cat": "a fluffy kitten sitting on a sofa", "cow": "a black and white dairy cow in a green field", "duck": "a yellow duckling and a white duck by a pond", "pig": "a pink piglet on a farm", "sheep": "a fluffy white sheep in a meadow", "bird": "a small colorful bird on a branch", "fish": "an orange goldfish in clear water", "rabbit": "a white bunny rabbit on grass", "elephant": "a gentle elephant with big ears", "apple": "one shiny red apple", "banana": "a ripe yellow banana", "milk": "a glass of milk", "water": "a clear glass of water", "bread": "a loaf of soft bread", "egg": "two whole eggs", "rice": "a small bowl of white rice", "cookie": "a round chocolate chip cookie", "eyes": "a smiling toddler's face, close-up of bright eyes", "nose": "a toddler touching their own nose and smiling", "mouth": "a toddler opening their mouth wide, saying ahh", "ears": "a toddler pointing to their ear and smiling", "hands": "two small toddler hands clapping", "feet": "two little toddler feet on a soft rug", "teeth": "a toddler brushing teeth with a small toothbrush", "hair": "a parent gently brushing a toddler's hair", "red": "a set of bright red things: a red ball, a red apple and a red toy car", "blue": "a set of bright blue things: a blue ball, a blue cup and a blue toy block", "yellow": "a set of bright yellow things: a yellow duck toy, a banana and a yellow ball", "green": "a set of bright green things: a green apple, a green leaf and a green toy block", "orange": "a set of bright orange things: an orange, a carrot and an orange ball", "purple": "a set of bright purple things: purple grapes, a purple ball and a purple crayon", "black": "a set of black things: a black cat toy, black shoes and a black ball", "white": "a set of white things: a white teddy bear, a glass of milk and a white ball", "mommy": "a smiling mother hugging her baby", "daddy": "a smiling father holding his toddler", "baby": "a happy baby smiling on a blanket", "grandma": "a smiling grandmother reading to a toddler", "grandpa": "a smiling grandfather playing with a toddler", "brother": "a cheerful young boy, a big brother, playing with a toddler", "sister": "a cheerful young girl, a big sister, playing with a toddler", "family": "a happy family of parents and children sitting together", "ball": "a colorful toy ball", "teddy bear": "a soft brown teddy bear", "book": "a colorful children's picture book", "car": "a small red toy car", "bus": "a yellow school bus", "shoes": "a pair of small children's sneakers", "hat": "a small sun hat for children", "cup": "a toddler's plastic cup", "hello": "a smiling toddler waving hello", "bye-bye": "a toddler waving bye-bye at a door", "eat": "a toddler eating with a spoon in a high chair", "bath": "a toddler playing with a rubber duck in a bubble bath, only head and shoulders visible", "sleep": "a baby sleeping peacefully in a crib", "walk": "a parent and toddler walking hand in hand in a park", "hug": "a parent and toddler hugging", "kiss": "a mother kissing her baby's cheek", "sun": "the bright sun in a blue sky", "moon": "a full moon in the night sky", "star": "bright stars twinkling in the night sky", "rain": "raindrops falling and a child's colorful umbrella", "flower": "a bright sunflower", "tree": "a big green tree in a park", "cloud": "fluffy white clouds in a blue sky", "rainbow": "a colorful rainbow over green hills"};
-let BPICS = { pics: {}, hide: [] };
+let BPICS = { pics: {}, hide: [], pending: [] };
 const BPIC_URL = {};
 const bpicCan = () => KEY_MODE() && Store.backend === "sheet";
 const bpicHidden = t => BPICS.hide.includes(t) || (state.babyHide || []).includes(t);
@@ -3240,9 +3242,9 @@ async function bpicUrl(id) {
 }
 async function bbPhotos(w) {
   if (state.babyPhoto === false) return [];
-  const mine = (BPICS.pics[w] || []).filter(x => x[1] === "mine"), ai = (BPICS.pics[w] || []).filter(x => x[1] === "ai");
+  const of = k => (BPICS.pics[w] || []).filter(x => x[1] === k);
   const out = [];
-  for (const [id, k] of mine.concat(ai)) { if (out.length >= 2) break; const u = await raceMs(bpicUrl(id), 4000); if (u) out.push({ u, src: { kind: k, id } }); }
+  for (const [id, k] of of("mine").concat(of("guest"), of("ai"))) { if (out.length >= 2) break; const u = await raceMs(bpicUrl(id), 4000); if (u) out.push({ u, src: { kind: k, id } }); }
   for (const t of (BABY_PIX[w] || [[]])[0]) { if (out.length >= 2) break; if (bpicHidden(t)) continue; const ph = await raceMs(babyPhoto(t), 1500); if (ph && ph.u) out.push({ u: ph.u, p: ph.p, src: { kind: "wiki", title: t } }); }
   return out;
 }
@@ -3264,7 +3266,7 @@ function bbShowFrame(fr, w, e) {
     cr.hidden = !fr.img;
     if (fr.img) {
       const k = fr.img.src && fr.img.src.kind;
-      cr.innerHTML = (k === "mine" ? "照片：自己拍的" : k === "ai" ? "圖片：AI 產生" : `照片：<a href="${esc(fr.img.p || "")}" target="_blank" rel="noopener">維基百科</a>（Wikimedia Commons，CC 授權）`) +
+      cr.innerHTML = (k === "mine" ? "照片：自己拍的" : k === "guest" ? "照片：朋友提供" : k === "ai" ? "圖片：AI 產生" : `照片：<a href="${esc(fr.img.p || "")}" target="_blank" rel="noopener">維基百科</a>（Wikimedia Commons，CC 授權）`) +
         ((k === "wiki" || bpicCan()) ? ` <button class="btn small" id="bbWrong" style="padding:2px 8px;font-size:11px;margin-left:6px">🚫 這張不對</button>` : "");
       if ($("bbWrong")) $("bbWrong").onclick = bbWrongPic;
     }
@@ -3296,8 +3298,48 @@ async function bbUpload(input) {
   const f = input.files && input.files[0]; input.value = ""; if (!f) return;
   const w = BABY[BB.t][2][BB.i][0];
   toast("照片上傳中…");
-  try { const b64 = await shrinkImage(f); BPICS = await gs("babyPicSave", w, b64); toast("存好了！之後唸到這個字就會出現你的照片"); renderBaby(true); }
-  catch (e) { toast(/BAD_IMAGE/.test(String(e && e.message)) ? "這個檔案打不開，請換一張照片" : backendError(e)); }
+  try {
+    const b64 = await shrinkImage(f);
+    if (!bpicCan()) { await gs("babyPicSuggest", w, b64, guestCode()); toast("謝謝你！照片已經送出，作者確認後就會出現"); return; }
+    BPICS = await gs("babyPicSave", w, b64);
+    const n = (BPICS.pics[w] || []).filter(x => x[1] === "mine").length;
+    toast(n >= 2 ? "存好了！這兩張會出現在第 2 次和第 4 次（再上傳會換掉比較舊的那張）" : "存好了！這張會出現在第 2 次，再上傳一張會放在第 4 次");
+    renderBaby(true);
+  }
+  catch (e) { const m = String(e && e.message); toast(/BAD_IMAGE/.test(m) ? "這個檔案打不開，請換一張照片" : /TOO_MANY/.test(m) ? "今天已經送了很多張，謝謝你！晚點再來吧" : backendError(e)); }
+}
+/* 審核朋友提供的照片：一張一張看清楚是哪個字、哪張圖，再決定採用或刪掉 */
+function babyWordInfo(w) { for (const [tn, , items] of BABY) { const it = items.find(x => x[0] === w); if (it) return { theme: tn, e: it[1], zh: it[3], ph: it[2] }; } return { theme: "", e: "", zh: "", ph: "" }; }
+let PRV = 0;
+async function openPicReview(i) {
+  const list = BPICS.pending || [];
+  if (!list.length) { closeModal(); toast("沒有待確認的照片了"); renderWishBar(); if (!$("baby").hidden) renderBaby(false); return; }
+  PRV = Math.max(0, Math.min(i || 0, list.length - 1));
+  const [id, w, who, when] = list[PRV], info = babyWordInfo(w), cur = (BPICS.pics[w] || []).filter(x => x[1] === "mine" || x[1] === "guest");
+  const slot = (BPICS.pics[w] || []).filter(x => x[1] === "mine").length ? "第 4 次" : "第 2 次";
+  openModal(`
+    <div class="row"><h2 style="font-size:20px;flex:1;min-width:0">朋友提供的照片</h2><span class="muted" style="font-size:14px">${PRV + 1} / ${list.length}</span><button class="icon-btn" id="prClose" aria-label="關閉">${ICON.x}</button></div>
+    <div class="row" style="gap:12px;align-items:center"><span style="font-size:44px" aria-hidden="true">${info.e}</span><div style="flex:1;min-width:0"><div style="font-size:26px;font-weight:800">${esc(w)}</div><div class="muted">${esc(info.zh)}・${esc(info.theme)}</div></div></div>
+    <img id="prImg" alt="${esc(w)} 的照片" style="width:100%;max-height:52vh;object-fit:contain;border-radius:16px;background:var(--surface-2);min-height:200px">
+    <p class="muted" style="margin:0;font-size:13px">提供者：${esc(who || "訪客")}${when ? `・${esc(when)}` : ""}。採用後會出現在寶寶聽力「${esc(w)}」的<b>${slot}</b>，顯示「照片：朋友提供」。</p>
+    ${cur.length ? `<div><span class="eyebrow">這個字現在的照片</span><div class="row" style="gap:6px;margin-top:4px">${cur.map(([cid, k]) => `<img data-prcur="${esc(cid)}" alt="" title="${k === "mine" ? "自己拍的" : "朋友提供"}" style="width:72px;height:54px;object-fit:cover;border-radius:8px;background:var(--surface-2)">`).join("")}</div></div>` : ""}
+    <div class="row" style="gap:8px"><button class="btn" id="prPrev" ${PRV ? "" : "disabled"}>◀</button><button class="btn" id="prNo">🗑 刪掉</button><div class="spacer"></div><button class="btn primary" id="prOk">✅ 採用</button><button class="btn" id="prNext" ${PRV + 1 < list.length ? "" : "disabled"}>▶</button></div>`);
+  $("prClose").onclick = () => { closeModal(); renderWishBar(); if (!$("baby").hidden) renderBaby(false); };
+  $("prPrev").onclick = () => openPicReview(PRV - 1);
+  $("prNext").onclick = () => openPicReview(PRV + 1);
+  const act = async ok => { $("prOk").disabled = $("prNo").disabled = true; try { BPICS = await gs(ok ? "babyPicApprove" : "babyPicDelete", id); toast(ok ? `採用了：${w}` : "已刪掉"); } catch (e) { toast(backendError(e)); } renderWishBar(); openPicReview(PRV); };
+  $("prOk").onclick = () => act(true);
+  $("prNo").onclick = () => act(false);
+  bpicUrl(id).then(u => { const im = $("prImg"); if (u && im) im.src = u; });
+  document.querySelectorAll("[data-prcur]").forEach(el => bpicUrl(el.dataset.prcur).then(u => { if (u && el.isConnected) el.src = u; }));
+}
+/* 你審核朋友提供的照片 */
+async function bpReview(id, ok) {
+  try { BPICS = await gs(ok ? "babyPicApprove" : "babyPicDelete", id); toast(ok ? "採用了！" : "已刪掉"); } catch (e) { toast(backendError(e)); }
+  renderBaby(false);
+}
+async function bpPendingThumbs() {
+  for (const [id] of BPICS.pending || []) { const el = document.querySelector(`[data-bpimg="${id}"]`); if (!el) continue; const u = await bpicUrl(id); if (u && el.isConnected) el.src = u; }
 }
 const imgErrText = e => { const m = String((e && e.message) || e); return /NEED_BILLING/.test(m) ? "Gemini 畫圖沒有免費額度，要先在 Google AI Studio 幫金鑰開啟付費" : /RATE_LIMITED/.test(m) ? "Gemini 說太快了，等一下再試" : /BAD_KEY|NO_KEY/.test(m) ? "Gemini 金鑰有問題" : /MODEL_NOT_FOUND/.test(m) ? "找不到 Gemini 畫圖模型，請跟我說一聲" : backendError(e); };
 async function bbAiPic(w) {
@@ -3346,17 +3388,19 @@ function renderBaby(say) {
   const [, , items] = BABY[BB.t], [w, e, ph, zw, zp] = items[BB.i];
   $("baby").innerHTML = `
     <header class="top"><button class="icon-btn" id="bbBack" aria-label="離開">${ICON.x}</button><h2 style="font-size:22px;flex:1;min-width:0">寶寶聽力</h2><span class="muted" style="font-size:14px">${BB.i + 1} / ${items.length}</span></header>
+    ${bpicCan() && (BPICS.pending || []).length ? `<button class="btn small block" id="bpTop" style="background:var(--primary-soft)">📬 朋友提供了 ${BPICS.pending.length} 張照片等你確認</button>` : ""}
     <div class="bbthemes">${BABY.map(([n, ic], k) => `<button class="tchip${k === BB.t ? " on" : ""}" data-bt="${k}"><span aria-hidden="true">${ic}</span>${esc(n)}</button>`).join("")}</div>
     <button class="bbcard" id="bbCard" aria-label="再聽一次 ${esc(w)}"><span class="bbvis" id="bbVis" aria-hidden="true"><span class="bbem">${e}</span></span><span class="bbw">${esc(w)}</span>${state.babySub === false ? "" : `<span class="bbzh">${esc(zw)}</span>`}</button>
     <p class="muted" id="bbCredit" hidden style="margin:-6px 0 0;font-size:11px;text-align:center"></p>
-    ${bpicCan() ? (() => { const mine = (BPICS.pics[w] || []); return `<div class="row bbctl" style="flex-wrap:wrap;gap:6px"><label class="btn small" style="cursor:pointer">📷 換成我的照片<input type="file" accept="image/*" id="bbUp" hidden></label><button class="btn small" id="bbAi">🎨 AI 產生照片</button>${mine.length ? `<span class="muted" style="font-size:12px">這個字有 ${mine.filter(x => x[1] === "mine").length} 張自己拍的、${mine.filter(x => x[1] === "ai").length} 張 AI</span>` : ""}</div>`; })() : ""}
+    ${bpicCan() ? (() => { const mine = (BPICS.pics[w] || []), c = k => mine.filter(x => x[1] === k).length; return `<div class="row bbctl" style="flex-wrap:wrap;gap:6px"><label class="btn small" style="cursor:pointer">📷 放我的照片（第 2、4 次出現）<input type="file" accept="image/*" id="bbUp" hidden></label><button class="btn small" id="bbAi">🎨 AI 產生照片</button>${mine.length ? `<span class="muted" style="font-size:12px">這個字：自己拍 ${c("mine")}・朋友 ${c("guest")}・AI ${c("ai")}</span>` : ""}</div>`; })()
+      : Store.backend === "sheet" ? `<div class="row bbctl"><label class="btn small" style="cursor:pointer">📷 幫忙提供照片<input type="file" accept="image/*" id="bbUp" hidden></label><span class="muted" style="font-size:12px">作者確認後才會出現</span></div>` : ""}
     <div class="bbsub" id="bbSub" aria-live="polite" ${state.babySub === false ? "hidden" : ""}><div class="bbsen">${esc(ph)}</div><div class="bbszh">${esc(zp)}</div></div>
     <div class="row bbctl"><button class="btn" id="bbPrev" aria-label="上一個">◀</button><button class="btn primary" id="bbAuto">${BB.auto ? "⏸ 暫停" : "▶ 自動播放"}</button><button class="btn" id="bbNext" aria-label="下一個">▶</button></div>
     <div class="row bbctl"><button class="btn small" id="bbDark">只放聲音（螢幕變暗）</button><button class="btn small${state.babySlow ? " primary" : ""}" id="bbSlow" aria-pressed="${state.babySlow ? "true" : "false"}">🐢 慢一點</button></div>
     <div class="row bbctl"><button class="btn small${state.babySub !== false ? " primary" : ""}" id="bbSubT" aria-pressed="${state.babySub !== false}">字幕（英＋中）</button><button class="btn small${state.babyZh ? " primary" : ""}" id="bbZh" aria-pressed="${!!state.babyZh}">中文語音</button><button class="btn small${state.babyPhoto !== false ? " primary" : ""}" id="bbPhoto" aria-pressed="${state.babyPhoto !== false}">真實照片</button></div>
     <div class="row bbctl"><span class="muted" style="font-size:13px">每張重複</span><div class="seg" id="bbReps">${[1, 3, 5].map(n => `<button data-reps="${n}" aria-pressed="${(([1, 3, 5].includes(state.babyReps) ? state.babyReps : 5) === n)}">${n} 次</button>`).join("")}</div></div>
     ${AIV_CAN_MAKE() && AIV_ON() ? (() => { const its = babyAivItems(), todo = aivTodo(its); return todo ? `<div class="reply" style="display:flex;flex-direction:column;gap:6px;border-radius:12px;padding:10px 12px"><b>AI 語音（4 種聲音＋中文）還有 ${todo} / ${its.length} 段沒產生</b><span class="muted" style="font-size:13px">還沒產生的先用原本的聲音。按一次「一鍵產生全部」，${Store.backend === "sheet" ? "後台會自己慢慢做（先做這個主題），關掉網頁也會繼續" : "這頁開著就會慢慢做"}。</span><div class="row" style="flex-wrap:wrap"><button class="btn small primary" id="bbGen">一鍵產生全部</button><button class="btn small" data-aivstop hidden>停止</button></div><span style="font-size:13px" data-aivsrv></span><span style="font-size:13px" data-aivout></span></div>` : ""; })() : ""}
-    ${bpicCan() ? `<div class="reply" style="display:flex;flex-direction:column;gap:6px;border-radius:12px;padding:10px 12px"><b>照片小幫手（只有你看得到）</b><span class="muted" style="font-size:13px">照片的順序：自己拍的 → AI 畫的 → 維基百科。照片不對就按照片下方的「這張不對」。AI 畫圖要 Gemini 付費（一張約 1 塊台幣）。</span><div class="row" style="flex-wrap:wrap;gap:6px"><button class="btn small" id="bpAll">${BPAI.on ? "停止" : "AI 幫每個沒照片的字畫一張"}</button><span style="font-size:13px" id="bpAllOut"></span></div></div>` : ""}
+    ${bpicCan() ? `<div class="reply" style="display:flex;flex-direction:column;gap:6px;border-radius:12px;padding:10px 12px"><b>照片小幫手（只有你看得到）</b>${(BPICS.pending || []).length ? `<button class="btn primary" id="bpReview">📬 朋友提供了 ${BPICS.pending.length} 張照片，點這裡一張一張確認</button><span class="muted" style="font-size:12px">${[...new Set(BPICS.pending.map(x => x[1]))].slice(0, 8).map(esc).join("、")}${new Set(BPICS.pending.map(x => x[1])).size > 8 ? "…" : ""}</span>` : ""}<span class="muted" style="font-size:13px">照片的順序：自己拍的 → 朋友提供的 → AI 畫的 → 維基百科。照片不對就按照片下方的「這張不對」。AI 畫圖要 Gemini 付費（一張約 1 塊台幣）。</span><div class="row" style="flex-wrap:wrap;gap:6px"><button class="btn small" id="bpAll">${BPAI.on ? "停止" : "AI 幫每個沒照片的字畫一張"}</button><span style="font-size:13px" id="bpAllOut"></span></div></div>` : ""}
     <p class="muted" style="margin:0;font-size:13px;text-align:center">點大圖可以再聽一次。建議爸媽陪著一起聽、跟著唸、指給寶寶看；自動播放 10 分鐘會自己停下來休息。</p>
     ${BB.dark ? `<button class="bbdark" id="bbLight">聲音播放中・點一下回到畫面</button>` : ""}`;
   bbSub(ph, zp, "");
@@ -3376,6 +3420,8 @@ function renderBaby(say) {
   { const [w0, , ph0, zw0, zp0] = items[BB.i], nx = items[(BB.i + 1) % items.length]; aivPrefetch(AIV_LIST.map(([v]) => [v, babyEn(w0, ph0)]).concat([["zh", babyZhT(zw0, zp0)]], AIV_LIST.map(([v]) => [v, babyEn(nx[0], nx[2])]))); }
   if ($("bbUp")) $("bbUp").onchange = e => bbUpload(e.target);
   if ($("bbAi")) $("bbAi").onclick = () => bbAiPic(w);
+  if ($("bpReview")) $("bpReview").onclick = () => openPicReview(0);
+  if ($("bpTop")) $("bpTop").onclick = () => openPicReview(0);
   if ($("bpAll")) $("bpAll").onclick = () => { bbAiAll(); $("bpAll").textContent = BPAI.on ? "停止" : "AI 幫每個沒照片的字畫一張"; };
   $("bbPhoto").onclick = () => { state.babyPhoto = state.babyPhoto === false; Store.save(); renderBaby(false); };
   prefetchBabyPix(items, BB.i);
@@ -4731,8 +4777,9 @@ function openSupport() {
 }
 function renderWishBar() {
   const bar = $("togetherBar"); if (!bar) return;
-  const w = CAN_WISH(), sp = SHOW_SUPPORT();
-  bar.hidden = !w && !sp;
+  const w = CAN_WISH(), sp = SHOW_SUPPORT(), pc = typeof BPICS !== "undefined" && bpicCan() ? (BPICS.pending || []).length : 0;
+  bar.hidden = !w && !sp && !pc;
+  $("tbPic").hidden = !pc; $("tbPicN").textContent = pc ? String(pc) : ""; $("tbPic").onclick = () => openPicReview(0);
   $("tbWish").hidden = !w; $("tbWishN").textContent = WISH_COUNT ? String(WISH_COUNT) : "";
   $("tbSup").hidden = !sp;
   $("tbWish").onclick = openWishes; $("tbSup").onclick = openSupport;
