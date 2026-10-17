@@ -595,7 +595,7 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
-const EQ_BUILD = "d321ba";
+const EQ_BUILD = "be2c32";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -720,6 +720,7 @@ function mergeLibrary(lib) {
   if (Array.isArray(lib.sponsors)) SPONSORS = lib.sponsors.filter(x => x && x.n).slice(-100);
   if (typeof lib.wishCount === "number") WISH_COUNT = lib.wishCount;
   if (lib.voices && typeof lib.voices === "object") mergeVoices(lib.voices);
+  if (Array.isArray(lib.tts)) lib.tts.forEach(k => typeof k === "string" && AIV.have.add(k));
   if (typeof renderSponsorWall === "function") renderSponsorWall();
 }
 function logEvent(type, data) {
@@ -949,6 +950,96 @@ function playUrl(url, rate) {
     a.play().catch(() => done(false));
   });
 }
+/* ================= AI 語音（Gemini）：每段只產生一次，存在後台大家共用 ================= */
+const AIV_LIST = [["gf", "溫柔女聲"], ["lf", "活潑女聲"], ["gm", "溫柔男聲"], ["lm", "活潑男聲"]];
+const AIV = { have: new Set(), url: {}, wait: {}, q: [], busy: false, stop: false, made: 0, fail: 0, err: "" };
+const aiKey = (v, t) => v + "_" + hashStr(v + "|" + String(t).trim()).toString(36);
+const AIV_ON = () => state.aiVoice !== false;
+const AIV_CAN_MAKE = () => KEY_MODE() && !!AI.kind;
+const aivFor = t => state.aiVoiceId && state.aiVoiceId !== "mix" ? state.aiVoiceId : AIV_LIST[hashStr(String(t).trim()) % 4][0];
+function b64Blob(b64) { const bin = atob(b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new Blob([u], { type: "audio/wav" }); }
+async function aivCacheGet(k) { try { const c = await caches.open("eq-aivoice"), r = await c.match("/aiv/" + k); return r ? await r.blob() : null; } catch (e) { return null; } }
+async function aivCachePut(k, blob) { try { const c = await caches.open("eq-aivoice"); await c.put("/aiv/" + k, new Response(blob, { headers: { "Content-Type": "audio/wav" } })); } catch (e) { } }
+function aivSet(k, blob) { if (AIV.url[k]) return AIV.url[k]; return (AIV.url[k] = URL.createObjectURL(blob)); }
+/* 拿到已經產生好的語音網址；還沒有就回傳空字串 */
+function aiVoiceUrl(v, t) {
+  const k = aiKey(v, t);
+  if (AIV.url[k]) return Promise.resolve(AIV.url[k]);
+  if (!AIV.have.has(k)) return Promise.resolve("");
+  if (Store.backend === "computer") return Promise.resolve(AIV.url[k] = "api/tts?k=" + k);
+  if (AIV.wait[k]) return AIV.wait[k];
+  return (AIV.wait[k] = (async () => {
+    try {
+      let blob = await aivCacheGet(k);
+      if (!blob && Store.backend === "sheet") { const m = await gs("ttsGet", [k]); if (m && m[k]) { blob = b64Blob(m[k]); aivCachePut(k, blob); } }
+      return blob ? aivSet(k, blob) : "";
+    } catch (e) { return ""; } finally { delete AIV.wait[k]; }
+  })());
+}
+/* 先把接下來要播的下載好（一次最多 6 段） */
+async function aivPrefetch(pairs) {
+  if (!AIV_ON() || Store.backend !== "sheet") { pairs.forEach(([v, t]) => aiVoiceUrl(v, t)); return; }
+  const need = [];
+  for (const [v, t] of pairs) { const k = aiKey(v, t); if (AIV.have.has(k) && !AIV.url[k] && !AIV.wait[k] && !need.includes(k)) { const b = await aivCacheGet(k); if (b) aivSet(k, b); else need.push(k); } }
+  for (let i = 0; i < need.length; i += 6) {
+    const part = need.slice(i, i + 6); let res = null;
+    const p = gs("ttsGet", part).then(m => { res = m || {}; part.forEach(k => { if (res[k]) { const b = b64Blob(res[k]); aivCachePut(k, b); aivSet(k, b); } }); }).catch(() => { });
+    part.forEach(k => AIV.wait[k] = p.then(() => AIV.url[k] || "").finally(() => delete AIV.wait[k]));
+    await p;
+  }
+}
+/* 你自己（有金鑰）才會產生：排隊一段一段做，額度用完就停，明天再繼續 */
+function aivQueue(items) {
+  if (!AIV_CAN_MAKE() || !AIV_ON()) return;
+  items.forEach(([v, t]) => { t = String(t || "").trim(); if (!t || t.length > 300) return; const k = aiKey(v, t); if (!AIV.have.has(k) && !AIV.q.some(x => x.k === k)) AIV.q.push({ k, v, t }); });
+  aivRun();
+}
+async function aivRun() {
+  if (AIV.busy || !AIV.q.length) { aivUi(); return; }
+  AIV.busy = true; AIV.err = ""; AIV.fail = 0; aivUi();
+  while (AIV.q.length && !AIV.stop) {
+    const it = AIV.q[0];
+    try {
+      let m;
+      if (Store.backend === "sheet") m = await gs("ttsMake", [{ k: it.k, v: it.v, t: it.t }]);
+      else { const r = await apiFetch("api/tts-make", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: [{ k: it.k, v: it.v, t: it.t }] }) }); m = await r.json(); }
+      if (m && m.error) throw new Error(m.error);
+      if (m && m[it.k]) { AIV.have.add(it.k); const b = b64Blob(m[it.k]); aivCachePut(it.k, b); if (Store.backend === "sheet") aivSet(it.k, b); AIV.made++; AIV.fail = 0; }
+      AIV.q.shift();
+    } catch (e) {
+      const msg = String((e && e.message) || e);
+      if (/RATE_LIMITED|429|quota/i.test(msg)) { AIV.err = "Gemini 說太快或今天的免費額度用完了，先停下來。明天（或過一陣子）再按一次會接著做。"; break; }
+      if (/BAD_KEY|NO_KEY/.test(msg)) { AIV.err = "Gemini 金鑰有問題，請到「AI 功能」重新設定。"; break; }
+      if (/MODEL_NOT_FOUND/.test(msg)) { AIV.err = "找不到 Gemini 語音模型，可能 Google 改了名稱，請跟我說一聲。"; break; }
+      if (/UNKNOWN_FN|is not a function|NOT_OWNER/.test(msg)) { AIV.err = backendError(e); break; }
+      if (++AIV.fail >= 4) { AIV.err = "連續失敗，先停下來：" + msg.slice(0, 80); break; }
+      AIV.q.push(AIV.q.shift());
+    }
+    aivUi(); await waitMs(3500);
+  }
+  AIV.busy = false; AIV.stop = false; aivUi();
+}
+function aivUi() {
+  document.querySelectorAll("[data-aivout]").forEach(el => {
+    el.textContent = (AIV.busy ? `產生中…已完成 ${AIV.made} 段，還有 ${AIV.q.length} 段` : AIV.q.length ? `還有 ${AIV.q.length} 段沒產生` : AIV.made ? `這次產生了 ${AIV.made} 段` : "") + (AIV.err ? "　" + AIV.err : "");
+  });
+  document.querySelectorAll("[data-aivstop]").forEach(b => { b.hidden = !AIV.busy; });
+}
+const babyEn = (w, ph) => w.charAt(0).toUpperCase() + w.slice(1) + "! ... " + ph;
+const babyZhT = (zw, zp) => zw + "。" + zp;
+function babyAivItems() { const out = []; BABY.forEach(t => t[2].forEach(([w, , ph, zw, zp]) => { AIV_LIST.forEach(([v]) => out.push([v, babyEn(w, ph)])); out.push(["zh", babyZhT(zw, zp)]); })); return out; }
+function courseAivItems() {
+  const set = new Set(), out = [];
+  const add = t => { t = ckPlain(String(t || "")).trim(); if (!t || t.length > 200 || set.has(t) || !/[a-z]/i.test(t)) return; if (canHumanSent(t)) { const v = sentCached(normSent(t)); if (v && v.u) return; } set.add(t); out.push([aivFor(t), t]); };
+  WORDS.forEach(w => { add(w.ex); const c = cardOf(w.en); if (c) add(c.s); });
+  Object.values(TRAVEL).forEach(c => c.items.forEach(x => add(x[0])));
+  CHUNK.lib.forEach(c => c[2].forEach(m => m[3].forEach(e => add(e[0]))));
+  CHUNK.scenes.forEach(c => c[2].forEach(t => add(t[1])));
+  GRAM.forEach(g => g.q.forEach(q => add(gFill(q[0], q[1][q[2]]))));
+  Object.values(state.aiBank || {}).forEach(a => (Array.isArray(a) ? a : []).forEach(x => x && add(x.s)));
+  return out;
+}
+const aivTodo = items => items.filter(([v, t]) => !AIV.have.has(aiKey(v, t))).length;
 /* 句子真人錄音：Tatoeba 志工錄的整句（整句完全一樣才用），找不到就用電腦語音。查過的結果記起來，不重複查 */
 const HS = { mem: {}, wait: {}, told: {} };
 try { localStorage.removeItem("eq-human-s"); } catch (e) { }
@@ -1109,9 +1200,10 @@ function prefetchHuman(words) { if (state.human === false) return; words.filter(
 function speak(text, slow, fixedRate) {
   const tok = (speak.t = (speak.t || 0) + 1);
   const rate = fixedRate ? Math.max(0.6, Math.min(1.2, fixedRate)) : slow ? 0.75 : 1;
+  const fallback = () => { if (tok === speak.t) speakAiOr(text, slow, fixedRate, rate, tok); };
   if (canHuman(text)) {
     if (TTS) speechSynthesis.cancel();
-    playHuman(text, rate).then(ok => { if (!ok && tok === speak.t) speakTTS(text, slow, fixedRate); });
+    playHuman(text, rate).then(ok => { if (!ok) fallback(); });
     return;
   }
   if (canHumanSent(text)) {
@@ -1120,13 +1212,24 @@ function speak(text, slow, fixedRate) {
       if (tok !== speak.t) return;
       if (v && v.u) {
         if (v.t && !HS.told[v.t]) { HS.told[v.t] = 1; toast("真人錄音是口語縮寫：" + v.t); }
-        playUrl(v.u, rate).then(ok => { if (!ok && tok === speak.t) speakTTS(text, slow, fixedRate); });
+        playUrl(v.u, rate).then(ok => { if (!ok) fallback(); });
       }
-      else speakTTS(text, slow, fixedRate);
+      else fallback();
     });
     return;
   }
-  speakTTS(text, slow, fixedRate);
+  fallback();
+}
+/* 沒有真人錄音：有 AI 語音就播 AI 語音，沒有就用電腦語音（你自己用時順便排隊產生） */
+async function speakAiOr(text, slow, fixedRate, rate, tok) {
+  const t = String(text || "").trim();
+  if (AIV_ON() && t && t.length <= 200 && /[a-z]/i.test(t)) {
+    const v = aivFor(t), u = AIV.have.has(aiKey(v, t)) ? await raceMs(aiVoiceUrl(v, t), 3000) : "";
+    if (tok !== speak.t) return;
+    if (u) { stopHuman(); if (TTS) speechSynthesis.cancel(); if (await playUrl(u, rate)) return; if (tok !== speak.t) return; }
+    else aivQueue([[v, t]]);
+  }
+  if (tok === speak.t) speakTTS(text, slow, fixedRate);
 }
 function speakTTS(text, slow, fixedRate) {
   if (!TTS) { toast("這個瀏覽器不支援朗讀，建議使用 Chrome 或 Edge"); return; }
@@ -3034,7 +3137,12 @@ function bbSub(en, zh, lang) {
   const el = $("bbSub"); if (!el) return;
   if (state.babySub === false) { el.hidden = true; return; }
   el.hidden = false;
-  el.innerHTML = `<div class="bbsen${lang === "en" ? " now" : ""}">${esc(en)}</div><div class="bbszh${lang === "zh" ? " now" : ""}">${esc(zh)}</div>`;
+  el.innerHTML = `<div class="bbsen${lang === "en" ? " now" : ""}">${esc(en)}</div><div class="bbszh${lang === "zh" ? " now" : ""}">${esc(zh)}</div>${BB && BB.rep ? `<div class="muted" style="font-size:12px">${esc(BB.rep)}</div>` : ""}`;
+}
+async function bbOldEn(w, ph, tok) {
+  await sayBabyWord(w); if (tok !== BB.tok) return;
+  await waitMs(500); if (tok !== BB.tok) return;
+  await sayBabyPhrase(ph, tok);
 }
 async function sayBabyWord(w) {
   let url = "";
@@ -3067,6 +3175,8 @@ function renderBaby(say) {
     <div class="row bbctl"><button class="btn" id="bbPrev" aria-label="上一個">◀</button><button class="btn primary" id="bbAuto">${BB.auto ? "⏸ 暫停" : "▶ 自動播放"}</button><button class="btn" id="bbNext" aria-label="下一個">▶</button></div>
     <div class="row bbctl"><button class="btn small" id="bbDark">只放聲音（螢幕變暗）</button><button class="btn small${state.babySlow ? " primary" : ""}" id="bbSlow" aria-pressed="${state.babySlow ? "true" : "false"}">🐢 慢一點</button></div>
     <div class="row bbctl"><button class="btn small${state.babySub !== false ? " primary" : ""}" id="bbSubT" aria-pressed="${state.babySub !== false}">字幕（英＋中）</button><button class="btn small${state.babyZh ? " primary" : ""}" id="bbZh" aria-pressed="${!!state.babyZh}">中文語音</button></div>
+    <div class="row bbctl"><span class="muted" style="font-size:13px">每張重複</span><div class="seg" id="bbReps">${[1, 3, 5].map(n => `<button data-reps="${n}" aria-pressed="${(([1, 3, 5].includes(state.babyReps) ? state.babyReps : 5) === n)}">${n} 次</button>`).join("")}</div></div>
+    ${AIV_CAN_MAKE() && AIV_ON() ? (() => { const its = babyAivItems(), todo = aivTodo(its); return todo ? `<div class="reply" style="display:flex;flex-direction:column;gap:6px;border-radius:12px;padding:10px 12px"><b>AI 語音（4 種聲音＋中文）還有 ${todo} / ${its.length} 段沒產生</b><span class="muted" style="font-size:13px">還沒產生的先用原本的聲音。按一次會在背景慢慢產生，額度用完就停，明天再按會接著做。</span><div class="row" style="flex-wrap:wrap"><button class="btn small primary" id="bbGen">開始產生</button><button class="btn small" data-aivstop hidden>停止</button><span style="font-size:13px" data-aivout></span></div></div>` : ""; })() : ""}
     <p class="muted" style="margin:0;font-size:13px;text-align:center">點大圖可以再聽一次。建議爸媽陪著一起聽、跟著唸、指給寶寶看；自動播放 10 分鐘會自己停下來休息。</p>
     ${BB.dark ? `<button class="bbdark" id="bbLight">聲音播放中・點一下回到畫面</button>` : ""}`;
   bbSub(ph, zp, "");
@@ -3078,6 +3188,11 @@ function renderBaby(say) {
   $("bbAuto").onclick = () => { BB.auto = !BB.auto; if (BB.auto) BB.started = Date.now(); renderBaby(BB.auto); if (!BB.auto) { BB.tok++; stopHuman(); if (TTS) speechSynthesis.cancel(); } };
   $("bbDark").onclick = () => { BB.dark = true; if (!BB.auto) { BB.auto = true; BB.started = Date.now(); renderBaby(true); } else renderBaby(false); };
   $("bbSlow").onclick = () => { state.babySlow = !state.babySlow; Store.save(); renderBaby(true); };
+  $("baby").querySelectorAll("[data-reps]").forEach(b => b.onclick = () => { state.babyReps = Number(b.dataset.reps); Store.save(); renderBaby(false); });
+  if ($("bbGen")) $("bbGen").onclick = () => { const cur = BABY[BB.t][2]; const first = []; cur.forEach(([w, , ph, zw, zp]) => { AIV_LIST.forEach(([v]) => first.push([v, babyEn(w, ph)])); first.push(["zh", babyZhT(zw, zp)]); }); aivQueue(first.concat(babyAivItems())); };
+  $("baby").querySelectorAll("[data-aivstop]").forEach(b => b.onclick = () => { AIV.stop = true; });
+  aivUi();
+  { const [w0, , ph0, zw0, zp0] = items[BB.i], nx = items[(BB.i + 1) % items.length]; aivPrefetch(AIV_LIST.map(([v]) => [v, babyEn(w0, ph0)]).concat([["zh", babyZhT(zw0, zp0)]], AIV_LIST.map(([v]) => [v, babyEn(nx[0], nx[2])]))); }
   $("bbSubT").onclick = () => { state.babySub = state.babySub === false; Store.save(); renderBaby(false); };
   $("bbZh").onclick = () => { state.babyZh = !state.babyZh; Store.save(); if (state.babyZh && TTS && !zhVoice()) toast("這台裝置找不到中文語音，請到系統設定加入「中文（台灣）」語音"); renderBaby(true); };
   if ($("bbLight")) $("bbLight").onclick = () => { BB.dark = false; renderBaby(false); };
@@ -3086,13 +3201,27 @@ function renderBaby(say) {
 async function sayCard() {
   const tok = ++BB.tok, [, , items] = BABY[BB.t], [w, , ph, zw, zp] = items[BB.i], zh = !!state.babyZh;
   const card = $("bbCard"); if (card) { card.classList.remove("pop"); void card.offsetWidth; card.classList.add("pop"); }
-  bbSub(w, zw, "en"); await sayBabyWord(w); if (tok !== BB.tok) return;
-  if (zh) { await waitMs(300); bbSub(w, zw, "zh"); await sayZh(zw, state.babySlow ? 0.75 : 0.9); if (tok !== BB.tok) return; }
-  await waitMs(700); if (tok !== BB.tok) return;
-  bbSub(ph, zp, "en"); await sayBabyPhrase(ph, tok); if (tok !== BB.tok) return;
-  if (zh) { await waitMs(300); bbSub(ph, zp, "zh"); await sayZh(zp, state.babySlow ? 0.75 : 0.9); if (tok !== BB.tok) return; }
-  await waitMs(800); if (tok !== BB.tok) return;
-  bbSub(w, zw, "en"); await sayBabyWord(w); if (tok !== BB.tok) return;
+  const reps = [1, 3, 5].includes(state.babyReps) ? state.babyReps : 5, en = babyEn(w, ph), zt = babyZhT(zw, zp), slow = !!state.babySlow;
+  for (let r = 0; r < reps; r++) {
+    const [vid, vname] = AIV_LIST[r % 4];
+    BB.rep = `第 ${r + 1} / ${reps} 次・${AIV_ON() ? vname : "電腦語音"}`;
+    const u = AIV_ON() ? await raceMs(aiVoiceUrl(vid, en), 2500) : "";
+    if (tok !== BB.tok) return;
+    bbSub(en.replace(" ... ", " "), `${zw}。${zp}`, "en");
+    if (u) { if (!(await playUrl(u, slow ? 0.85 : 1)) && tok === BB.tok) await bbOldEn(w, ph, tok); }
+    else { if (AIV_ON()) aivQueue([[vid, en]]); await bbOldEn(w, ph, tok); }
+    if (tok !== BB.tok) return;
+    if (zh) {
+      await waitMs(300); if (tok !== BB.tok) return;
+      bbSub(en.replace(" ... ", " "), `${zw}。${zp}`, "zh");
+      const zu = AIV_ON() ? await raceMs(aiVoiceUrl("zh", zt), 2500) : "";
+      if (tok !== BB.tok) return;
+      if (!(zu && await playUrl(zu, slow ? 0.85 : 1))) { if (AIV_ON() && !zu) aivQueue([["zh", zt]]); await sayZh(zw, slow ? 0.75 : 0.9); await waitMs(300); if (tok !== BB.tok) return; await sayZh(zp, slow ? 0.75 : 0.9); }
+      if (tok !== BB.tok) return;
+    }
+    if (r + 1 < reps) { await waitMs(900); if (tok !== BB.tok) return; }
+  }
+  BB.rep = "";
   if (!BB.auto) return;
   if (Date.now() - BB.started > 10 * 60e3) { BB.auto = false; BB.dark = false; toast("聽了 10 分鐘了，休息一下吧！"); renderBaby(false); return; }
   await waitMs(2500); if (tok !== BB.tok || !BB.auto) return;
@@ -4530,6 +4659,12 @@ function renderStats(focus) {
       <label class="row" style="gap:8px;font-size:15px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="humanSentOn" style="margin-top:4px" ${state.human !== false && state.humanSent !== false ? "checked" : ""} ${state.human === false ? "disabled" : ""}><span>句子也先找<b>真人錄音</b>（同一句才有，縮寫也算）</span></label>
       ${KEY_MODE() ? `<div class="reply" style="display:flex;flex-direction:column;gap:6px"><b>先把錄音全部查好（播放就不會卡）</b><span class="muted" style="font-size:13px">一次查完所有單字和句子，結果存在後台大家共用，朋友打開也直接有真人聲音。之後 AI 新產生的句子會自動查。</span><div class="row" style="flex-wrap:wrap"><button class="btn small primary" id="scanBtn">一次掃描全部</button><span style="font-size:13px" id="scanOut"></span></div></div>` : ""}
       <p class="muted" style="margin:0;font-size:12px">單字真人錄音來自 Wiktionary 志工（CC BY-SA，透過 Free Dictionary API）；句子真人錄音來自 Tatoeba 志工（例如 CK），依各錄音者的 CC 授權使用。找不到的句子才用下面選的語音；Edge 的「Natural」聲音、iPhone 下載的「增強版」聲音最接近真人。</p>
+      <div class="reply" style="display:flex;flex-direction:column;gap:8px;border-radius:12px;padding:10px 12px">
+        <label class="row" style="gap:8px;font-size:15px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="aivOn" style="margin-top:4px" ${AIV_ON() ? "checked" : ""}><span>沒有真人錄音時，用 <b>Gemini AI 語音</b>（聽起來像真人）</span></label>
+        <div class="row" style="flex-wrap:wrap;gap:6px"><span class="muted" style="font-size:13px">英文聲音</span><div class="seg" id="aivSeg" style="flex-wrap:wrap">${[["mix", "四種輪流"]].concat(AIV_LIST).map(([k, n]) => `<button data-aiv="${k}" aria-pressed="${(state.aiVoiceId || "mix") === k}">${n}</button>`).join("")}</div></div>
+        <span class="muted" style="font-size:13px">已經產生 ${AIV.have.size} 段。產生好的語音存在你的雲端硬碟「English Quest AI 語音」，朋友打開也直接用，不會再花額度。</span>
+        ${AIV_CAN_MAKE() ? (() => { const c = courseAivItems(), b = babyAivItems(), tc = aivTodo(c), tb = aivTodo(b); return `<div class="row" style="flex-wrap:wrap;gap:6px"><button class="btn small primary" id="aivCourse" ${tc ? "" : "disabled"}>產生課程句子（還有 ${tc} 句）</button><button class="btn small" id="aivBaby" ${tb ? "" : "disabled"}>產生寶寶聽力（還有 ${tb} 段）</button><button class="btn small" data-aivstop hidden>停止</button></div><span style="font-size:13px" data-aivout></span><span class="muted" style="font-size:12px">一段一段慢慢做；Gemini 免費額度用完會自動停下，明天再按會接著做。已經有真人錄音的句子會跳過。</span>`; })() : `<span class="muted" style="font-size:12px">只有分享者（有 Gemini 金鑰）可以產生新的 AI 語音。</span>`}
+      </div>
       <label class="lbl" for="voiceSel">朗讀的聲音</label>
       <select class="field" id="voiceSel"><option value="">自動選擇美式英文</option>${vOpts}</select>
       <div class="row"><span class="lbl">語速</span><div class="seg" id="rateSeg">${[[0.8, "慢"], [1, "正常"], [1.15, "快"]].map(([r, l]) => `<button data-r="${r}" aria-pressed="${state.rate === r}">${l}</button>`).join("")}</div><div class="spacer"></div><button class="btn small" id="testVoice">${ICON.spk}試聽</button></div>
@@ -4696,6 +4831,12 @@ function renderStats(focus) {
   $("testVoice").onclick = () => speak("Hello! Let's learn English together.");
   $("humanOn").onchange = e => { state.human = e.target.checked; Store.save(); const hs = $("humanSentOn"); if (hs) { hs.disabled = !state.human; hs.checked = state.human && state.humanSent !== false; } speak("family"); };
   if ($("scanBtn")) { $("scanBtn").onclick = scanVoices; scanUi(SCAN.on ? "掃描中…" : ""); }
+  $("aivOn").onchange = e => { state.aiVoice = e.target.checked; Store.save(); };
+  $("stats").querySelectorAll("[data-aiv]").forEach(b => b.onclick = () => { state.aiVoiceId = b.dataset.aiv; Store.save(); $("stats").querySelectorAll("[data-aiv]").forEach(x => x.setAttribute("aria-pressed", x === b)); });
+  if ($("aivCourse")) $("aivCourse").onclick = () => aivQueue(courseAivItems());
+  if ($("aivBaby")) $("aivBaby").onclick = () => aivQueue(babyAivItems());
+  $("stats").querySelectorAll("[data-aivstop]").forEach(b => b.onclick = () => { AIV.stop = true; });
+  aivUi();
   $("humanSentOn").onchange = e => { state.humanSent = e.target.checked; Store.save(); speak("Give me a hug."); };
   let armed = false;
   $("resetBtn").onclick = e => {
