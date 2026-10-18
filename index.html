@@ -229,6 +229,12 @@ button.chip:hover{border-color:var(--primary)}
 .uscell span{font-size:11px;color:var(--muted);padding:2px 6px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .uscell.on{border-color:var(--primary)}
 .usnum{position:absolute;top:6px;left:6px;background:var(--primary);color:#fff;border-radius:999px;font-size:12px;padding:2px 8px}
+.usslots{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.usslot{display:flex;flex-direction:column;align-items:center;gap:2px;border:3px solid var(--line);border-radius:12px;background:var(--surface);padding:4px 2px;cursor:pointer;color:inherit;min-width:0}
+.usslot.on{border-color:var(--primary);background:var(--primary-soft)}
+.usslot img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}
+.usslot .usem{font-size:30px;line-height:1.4;aspect-ratio:1;display:flex;align-items:center;justify-content:center}
+.ussn{font-size:11px;font-weight:800}.usst{font-size:10px;color:var(--muted)}
 .bbview{display:flex;flex-direction:column;gap:14px}
 .ptq{display:block;width:100%;border:0;background:var(--surface);border-radius:18px;padding:12px 14px;text-align:center;box-shadow:var(--shadow);cursor:pointer;color:inherit}
 .ptgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -700,8 +706,8 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
-const EQ_BUILD = "ca678a";
-const EQ_WEB = "0d2f";
+const EQ_BUILD = "3d5e96";
+const EQ_WEB = "81ef";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -827,7 +833,7 @@ function mergeLibrary(lib) {
   if (typeof lib.wishCount === "number") WISH_COUNT = lib.wishCount;
   if (lib.voices && typeof lib.voices === "object") mergeVoices(lib.voices);
   if (Array.isArray(lib.tts)) lib.tts.forEach(k => typeof k === "string" && AIV.have.add(k));
-  if (lib.babyPics && typeof lib.babyPics === "object") BPICS = { pics: lib.babyPics.pics || {}, hide: lib.babyPics.hide || [], pending: lib.babyPics.pending || [], us: lib.babyPics.us || {}, usKey: !!lib.babyPics.usKey };
+  if (lib.babyPics && typeof lib.babyPics === "object") BPICS = { pics: lib.babyPics.pics || {}, hide: lib.babyPics.hide || [], pending: lib.babyPics.pending || [], us: lib.babyPics.us || {}, usPin: lib.babyPics.usPin || {}, usKey: !!lib.babyPics.usKey };
   if (typeof lib.famPending === "number") FAMG.pending = lib.famPending;
   try { renderWishBar(); } catch (e) { }
   if (typeof renderSponsorWall === "function") renderSponsorWall();
@@ -3442,7 +3448,7 @@ function babyPhoto(title) {
 /* 5 次的畫面：1 原本卡通 → 2 照片 → 3 另一張卡通 → 4 第二張照片 → 5 再換一張卡通（沒照片就用卡通補上，不重複） */
 /* 自己拍的、AI 畫的照片（存在雲端硬碟，大家共用）＋不要的維基照片 */
 const BPIC_DESC = {"dog": "a friendly golden puppy sitting on grass", "cat": "a fluffy kitten sitting on a sofa", "cow": "a black and white dairy cow in a green field", "duck": "a yellow duckling and a white duck by a pond", "pig": "a pink piglet on a farm", "sheep": "a fluffy white sheep in a meadow", "bird": "a small colorful bird on a branch", "fish": "an orange goldfish in clear water", "rabbit": "a white bunny rabbit on grass", "elephant": "a gentle elephant with big ears", "apple": "one shiny red apple", "banana": "a ripe yellow banana", "milk": "a glass of milk", "water": "a clear glass of water", "bread": "a loaf of soft bread", "egg": "two whole eggs", "rice": "a small bowl of white rice", "cookie": "a round chocolate chip cookie", "eyes": "a smiling toddler's face, close-up of bright eyes", "nose": "a toddler touching their own nose and smiling", "mouth": "a toddler opening their mouth wide, saying ahh", "ears": "a toddler pointing to their ear and smiling", "hands": "two small toddler hands clapping", "feet": "two little toddler feet on a soft rug", "teeth": "a toddler brushing teeth with a small toothbrush", "hair": "a parent gently brushing a toddler's hair", "red": "a set of bright red things: a red ball, a red apple and a red toy car", "blue": "a set of bright blue things: a blue ball, a blue cup and a blue toy block", "yellow": "a set of bright yellow things: a yellow duck toy, a banana and a yellow ball", "green": "a set of bright green things: a green apple, a green leaf and a green toy block", "orange": "a set of bright orange things: an orange, a carrot and an orange ball", "purple": "a set of bright purple things: purple grapes, a purple ball and a purple crayon", "black": "a set of black things: a black cat toy, black shoes and a black ball", "white": "a set of white things: a white teddy bear, a glass of milk and a white ball", "mommy": "a smiling mother hugging her baby", "daddy": "a smiling father holding his toddler", "baby": "a happy baby smiling on a blanket", "grandma": "a smiling grandmother reading to a toddler", "grandpa": "a smiling grandfather playing with a toddler", "brother": "a cheerful young boy, a big brother, playing with a toddler", "sister": "a cheerful young girl, a big sister, playing with a toddler", "family": "a happy family of parents and children sitting together", "ball": "a colorful toy ball", "teddy bear": "a soft brown teddy bear", "book": "a colorful children's picture book", "car": "a small red toy car", "bus": "a yellow school bus", "shoes": "a pair of small children's sneakers", "hat": "a small sun hat for children", "cup": "a toddler's plastic cup", "hello": "a smiling toddler waving hello", "bye-bye": "a toddler waving bye-bye at a door", "eat": "a toddler eating with a spoon in a high chair", "bath": "a toddler playing with a rubber duck in a bubble bath, only head and shoulders visible", "sleep": "a baby sleeping peacefully in a crib", "walk": "a parent and toddler walking hand in hand in a park", "hug": "a parent and toddler hugging", "kiss": "a mother kissing her baby's cheek", "sun": "the bright sun in a blue sky", "moon": "a full moon in the night sky", "star": "bright stars twinkling in the night sky", "rain": "raindrops falling and a child's colorful umbrella", "flower": "a bright sunflower", "tree": "a big green tree in a park", "cloud": "fluffy white clouds in a blue sky", "rainbow": "a colorful rainbow over green hills", "one": "one red apple on a table", "two": "two small children's shoes side by side", "three": "three toy piglets in a row", "four": "four yellow rubber ducks in a row", "five": "a child's hand showing five fingers", "six": "six eggs in a carton", "seven": "seven paper stars in a row", "eight": "a cute toy octopus with eight legs", "nine": "nine colorful balloons", "ten": "two small hands showing ten fingers", "circle": "a big red circle shape made of paper", "square": "a blue square wooden block", "triangle": "a red triangle shape made of paper", "heart": "a red heart shape made of paper", "diamond": "a blue diamond shape made of paper", "train": "a colorful passenger train", "plane": "an airplane flying in a blue sky", "boat": "a small sailboat on calm water", "bike": "a small children's bicycle", "truck": "a big friendly truck", "taxi": "a yellow taxi", "fire truck": "a red fire truck", "helicopter": "a helicopter flying in the sky", "big": "a big elephant next to a small mouse", "small": "a tiny mouse", "hot": "a cup of hot tea with steam", "cold": "ice cubes and a snowman", "up": "colorful balloons floating up into the sky", "down": "a child going down a playground slide", "fast": "a cheetah running fast", "slow": "a turtle walking slowly", "jump": "a happy child jumping in the air", "run": "a happy child running on grass", "sit": "a toddler sitting on a small chair", "stand": "a toddler standing up proudly", "clap": "a toddler clapping hands", "dance": "a child dancing happily", "sing": "a child singing into a toy microphone", "swim": "a happy dog swimming in a lake"};
-let BPICS = { pics: {}, hide: [], pending: [], us: {}, usKey: false };
+let BPICS = { pics: {}, hide: [], pending: [], us: {}, usPin: {}, usKey: false };
 const BPIC_URL = {};
 const bpicCan = () => KEY_MODE() && Store.backend === "sheet";
 const bpicHidden = t => BPICS.hide.includes(t) || (state.babyHide || []).includes(t);
@@ -3483,6 +3489,7 @@ async function bbFrames(w, e) {
   const pool = [e].concat(alts); let ci = 1; const next = () => ({ em: pool[(ci++) % pool.length] });
   const pin = {};
   if (state.babyPhoto !== false) for (const [id, k, sl] of (BPICS.pics[w] || [])) if (sl >= 1 && sl <= 5 && !pin[sl]) { const u = await raceMs(bpicUrl(id), 4000); if (u) pin[sl] = { img: { u, src: { kind: k, id } } }; }
+  if (state.babyPhoto !== false) for (const [sl, x] of Object.entries((BPICS.usPin || {})[w] || {})) { if (pin[sl] || bpicHidden(usKeyOf(x))) continue; const u = await imgOk(usUrl(x[0]), 2500); if (u) pin[sl] = { img: { u, src: { kind: "unsplash", title: usKeyOf(x), name: x[1], user: x[2] } } }; }
   const f = [pin[1] || { em: e }];
   f.push(pin[2] || (p1 && p1.u ? { img: p1 } : next()));
   f.push(pin[3] || next());
@@ -3606,25 +3613,46 @@ function openUsPick(w, q) {
     if ($("upSave")) $("upSave").onclick = async () => { const k = $("upKey").value.trim(); if (!k) return; $("upSave").disabled = true; try { BPICS = await gs("unsplashSetKey", k); toast("金鑰存好了！"); openUsPick(w, q); } catch (e) { $("upSave").disabled = false; toast(/BAD_KEY/.test(String(e && e.message)) ? "金鑰格式不對，請複製 Access Key（不是 Secret key）" : backendError(e)); } };
     return;
   }
-  const S = { q: q || w, res: null, sel: [], busy: false };
+  const it = babyWordMap()[w] || [w, "🖼️"], e = it[1];
+  const S = { q: q || w, res: null, act: 2, put: {}, clr: {}, cur: null };
+  const slotHtml = n => {
+    const p = S.put[n], c = S.cur && S.cur[n - 1];
+    const inner = p ? `<img src="${esc(p.thumb)}" alt="">` : S.clr[n] ? `<span class="usem">↺</span>` : c && c.img ? `<img src="${esc(c.img.u)}" alt="">` : `<span class="usem">${c ? esc(String(c.em).replace(/^#\d+:/, "")) : e}</span>`;
+    const tag = p ? "新照片" : S.clr[n] ? "還原" : c && c.img ? ({ mine: "你的", fam: "家人", guest: "朋友", ai: "AI", unsplash: "Unsplash", wiki: "維基" })[c.img.src && c.img.src.kind] || "照片" : "卡通";
+    return `<button class="usslot${S.act === n ? " on" : ""}" data-uss="${n}" aria-pressed="${S.act === n}"><span class="ussn">第 ${n} 次</span>${inner}<span class="usst">${tag}</span></button>`;
+  };
   const draw = () => {
+    const pinned = (BPICS.usPin || {})[w] || {};
     openModal(`<div class="row"><h2 style="font-size:20px;flex:1;min-width:0">🔍 Unsplash 找照片</h2><button class="icon-btn" id="upClose" aria-label="關閉">${ICON.x}</button></div>
-      <p class="muted" style="margin:0;font-size:13px">幫 <b>${esc(w)}</b> 挑 1～2 張照片，會放在第 2、4 次（第 1 張選的放第 2 次）。搜尋要用英文。</p>
-      <div class="row" style="gap:8px"><input id="upQ" value="${esc(S.q)}" maxlength="60" style="flex:1;min-width:0"><button class="btn primary" id="upGo">搜尋</button></div>
-      ${S.res === null ? `<p class="muted">搜尋中…</p>` : !S.res.length ? `<p class="muted">找不到，換個英文關鍵字試試（例如 toy dinosaur）。</p>` : `<div class="usgrid">${S.res.map((x, i) => { const k = S.sel.indexOf(i); return `<button class="uscell${k >= 0 ? " on" : ""}" data-up="${i}" aria-pressed="${k >= 0}"><img src="${esc(x.thumb)}" alt="${esc(x.alt || w)}" loading="lazy">${k >= 0 ? `<b class="usnum">第 ${k ? 4 : 2} 次</b>` : ""}<span>${esc(x.name)}</span></button>`; }).join("")}</div>`}
-      <div class="row" style="gap:8px;position:sticky;bottom:0;background:var(--surface);padding-top:8px"><a class="btn small" href="${esc("https:\/\/unsplash.com/s/photos/" + encodeURIComponent(S.q.replace(/\s+/g, "-")))}" target="_blank" rel="noopener">Unsplash 網站 ↗</a><div class="spacer"></div><button class="btn primary" id="upOk" ${S.sel.length ? "" : "disabled"}>放進去（${S.sel.length} 張）</button></div>
-      <p class="muted" style="margin:0;font-size:11px">照片來自 Unsplash，播放時會標示攝影師。</p>`);
+      <p class="muted" style="margin:0;font-size:13px"><b>${esc(w)}</b> 每張卡片會顯示 5 次。① 先點上面要換的「第幾次」，② 再點下面的照片放進去。可以一次換好幾格。</p>
+      <div class="usslots">${[1, 2, 3, 4, 5].map(slotHtml).join("")}</div>
+      ${pinned[S.act] && !S.put[S.act] && !S.clr[S.act] ? `<button class="btn small" id="upClr" style="align-self:flex-start">↺ 第 ${S.act} 次改回原本的</button>` : ""}
+      <div class="row" style="gap:8px"><input id="upQ" value="${esc(S.q)}" maxlength="60" style="flex:1;min-width:0" aria-label="英文關鍵字"><button class="btn primary" id="upGo">搜尋</button></div>
+      ${S.res === null ? `<p class="muted">搜尋中…</p>` : !S.res.length ? `<p class="muted">找不到，換個英文關鍵字試試（例如 red apple）。</p>` : `<div class="usgrid">${S.res.map((x, i) => { const at = Object.keys(S.put).filter(n => S.put[n] === x); return `<button class="uscell${at.length ? " on" : ""}" data-up="${i}"><img src="${esc(x.thumb)}" alt="${esc(x.alt || w)}" loading="lazy">${at.length ? `<b class="usnum">第 ${at.join("、")} 次</b>` : ""}<span>${esc(x.name)}</span></button>`; }).join("")}</div>`}
+      <div class="row" style="gap:8px;position:sticky;bottom:0;background:var(--surface);padding-top:8px"><a class="btn small" href="${esc("https:\/\/unsplash.com/s/photos/" + encodeURIComponent(S.q.replace(/\s+/g, "-")))}" target="_blank" rel="noopener">Unsplash 網站 ↗</a><div class="spacer"></div><button class="btn primary" id="upOk" ${Object.keys(S.put).length || Object.keys(S.clr).length ? "" : "disabled"}>✅ 換好了</button></div>
+      <p class="muted" style="margin:0;font-size:11px">照片來自 Unsplash，播放時會標示攝影師。你自己拍的照片如果也放在同一格，後放的會蓋掉先放的。</p>`);
     $("upClose").onclick = closeModal;
-    $("upGo").onclick = () => { S.q = $("upQ").value.trim() || w; S.res = null; S.sel = []; draw(); search(); };
-    $("upQ").onkeydown = e => { if (e.key === "Enter") $("upGo").click(); };
-    $("gPanel").querySelectorAll("[data-up]").forEach(b => b.onclick = () => { const i = Number(b.dataset.up), k = S.sel.indexOf(i); if (k >= 0) S.sel.splice(k, 1); else { S.sel.push(i); if (S.sel.length > 2) S.sel.shift(); } draw(); });
+    $("gPanel").querySelectorAll("[data-uss]").forEach(b => b.onclick = () => { S.act = Number(b.dataset.uss); draw(); });
+    if ($("upClr")) $("upClr").onclick = () => { S.clr[S.act] = 1; delete S.put[S.act]; draw(); };
+    $("upGo").onclick = () => { S.q = $("upQ").value.trim() || w; S.res = null; draw(); search(); };
+    $("upQ").onkeydown = ev => { if (ev.key === "Enter") $("upGo").click(); };
+    $("gPanel").querySelectorAll("[data-up]").forEach(b => b.onclick = () => {
+      const x = S.res[Number(b.dataset.up)];
+      if (S.put[S.act] === x) delete S.put[S.act]; else { S.put[S.act] = x; delete S.clr[S.act]; if (S.act === 2 && !S.put[4]) S.act = 4; }
+      draw();
+    });
     $("upOk").onclick = async () => {
       $("upOk").disabled = true;
-      try { BPICS = await gs("unsplashPick", w, S.sel.map(i => S.res[i]), famTok()); closeModal(); toast("放好了！第 2、4 次會出現這些照片"); BB.frames = null; renderBaby(true); }
-      catch (e) { $("upOk").disabled = false; toast(usErr(e)); }
+      try {
+        for (const n of Object.keys(S.clr)) BPICS = await gs("unsplashClear", w, Number(n), famTok());
+        const picks = Object.keys(S.put).map(n => Object.assign({}, S.put[n], { slot: Number(n) }));
+        if (picks.length) BPICS = await gs("unsplashPick", w, picks, famTok());
+        closeModal(); toast(`換好了！${picks.length ? "第 " + picks.map(x => x.slot).sort().join("、") + " 次會顯示新照片" : "已改回原本的"}`); BB.frames = null; renderBaby(true);
+      } catch (err) { $("upOk").disabled = false; toast(usErr(err)); }
     };
   };
-  const search = async () => { try { S.res = await gs("unsplashFind", S.q, famTok()); } catch (e) { S.res = []; toast(usErr(e)); } if (!$("gModal").hidden) draw(); };
+  const search = async () => { try { S.res = await gs("unsplashFind", S.q, famTok()); } catch (err) { S.res = []; toast(usErr(err)); } if (!$("gModal").hidden) draw(); };
+  bbFrames(w, e).then(f => { S.cur = f; if (!$("gModal").hidden) draw(); }).catch(() => { });
   draw(); search();
 }
 /* AI 出的新字：自動幫每個字找 2 張 Unsplash 照片（之後可以按「🔍 Unsplash 找照片」換） */
