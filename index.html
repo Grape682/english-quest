@@ -726,7 +726,7 @@ let GUEST = false;
 let SPONSOR = "";
 let OWNER_WHO = "";
 const EQ_BUILD = "243ac4";
-const EQ_WEB = "6320";
+const EQ_WEB = "41c6";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -4784,6 +4784,8 @@ function openSpeak(tid) {
 const SPK_TABS = [[1, "① 聽範例"], [2, "② 跟讀"], [3, "③ 替換組句"], [4, "④ 不看稿"], ["role", "🎭 角色對話"]];
 function renderSpeak() {
   spkStop();
+  /* 同一個畫面重畫（例如點選另一種說法）時，留在原本捲到的位置，不要跳回最上面 */
+  const vk = [SP.tid, SP.tab, SP.role ? SP.role.i : 0].join("|"), keepY = SP.vk === vk ? window.scrollY : -1; SP.vk = vk;
   const t = spkGet(SP.tid), d = today(), st = spkS().steps[d] || {}, td = spkToday(), doneToday = !!spkS().done[d];
   $("speak").innerHTML = `
     <header class="top"><button class="icon-btn" id="spBack" aria-label="離開">${ICON.x}</button><h2 style="font-size:22px;flex:1;min-width:0">情境口說</h2><span class="muted" style="font-size:13px">${spkStreak() ? `連續 ${spkStreak()} 天` : ""}</span></header>
@@ -4802,6 +4804,7 @@ function renderSpeak() {
   if ($("spDel")) $("spDel").onclick = () => { if (!confirm("要刪掉這個自訂情境嗎？")) return; const s = spkS(); s.custom = s.custom.filter(x => x.id !== t.id); Store.save(); SP.tid = spkToday().id; renderSpeak(); };
   chipCenter($("speak"));
   ({ 1: spkStep1, 2: spkStep2, 3: spkStep3, 4: spkStep4, role: spkRole })[SP.tab](t);
+  if (keepY > 0) window.scrollTo(0, keepY);
 }
 function spkBlocksHtml(t, mine) {
   return `<div class="spblocks">${t.b.map((b, i) => { const L = mine ? spkLine(t, i) : { en: b.v[0][0], zh: b.v[0][1] }; return `<div class="spblk c${i}" data-spb="${i}"><span class="spk-k">${i + 1} ${esc(b.k)}・${esc(b.kz)}</span><div class="en">${esc(L.en)}</div><div class="zh">${esc(L.zh)}</div></div>`; }).join("")}</div>`;
