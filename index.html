@@ -697,7 +697,7 @@ function setOwnerToken(t) { try { if (t) localStorage.setItem("eq-owner-token", 
 /* 呼叫後台：同時最多 6 個（Google 對同時執行的次數有限制，太多會被擋、看起來像 CORS 錯誤）；
    讀資料的請求遇到 Google 暫時出錯會自動再試 2 次，寫入的不重試，避免重複存 */
 const GSQ = { n: 0, q: [] };
-const GS_RETRY = new Set(["aiStatus", "loadLibrary", "loadProgress", "ttsGet", "ttsStatus", "babyPicGet", "famStatus", "famAdmin", "famVoiceList", "famVoiceGet", "growGet", "growSet", "newsHeadlines", "newsGet", "findVoice", "findWords", "listWishes", "listSaves", "unsplashFind", "saveProgress"]);
+const GS_RETRY = new Set(["aiStatus", "voiceListGet", "loadLibrary", "loadProgress", "ttsGet", "ttsStatus", "babyPicGet", "famStatus", "famAdmin", "famVoiceList", "famVoiceGet", "growGet", "growSet", "newsHeadlines", "newsGet", "findVoice", "findWords", "listWishes", "listSaves", "unsplashFind", "saveProgress"]);
 function gsSlot() { return new Promise(res => { if (GSQ.n < 6) { GSQ.n++; res(); } else GSQ.q.push(res); }); }
 function gsDone() { const nx = GSQ.q.shift(); if (nx) nx(); else GSQ.n = Math.max(0, GSQ.n - 1); }
 async function apiCall(fn, args) {
@@ -725,8 +725,8 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
-const EQ_BUILD = "ea4f87";
-const EQ_WEB = "16fb";
+const EQ_BUILD = "67d619";
+const EQ_WEB = "03a0";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -1166,9 +1166,10 @@ function aivUi() {
 const babyEn = (w, ph) => w.charAt(0).toUpperCase() + w.slice(1) + "! ... " + ph;
 const babyZhT = (zw, zp) => zw + "。" + zp;
 function babyAivItems() { const out = []; BABY.concat([["", "", typeof babyCustom === "function" ? babyCustom() : []]]).forEach(t => t[2].forEach(([w, , ph, zw, zp]) => { AIV_LIST.forEach(([v]) => out.push([v, babyEn(w, ph)])); out.push(["zh", babyZhT(zw, zp)]); })); return out.concat(babyExtraAivItems()); }
-function courseAivItems() {
+/* 課程裡會唸到的句子（例句、記憶卡、急救包、片語、文法、AI 例句） */
+function courseSentTexts() {
   const set = new Set(), out = [];
-  const add = t => { t = ckPlain(String(t || "")).trim(); if (!t || t.length > 200 || set.has(t) || !/[a-z]/i.test(t)) return; if (canHumanSent(t)) { const v = sentCached(normSent(t)); if (v && v.u) return; } set.add(t); out.push([aivFor(t), t]); };
+  const add = t => { t = ckPlain(String(t || "")).trim(); if (!t || t.length > 200 || set.has(t) || !/[a-z]/i.test(t)) return; set.add(t); out.push(t); };
   WORDS.forEach(w => { add(w.ex); const c = cardOf(w.en); if (c) add(c.s); });
   Object.values(TRAVEL).forEach(c => c.items.forEach(x => add(x[0])));
   CHUNK.lib.forEach(c => c[2].forEach(m => m[3].forEach(e => add(e[0]))));
@@ -1177,18 +1178,80 @@ function courseAivItems() {
   Object.values(state.aiBank || {}).forEach(a => (Array.isArray(a) ? a : []).forEach(x => x && add(x.s)));
   return out;
 }
+/* 後台能幫忙查 Tatoeba 的句子：2～16 個字（太長的本來就查不到，直接用 AI） */
+const sentCheckable = t => { if (!canHumanSent(t)) return false; const n = normSent(t).split(" ").filter(Boolean).length; return n >= 2 && n <= 16; };
+/* 句子的真人錄音狀態："yes" 有、"no" 沒有、"?" 還沒查 */
+function sentHumanState(t) { if (!sentCheckable(t)) return "no"; const v = sentCached(normSent(t)); return v === undefined ? "?" : v && v.u ? "yes" : "no"; }
+/* strict＝只放確定沒有真人錄音的（還沒查的先不放） */
+function courseAivItems(strict) {
+  return courseSentTexts().filter(t => { const h = sentHumanState(t); return h === "no" || (h === "?" && !strict); }).map(t => [aivFor(t), t]);
+}
+/* 課程單字：唸單字時先找「_真人單字」，沒有才用 AI 語音 */
+function courseWordList() { const m = new Map(); WORDS.forEach(w => { const t = String(w.en || "").trim(); if (/^[a-z]+(?:[- ][a-z]+)?$/i.test(t) && !m.has(t.toLowerCase())) m.set(t.toLowerCase(), t); }); return [...m].map(([k, t]) => ({ k, t })); }
+function humanCache() { try { return JSON.parse(localStorage.getItem("eq-human") || "{}") || {}; } catch (e) { return {}; } }
+function wordHumanState(w, cache) {
+  if (state.human === false) return "no";
+  const k = (UK() ? "uk:" : "") + w;
+  if (k in HUMAN.mem) return HUMAN.mem[k] ? "yes" : "no";
+  if (cache[k]) return "yes";
+  if (("@" + k) in cache && Date.now() - cache["@" + k] < 7 * 864e5) return "no";
+  return "?";
+}
+function courseWordAivItems(strict) {
+  const cache = humanCache();
+  return courseWordList().filter(x => { const h = wordHumanState(x.k, cache); return h === "no" || (h === "?" && !strict); }).map(x => [aivFor(x.t), x.t]);
+}
+/* 按「一鍵產生」之前：先拿雲端最新的「_真人句子」「_真人單字」，還沒查過的先查，有真人錄音的就不產生 AI 語音 */
+async function aivPrecheck(prog) {
+  if (Store.backend === "sheet") { try { const V = await gs("voiceListGet"); if (V && typeof V === "object") mergeVoices(V); } catch (e) { } }
+  const cache = humanCache();
+  const words = courseWordList().filter(x => wordHumanState(x.k, cache) === "?").map(x => x.k);
+  const sents = [...new Set(courseSentTexts().filter(t => sentHumanState(t) === "?").map(normSent))];
+  const total = words.length + sents.length; let done = 0;
+  if (!total) return { total: 0, fail: 0 };
+  prog(0, total);
+  for (let i = 0; i < words.length; i += 12) {
+    const b = words.slice(i, i + 12); let via = false;
+    if (Store.backend === "sheet" && !UK()) {
+      try { const m = (await gs("findWords", b)) || {}; via = true; b.forEach(w => { if (w in m) { VOICE_SRV.w.add(w); saveWordVoice(w, m[w] ? longVoiceUrl(m[w]) : ""); } }); } catch (e) { }
+    }
+    if (!via) for (const w of b) { await humanUrl(w); await waitMs(200); }
+    done += b.length; prog(done, total);
+  }
+  for (let i = 0; i < sents.length; i += 8) {
+    const b = sents.slice(i, i + 8);
+    try { await fetchSents(b); } catch (e) { }
+    done += b.length; prog(done, total); await waitMs(300);
+  }
+  const c2 = humanCache();
+  const fail = words.filter(w => wordHumanState(w, c2) === "?").length + sents.filter(k => sentCached(k) === undefined).length;
+  return { total, fail };
+}
 const aivTodo = items => items.filter(([v, t]) => !AIV.have.has(aiKey(v, t))).length;
 /* 一鍵全部產生：Google 版交給後台排程（關掉網頁也會繼續）；電腦版在這頁慢慢做 */
-const AIVS = { st: null, timer: 0 };
-function aivAllItems(babyFirst) {
+const AIVS = { st: null, timer: 0, checking: false };
+function aivAllItems(babyFirst, strict) {
   const cur = BB ? bbItems() : [], first = [];
   if (babyFirst) cur.forEach(([w, , ph, zw, zp]) => { AIV_LIST.forEach(([v]) => first.push([v, babyEn(w, ph)])); first.push(["zh", babyZhT(zw, zp)]); });
   const seen = new Set(), out = [];
-  first.concat(babyAivItems(), courseAivItems(), spkAivItems()).forEach(([v, t]) => { const k = aiKey(v, t); if (!seen.has(k) && !AIV.have.has(k)) { seen.add(k); out.push({ k, v, t }); } });
+  first.concat(babyAivItems(), courseAivItems(strict), courseWordAivItems(strict), spkAivItems()).forEach(([v, t]) => { const k = aiKey(v, t); if (!seen.has(k) && !AIV.have.has(k)) { seen.add(k); out.push({ k, v, t }); } });
   return out;
 }
 async function aivGenAll(babyFirst) {
-  const all = aivAllItems(babyFirst);
+  if (AIVS.checking) return;
+  const btns = [$("aivAll"), $("bbGen")].filter(Boolean);
+  const say = m => document.querySelectorAll("[data-aivout]").forEach(el => el.textContent = m);
+  AIVS.checking = true; btns.forEach(b => b.disabled = true);
+  let chk = { total: 0, fail: 0 };
+  try { chk = await aivPrecheck((d, t) => { say(`先對一次真人錄音（_真人句子、_真人單字）：${d} / ${t}，第一次要幾分鐘，請先不要關掉這頁`); btns.forEach(b => b.textContent = `對真人錄音中… ${d} / ${t}`); }); } catch (e) { }
+  AIVS.checking = false;
+  const cache = humanCache(), sYes = courseSentTexts().filter(t => sentHumanState(t) === "yes").length, wYes = courseWordList().filter(x => wordHumanState(x.k, cache) === "yes").length;
+  const all = aivAllItems(babyFirst, true);
+  const note = `已對過真人錄音：${sYes} 句、${wYes} 個字有真人錄音，不用產生。${chk.fail ? `有 ${chk.fail} 個這次沒查到（網路太忙），先不排，等一下再按一次會接著查。` : ""}`;
+  say(note);
+  if (!$("stats").hidden && $("aivAll")) { try { renderStats(); } catch (e) { } say(note); }
+  else if (!$("baby").hidden && BB) renderBaby(false);
+  else btns.forEach(b => { b.disabled = false; });
   if (!all.length) { toast("全部都產生好了！"); return; }
   if (Store.backend !== "sheet") { aivQueue(all.map(x => [x.v, x.t])); toast(`開始產生 ${all.length} 段（電腦版要開著這頁）`); return; }
   try {
@@ -6431,7 +6494,8 @@ function renderStats(focus) {
         <div class="row" style="flex-wrap:wrap;gap:6px"><span class="muted" style="font-size:13px">英文聲音</span><div class="seg" id="aivSeg" style="flex-wrap:wrap">${[["mix", "四種輪流"]].concat(AIV_BASE).map(([k, n]) => `<button data-aiv="${k}" aria-pressed="${(state.aiVoiceId || "mix") === k}">${n}</button>`).join("")}</div></div>
         <div class="row" style="flex-wrap:wrap;gap:6px"><span class="muted" style="font-size:13px">口音</span><div class="seg" id="accSeg">${[["us", "美式（建議）"], ["uk", "英式"]].map(([k, n]) => `<button data-acc="${k}" aria-pressed="${(UK() ? "uk" : "us") === k}">${n}</button>`).join("")}</div></div>
         <span class="muted" style="font-size:13px">已經產生 ${AIV.have.size} 段。產生好的語音存在你的雲端硬碟「English Quest AI 語音」，朋友打開也直接用，不會再花額度。</span>
-        ${AIV_CAN_MAKE() ? (() => { const tc = aivTodo(courseAivItems()), tb = aivTodo(babyAivItems()); return `<button class="btn primary block" id="aivAll" ${tc + tb ? "" : "disabled"}>${tc + tb ? `一鍵產生全部（寶寶聽力 ${tb} 段＋課程句子 ${tc} 句）` : "全部都產生好了 ✓"}</button>
+        ${AIV_CAN_MAKE() ? (() => { const tc = aivTodo(courseAivItems()), tw = aivTodo(courseWordAivItems()), tb = aivTodo(babyAivItems()); return `<button class="btn primary block" id="aivAll" ${tc + tb + tw ? "" : "disabled"}>${tc + tb + tw ? `一鍵產生全部（寶寶聽力 ${tb} 段＋課程句子最多 ${tc} 句＋單字最多 ${tw} 個）` : "全部都產生好了 ✓"}</button>
+          <span class="muted" style="font-size:12px">按下去會先對一次雲端的「_真人句子」「_真人單字」，還沒查過的先查；有真人錄音的句子和單字不產生，只做真的沒有的。</span>
           <span style="font-size:13px" data-aivsrv></span><span style="font-size:13px" data-aivout></span>
           <div class="row" style="flex-wrap:wrap;gap:6px"><button class="btn small" data-aivcancel hidden>取消排隊</button><button class="btn small" data-aivstop hidden>停止</button><button class="btn small" id="aivRef">更新進度</button></div>
           <span class="muted" style="font-size:12px">${Store.backend === "sheet" ? "按一次就好：清單交給後台，每 10 分鐘自動做一批，關掉網頁、手機也會繼續做。第一次用請先在試算表上方選單「English Quest」→「AI 語音：授權背景產生」按一次。" : "電腦版要開著這頁才會繼續做。"}已經有真人錄音的句子會跳過。</span>`; })() : `<span class="muted" style="font-size:12px">只有分享者（有 Gemini 金鑰）可以產生新的 AI 語音。</span>`}
