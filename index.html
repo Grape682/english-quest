@@ -101,6 +101,9 @@ button.chip:hover{border-color:var(--primary)}
 .mcard .tip{font-size:14px;color:var(--muted);border-top:1px dashed var(--line);padding-top:10px;width:100%}
 .memo{display:flex;gap:10px;align-items:flex-start;background:var(--surface-2);border-radius:12px;padding:10px 12px;text-align:left}
 .memo .em{font-size:26px;line-height:1.1;flex:none}
+.bbwho{flex:0 1 auto;min-width:0;max-width:46%;padding:6px 10px;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.byicons{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.byicons button{font-size:24px;width:44px;height:44px;border-radius:12px;border:1px solid var(--line,#ddd);background:var(--surface);cursor:pointer}.byicons button[aria-checked="true"]{border:2px solid var(--primary);background:var(--primary-soft)}
+.bysel{display:flex;align-items:center;gap:10px;flex:1;min-width:0;border:1px solid var(--line,#ddd);background:var(--surface);color:var(--ink);border-radius:14px;padding:8px 12px;cursor:pointer;font:inherit}.bysel[aria-pressed="true"]{border:2px solid var(--primary);background:var(--primary-soft)}
 .bbthemes{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.bbthemes .tchip{flex:0 0 auto;white-space:nowrap}
 .tchip.on{background:var(--primary);color:#fff;border-color:var(--primary)}
 .bbcard{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;min-height:50vh;border:0;border-radius:28px;background:var(--surface);box-shadow:0 10px 30px -18px rgba(0,0,0,.35);cursor:pointer;color:var(--ink)}
@@ -689,14 +692,28 @@ const REMOTE = !GAS_RUN && !!EQ_API;
 const GAS = GAS_RUN || REMOTE;
 function ownerToken() { try { return localStorage.getItem("eq-owner-token") || ""; } catch (e) { return ""; } }
 function setOwnerToken(t) { try { if (t) localStorage.setItem("eq-owner-token", t); else localStorage.removeItem("eq-owner-token"); } catch (e) { } }
+/* 呼叫後台：同時最多 6 個（Google 對同時執行的次數有限制，太多會被擋、看起來像 CORS 錯誤）；
+   讀資料的請求遇到 Google 暫時出錯會自動再試 2 次，寫入的不重試，避免重複存 */
+const GSQ = { n: 0, q: [] };
+const GS_RETRY = new Set(["aiStatus", "loadLibrary", "loadProgress", "ttsGet", "ttsStatus", "babyPicGet", "famStatus", "famAdmin", "famVoiceList", "famVoiceGet", "growGet", "growSet", "newsHeadlines", "newsGet", "findVoice", "findWords", "listWishes", "listSaves", "unsplashFind", "saveProgress"]);
+function gsSlot() { return new Promise(res => { if (GSQ.n < 6) { GSQ.n++; res(); } else GSQ.q.push(res); }); }
+function gsDone() { const nx = GSQ.q.shift(); if (nx) nx(); else GSQ.n = Math.max(0, GSQ.n - 1); }
 async function apiCall(fn, args) {
-  const body = JSON.stringify({ fn, args, token: ownerToken() });
-  let r;
-  try { r = await fetch(EQ_API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body, redirect: "follow", keepalive: body.length < 60000 }); }
-  catch (e) { throw new Error("OFFLINE"); }
-  let j; try { j = await r.json(); } catch (e) { throw new Error("BAD_RESPONSE " + r.status); }
-  if (j && j.error) throw new Error(j.error);
-  return j ? j.result : null;
+  const body = JSON.stringify({ fn, args, token: ownerToken() }), tries = GS_RETRY.has(fn) ? 3 : 1;
+  const pause = k => new Promise(r => setTimeout(r, 900 * (k + 1) + Math.random() * 600));
+  const q = fn !== "saveProgress"; if (q) await gsSlot();
+  try {
+    for (let k = 0; k < tries; k++) {
+      const last = k + 1 >= tries;
+      let r;
+      try { r = await fetch(EQ_API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body, redirect: "follow", keepalive: fn === "saveProgress" && body.length < 60000 }); }
+      catch (e) { if (!last && navigator.onLine !== false) { await pause(k); continue; } throw new Error("OFFLINE"); }
+      if (!r.ok && !last && (r.status === 404 || r.status === 429 || r.status >= 500)) { await pause(k); continue; }
+      let j; try { j = await r.json(); } catch (e) { if (!last) { await pause(k); continue; } throw new Error("BAD_RESPONSE " + r.status); }
+      if (j && j.error) throw new Error(j.error);
+      return j ? j.result : null;
+    }
+  } finally { if (q) gsDone(); }
 }
 function gs(fn, ...args) {
   if (REMOTE) return apiCall(fn, args);
@@ -706,8 +723,8 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
-const EQ_BUILD = "3d5e96";
-const EQ_WEB = "81ef";
+const EQ_BUILD = "ea4f87";
+const EQ_WEB = "1618";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -3711,9 +3728,9 @@ const BB_VIEWS = [["listen", "🎧", "聽單字"], ["point", "👆", "指指看"
 const bbView = () => BB && BB_VIEWS.some(v => v[0] === BB.view) ? BB.view : "listen";
 function bbTabs() { return `<nav class="bbviews" role="tablist" aria-label="寶寶聽力的功能">${BB_VIEWS.map(([k, ic, n]) => `<button class="vt${bbView() === k ? " on" : ""}" data-bview="${k}" role="tab" aria-selected="${bbView() === k}"><span aria-hidden="true">${ic}</span>${n}</button>`).join("")}</nav>`; }
 function bbStopAll() { if (BB) { BB.tok++; BB.auto = false; BB.dark = false; } PT.tok++; SG.tok++; TP.tok++; mbStop(); stopHuman(); if (TTS) speechSynthesis.cancel(); }
-function bbBindTabs() { $("baby").querySelectorAll("[data-bview]").forEach(b => b.onclick = () => { bbStopAll(); BB.view = b.dataset.bview; renderBaby(false); try { window.scrollTo(0, 0); } catch (e) { } }); }
+function bbBindTabs() { if ($("bbWho")) $("bbWho").onclick = () => { bbStopAll(); renderBaby(false); openBabies(); }; $("baby").querySelectorAll("[data-bview]").forEach(b => b.onclick = () => { bbStopAll(); BB.view = b.dataset.bview; renderBaby(false); try { window.scrollTo(0, 0); } catch (e) { } }); }
 function renderBabyView() {
-  $("baby").innerHTML = `<header class="top"><button class="icon-btn" id="bbBack" aria-label="離開">${ICON.x}</button><h2 style="font-size:22px;flex:1;min-width:0">寶寶聽力</h2></header>${bbTabs()}<div id="bbView" class="bbview"></div>`;
+  $("baby").innerHTML = `<header class="top"><button class="icon-btn" id="bbBack" aria-label="離開">${ICON.x}</button><h2 style="font-size:22px;flex:1;min-width:0">寶寶聽力</h2>${bbWhoBtn()}</header>${bbTabs()}<div id="bbView" class="bbview"></div>`;
   $("bbBack").onclick = () => { bbStopAll(); show("home"); renderHome(); };
   bbBindTabs();
   ({ point: renderPoint, song: renderSongs, tips: renderTips, grow: renderGrow })[bbView()]();
@@ -3889,35 +3906,155 @@ function openFamRec(key, title, sub, maxSec, after, song, baby) {
   draw();
 }
 
+/* ---------- 好幾位寶寶：紀錄各自記，單字、照片、兒歌、家人錄音大家共用 ---------- */
+const BABY_ICONS = ["👶", "👧", "👦", "🧒", "🐣", "🐻", "🐰", "🐱", "🐶", "🦁", "🐼", "🐥"];
+const BABY_ID_RE = /^b[0-9a-z]{1,10}$/;
+function babies() {
+  if (!Array.isArray(state.babies)) state.babies = [];
+  state.babies = state.babies.filter(b => b && BABY_ID_RE.test(b.id));
+  if (!state.babies.some(b => b.id === "b1")) state.babies.unshift({ id: "b1", n: "", ic: "👶" });
+  if (!state.babies.some(b => b.id === state.babyCur)) state.babyCur = "b1";
+  return state.babies;
+}
+const babyCur = () => babies().find(b => b.id === state.babyCur) || babies()[0];
+function babyName(b) { b = b || babyCur(); return b.n || (babies().length > 1 ? `寶寶 ${babies().indexOf(b) + 1}` : "寶寶"); }
+/* 寶寶自己說話的錄音：第一位寶寶沿用原本的 b:單字，其他位是 b:單字@編號 */
+const bvKey = (w, id) => { id = id || babyCur().id; return id === "b1" ? "b:" + w : `b:${w}@${id}`; };
+function babyStore() { if (!state.babyStore || typeof state.babyStore !== "object" || Array.isArray(state.babyStore)) state.babyStore = {}; return state.babyStore; }
+/* 目前這位寶寶的資料放在 babyLog／babyBirth／babyDaily，其他位收在 babyStore 裡 */
+function babyData(id) {
+  if (id === babyCur().id) return { log: growLog(), birth: state.babyBirth || "", daily: state.babyDaily };
+  const x = babyStore()[id] = babyStore()[id] || {}; if (!x.log || typeof x.log !== "object" || Array.isArray(x.log)) x.log = {}; return x;
+}
+function babySetBirth(id, v) { if (id === babyCur().id) state.babyBirth = v; else babyData(id).birth = v; }
+function babySwitch(id) {
+  const cur = babyCur(); if (id === cur.id || !babies().some(b => b.id === id)) return;
+  babyStore()[cur.id] = { log: growLog(), birth: state.babyBirth || "", daily: state.babyDaily || null };
+  const nx = babyStore()[id] || {}; delete babyStore()[id];
+  state.babyLog = nx.log && typeof nx.log === "object" && !Array.isArray(nx.log) ? nx.log : {}; state.babyBirth = nx.birth || ""; state.babyDaily = nx.daily || null;
+  state.babyCur = id; Store.save();
+  if (BB) { if (BB.t === BB_DAILY) BB.i = 0; GROW.all = false; }
+}
+function babyListApply(list) {
+  const nl = []; list.forEach(b => { if (b && BABY_ID_RE.test(b.id) && !nl.some(x => x.id === b.id)) nl.push({ id: b.id, n: String(b.n || "").slice(0, 12), ic: BABY_ICONS.includes(b.ic) ? b.ic : "👶" }); });
+  if (!nl.some(b => b.id === "b1")) nl.unshift({ id: "b1", n: "", ic: "👶" });
+  if (!nl.some(b => b.id === babyCur().id)) babySwitch("b1");
+  Object.keys(babyStore()).forEach(id => { if (!nl.some(b => b.id === id)) delete babyStore()[id]; });
+  state.babies = nl;
+}
+/* 雲端可以分寶寶記嗎？（後端還沒更新的話，第 2 位以後的寶寶只記在這台裝置） */
+const growCloud = id => fvCloud() && ((id || babyCur().id) === "b1" || GROWC.multi === true);
+function bbWhoBtn() { const b = babyCur(); return `<button class="tchip bbwho" id="bbWho" aria-label="現在是 ${esc(babyName(b))}，點一下切換或新增寶寶"><span aria-hidden="true">${b.ic}</span>${esc(babyName(b))} ▾</button>`; }
+function openBabies(edit) {
+  const L = babies(), canDel = id => id !== "b1" && !isFam() || (id !== "b1" && KEY_MODE());
+  if (edit) {
+    const isNew = edit === "new", b = isNew ? { id: "", n: "", ic: BABY_ICONS[Math.min(L.length, BABY_ICONS.length - 1)] } : L.find(x => x.id === edit);
+    if (!b) return openBabies();
+    const birth = isNew ? "" : babyData(b.id).birth || "";
+    openModal(`<div class="row"><h2 style="font-size:20px;flex:1;min-width:0">${isNew ? "＋ 新增寶寶" : `✏️ ${esc(babyName(b))}`}</h2><button class="icon-btn" id="byClose" aria-label="關閉">${ICON.x}</button></div>
+      <form id="byForm" style="display:flex;flex-direction:column;gap:12px">
+        <label style="display:flex;flex-direction:column;gap:4px"><span style="font-size:14px">名字或小名</span><input id="byName" maxlength="12" value="${esc(b.n)}" placeholder="例如：小明、妹妹" autocomplete="off"></label>
+        <div><span style="font-size:14px">代表圖示</span><div class="byicons" role="radiogroup" aria-label="代表圖示">${BABY_ICONS.map(ic => `<button type="button" data-byic="${ic}" role="radio" aria-checked="${ic === b.ic}">${ic}</button>`).join("")}</div></div>
+        <label style="display:flex;flex-direction:column;gap:4px"><span style="font-size:14px">生日（可以先不填）</span><input type="date" id="byBirth" value="${esc(birth)}"></label>
+        <button class="btn primary block" type="submit" id="bySave">${isNew ? "新增" : "存起來"}</button>
+      </form>
+      ${!isNew && canDel(b.id) ? `<button class="btn small" id="byDel" style="align-self:flex-start;color:var(--danger,#c0392b)">刪掉這位寶寶</button>` : ""}
+      <button class="btn small" id="byBack" style="align-self:flex-start">← 回到寶寶清單</button>`);
+    let ic = b.ic;
+    $("gPanel").querySelectorAll("[data-byic]").forEach(x => x.onclick = () => { ic = x.dataset.byic; $("gPanel").querySelectorAll("[data-byic]").forEach(y => y.setAttribute("aria-checked", String(y === x))); });
+    $("byClose").onclick = closeModal; $("byBack").onclick = () => openBabies();
+    $("byForm").onsubmit = async ev => {
+      ev.preventDefault();
+      const n = String($("byName").value || "").replace(/[<>"`]/g, "").trim().slice(0, 12), bd = /^\d{4}-\d{2}-\d{2}$/.test($("byBirth").value) ? $("byBirth").value : "";
+      if (isNew && L.length >= 10) { toast("最多 10 位寶寶"); return; }
+      const id = isNew ? "b" + (Date.now().toString(36) + Math.random().toString(36).slice(2, 4)).slice(-8) : b.id;
+      const oldBirth = isNew ? "" : babyData(id).birth || "";
+      if (isNew) L.push({ id, n, ic }); else { b.n = n; b.ic = ic; }
+      babySetBirth(id, bd); Store.save();
+      $("bySave").disabled = true;
+      if (fvCloud() && (id === "b1" || GROWC.multi !== false)) {
+        try { let r = await gs("growBaby", id, n, ic, famTok()); if (bd !== oldBirth) r = await gs("growBirth", bd, famTok(), id); if (r && r.bm) GROWC.multi = true; growApply(r); }
+        catch (e) { toast("存在這台裝置了；同步給家人失敗：" + backendError(e)); }
+      }
+      if (isNew) { babySwitch(id); toast(`新增好了！現在是 ${babyName()} 的紀錄`); } else toast("存好了");
+      closeModal(); renderBaby(false);
+    };
+    if ($("byDel")) $("byDel").onclick = async () => {
+      if (!confirm(`要刪掉「${babyName(b)}」嗎？他的會指、會說紀錄和他自己說話的錄音都會一起刪掉，不能復原。${fvCloud() ? "（全家的手機都會一起刪掉）" : ""}`)) return;
+      $("byDel").disabled = true;
+      if (fvCloud() && GROWC.multi) { try { growApply(await gs("growBabyDel", b.id)); } catch (e) { $("byDel").disabled = false; toast(backendError(e)); return; } }
+      if (babyCur().id === b.id) babySwitch("b1");
+      state.babies = babies().filter(x => x.id !== b.id); delete babyStore()[b.id];
+      Object.keys(fvIdx()).forEach(k => { if (k.slice(-(b.id.length + 1)) === "@" + b.id) delete fvIdx()[k]; }); fvSaveIdx();
+      Store.save(); toast("刪掉了"); closeModal(); renderBaby(false);
+    };
+    setTimeout(() => { try { if (isNew) $("byName").focus(); } catch (e) { } }, 50);
+    return;
+  }
+  const cur = babyCur();
+  openModal(`<div class="row"><h2 style="font-size:20px;flex:1;min-width:0">👶 哪一位寶寶？</h2><button class="icon-btn" id="byClose" aria-label="關閉">${ICON.x}</button></div>
+    <p class="muted" style="margin:0;font-size:13px">每位寶寶的「會指了、會說了」、成長時間軸、寶寶說話的錄音、聽過幾次和今日 10 個字都分開記。單字、照片、兒歌、爸媽小抄、家人錄音和自選清單大家共用。${fvCloud() ? "家人群組的手機也看得到這些寶寶，可以切換著記。" : ""}</p>
+    <div style="display:flex;flex-direction:column;gap:8px">${L.map(b => { const d = babyData(b.id), lg = d.log || {}, ns = Object.values(lg).filter(e => e && e.say).length, np = Object.values(lg).filter(e => e && e.point).length, age = ageText(d.birth, today()); return `<div class="row bypick${b.id === cur.id ? " on" : ""}" style="gap:10px;align-items:center">
+      <button class="bysel" data-bysw="${b.id}" aria-pressed="${b.id === cur.id}"><span style="font-size:30px" aria-hidden="true">${b.ic}</span><span style="flex:1;min-width:0;text-align:left"><b>${esc(babyName(b))}</b>${b.id === cur.id ? ` <span class="muted" style="font-size:12px">（現在）</span>` : ""}<br><span class="muted" style="font-size:12px">${age ? age + "・" : ""}會指 ${np}・會說 ${ns}</span></span></button>
+      <button class="btn small" data-byed="${b.id}" aria-label="改 ${esc(babyName(b))} 的名字和生日">✏️</button></div>`; }).join("")}</div>
+    ${!cur.n ? `<p class="muted" style="margin:0;font-size:12px">以前記的紀錄都在「${esc(babyName(babies()[0]))}」這裡，點 ✏️ 幫他取個名字吧。</p>` : ""}
+    ${L.length < 10 ? `<button class="btn block" id="byAdd">＋ 新增寶寶</button>` : ""}`);
+  $("byClose").onclick = closeModal;
+  $("gPanel").querySelectorAll("[data-bysw]").forEach(x => x.onclick = () => { bbStopAll(); babySwitch(x.dataset.bysw); closeModal(); toast(`現在是 ${babyName()} ${babyCur().ic}`); renderBaby(false); });
+  $("gPanel").querySelectorAll("[data-byed]").forEach(x => x.onclick = () => openBabies(x.dataset.byed));
+  if ($("byAdd")) $("byAdd").onclick = () => openBabies("new");
+}
+
 /* ---------- 成長紀錄 ---------- */
 function growLog() { if (!state.babyLog || typeof state.babyLog !== "object" || Array.isArray(state.babyLog)) state.babyLog = {}; return state.babyLog; }
 function growMark(w, k) { const e = growLog()[w] = growLog()[w] || {}; e[k] = (Number(e[k]) || 0) + 1; if (k === "pt" && !e.pt1) e.pt1 = today(); Store.save(); }
 function growToggle(w, k) {
-  const e = growLog()[w] = growLog()[w] || {};
-  if (e[k]) { if (!confirm(`要取消「${w}・${k === "point" ? "會指了" : "會說了"}」的紀錄嗎？${fvCloud() ? "（全家的紀錄都會一起取消）" : ""}`)) return false; delete e[k]; delete e[k + "By"]; }
-  else { e[k] = today(); e[k + "By"] = isFam() ? famSt().name : "爸媽"; toast(k === "point" ? `記下來了：${w} 會指了 👆` : `記下來了：${w} 會說了 🗣`); }
+  const e = growLog()[w] = growLog()[w] || {}, who = babies().length > 1 ? babyName() + "・" : "", id = babyCur().id;
+  if (e[k]) { if (!confirm(`要取消「${who}${w}・${k === "point" ? "會指了" : "會說了"}」的紀錄嗎？${growCloud() ? "（全家的紀錄都會一起取消）" : ""}`)) return false; delete e[k]; delete e[k + "By"]; }
+  else { e[k] = today(); e[k + "By"] = isFam() ? famSt().name : "爸媽"; toast(k === "point" ? `記下來了：${who}${w} 會指了 👆` : `記下來了：${who}${w} 會說了 🗣`); }
   Store.save();
-  if (fvCloud()) gs("growSet", w, k, e[k] || "", famTok()).then(growApply).catch(x => toast("已記在這台裝置；同步給家人失敗：" + backendError(x)));
+  if (growCloud(id)) gs("growSet", w, k, e[k] || "", famTok(), id).then(growApply).catch(x => toast("已記在這台裝置；同步給家人失敗：" + backendError(x)));
   return true;
 }
 /* 成長紀錄：作者和家人群組共用雲端那一份（聽過幾次、指指看次數還是各自記） */
-const GROWC = { at: 0 };
+const GROWC = { at: 0, multi: undefined };
 function growApply(r) {
   if (!r || typeof r.m !== "object") return;
-  const L = growLog();
-  Object.keys(L).forEach(w => ["point", "say", "pointBy", "sayBy"].forEach(k => delete L[w][k]));
-  Object.keys(r.m).forEach(w => { const e = r.m[w], x = L[w] = L[w] || {}; ["point", "say"].forEach(k => { if (e[k]) { x[k] = e[k]; x[k + "By"] = e[k + "By"] || ""; } }); });
-  state.babyBirth = r.birth || ""; Store.save();
+  const multi = !!(r.bm && typeof r.bm === "object" && Array.isArray(r.babies));
+  if (multi) { GROWC.multi = true; babyListApply(r.babies); }
+  const bm = multi ? r.bm : { b1: { m: r.m, birth: r.birth || "" } };
+  (multi ? babies().map(b => b.id) : ["b1"]).forEach(id => {
+    const d = bm[id] || { m: {}, birth: "" }, L = babyData(id).log;
+    Object.keys(L).forEach(w => ["point", "say", "pointBy", "sayBy"].forEach(k => delete L[w][k]));
+    Object.keys(d.m || {}).forEach(w => { const e = d.m[w], x = L[w] = L[w] || {}; ["point", "say"].forEach(k => { if (e[k]) { x[k] = e[k]; x[k + "By"] = e[k + "By"] || ""; } }); });
+    babySetBirth(id, d.birth || "");
+  });
+  Store.save();
 }
 async function growSync() {
   if (!fvCloud()) return;
   GROWC.at = Date.now(); let r;
   try { r = await gs("growGet", famTok()); } catch (e) { return; }
+  const multi = !!(r && r.bm && Array.isArray(r.babies)); GROWC.multi = multi;
   if (!state.growMig) {
-    const up = []; Object.entries(growLog()).forEach(([w, e]) => ["point", "say"].forEach(k => { if (e[k] && !(r.m[w] && r.m[w][k])) up.push([w, k, e[k]]); }));
-    if (state.babyBirth && !r.birth) up.push(["_baby", "birth", state.babyBirth]);
+    const d1 = babyData("b1"), up = []; Object.entries(d1.log).forEach(([w, e]) => ["point", "say"].forEach(k => { if (e[k] && !(r.m[w] && r.m[w][k])) up.push([w, k, e[k]]); }));
+    if (d1.birth && !r.birth) up.push(["_baby", "birth", d1.birth]);
     if (up.length) { try { r = await gs("growBulk", up, famTok()); } catch (e) { return; } }
     state.growMig = true;
+  }
+  /* 第一次分寶寶同步：這台裝置上新增過的寶寶和他們的紀錄搬上去 */
+  if (multi && !state.babyMig) {
+    for (const b of babies()) {
+      const c = r.babies.find(x => x.id === b.id);
+      if (b.id !== "b1" ? !c : (b.n && !(c && c.n))) { try { r = await gs("growBaby", b.id, b.n, b.ic, famTok()); } catch (e) { return; } }
+    }
+    const up = []; babies().filter(b => b.id !== "b1").forEach(b => {
+      const d = babyData(b.id), cm = (r.bm[b.id] || {}).m || {};
+      Object.entries(d.log).forEach(([w, e]) => ["point", "say"].forEach(k => { if (e[k] && !(cm[w] && cm[w][k])) up.push([w, k, e[k], b.id]); }));
+      if (d.birth && !(r.bm[b.id] || {}).birth) up.push(["_baby", "birth", d.birth, b.id]);
+    });
+    if (up.length) { try { r = await gs("growBulk", up, famTok()); } catch (e) { return; } }
+    state.babyMig = true;
   }
   growApply(r);
   if (!$("baby").hidden && BB && (bbView() === "grow" || (bbView() === "listen" && !BB.auto))) renderBaby(false);
@@ -3938,14 +4075,14 @@ function renderGrow() {
   const showAll = !!GROW.all;
   $("bbView").innerHTML = `
     <div class="reply" style="display:flex;flex-direction:column;gap:8px;border-radius:14px;padding:12px 14px">
-      <label class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><span style="font-size:14px">寶寶生日</span><input type="date" id="grBirth" value="${esc(birth)}" style="flex:1;min-width:150px"></label>
-      <span class="muted" style="font-size:12px">${fvCloud() ? "☁️ 全家共用：家人群組的每個人都能記，大家看到的是同一份。" : "紀錄存在這台裝置。"}填了生日，紀錄會顯示寶寶當時幾個月大。寶寶說出新的字時，點 🎙 就能把寶寶的聲音錄下來。</span></div>
+      <label class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><span style="font-size:14px">${esc(babyName())}的生日</span><input type="date" id="grBirth" value="${esc(birth)}" style="flex:1;min-width:150px"></label>
+      <span class="muted" style="font-size:12px">${growCloud() ? "☁️ 全家共用：家人群組的每個人都能記，大家看到的是同一份。" : "紀錄存在這台裝置。"}${babies().length > 1 ? `這裡是 ${esc(babyName())} 的紀錄，點上面的 ${babyCur().ic} 可以換寶寶。` : "家裡有兩位以上的寶寶？點上面的 👶 新增。"}填了生日，紀錄會顯示寶寶當時幾個月大。寶寶說出新的字時，點 🎙 就能把寶寶的聲音錄下來。</span></div>
     <div class="gtiles">
       <div class="gtile"><b>${nPoint}</b>👆 會指了</div><div class="gtile"><b>${nSay}</b>🗣 會說了</div>
       <div class="gtile"><b>${nHeard}<small> / ${all.length}</small></b>🎧 聽過的字</div><div class="gtile"><b>${ptSum}</b>👆 指指看答對</div></div>
-    ${firstSay ? `<div class="reply" style="border-radius:14px;padding:12px 14px;text-align:center"><span class="eyebrow">第一個會說的英文字</span><div style="font-size:28px;font-weight:800">${firstSay[2][1]} ${esc(firstSay[2][0])}</div><div class="muted">${esc(firstSay[0])}${ageText(birth, firstSay[0]) ? `・${ageText(birth, firstSay[0])}` : ""}</div>${fvList("b:" + firstSay[2][0]).length ? `<button class="btn small" data-gbp="${esc(firstSay[2][0])}" style="margin-top:6px">▶ 聽寶寶說</button>` : `<button class="btn small" data-gbr="${esc(firstSay[2][0])}" style="margin-top:6px">🎙 錄下寶寶說的聲音</button>`}</div>` : ""}
+    ${firstSay ? `<div class="reply" style="border-radius:14px;padding:12px 14px;text-align:center"><span class="eyebrow">第一個會說的英文字</span><div style="font-size:28px;font-weight:800">${firstSay[2][1]} ${esc(firstSay[2][0])}</div><div class="muted">${esc(firstSay[0])}${ageText(birth, firstSay[0]) ? `・${ageText(birth, firstSay[0])}` : ""}</div>${fvList(bvKey(firstSay[2][0])).length ? `<button class="btn small" data-gbp="${esc(firstSay[2][0])}" style="margin-top:6px">▶ 聽寶寶說</button>` : `<button class="btn small" data-gbr="${esc(firstSay[2][0])}" style="margin-top:6px">🎙 錄下寶寶說的聲音</button>`}</div>` : ""}
     <section><h3 style="font-size:17px;margin:0 0 6px">時間軸</h3>
-      ${ev.length ? `<div style="display:flex;flex-direction:column;gap:6px">${(showAll ? ev : ev.slice(0, 12)).map(([d, k, x, by]) => `<div class="row" style="gap:10px;align-items:center"><span class="muted" style="font-size:13px;width:44px">${mdDate(d)}</span><span style="font-size:22px">${x[1]}</span><span style="flex:1;min-width:0">${k === "say" ? "🗣 會說" : "👆 會指"} <b>${esc(x[0])}</b>（${esc(x[3])}）${by && by !== "爸媽" ? `<br><span class="muted" style="font-size:12px">${esc(by)}記的</span>` : ""}</span>${k === "say" ? (fvList("b:" + x[0]).length ? `<button class="btn small" data-gbp="${esc(x[0])}" aria-label="聽寶寶說 ${esc(x[0])}">▶ 👶</button>` : `<button class="btn small" data-gbr="${esc(x[0])}" aria-label="錄寶寶說 ${esc(x[0])}">🎙</button>`) : ""}${ageText(birth, d) ? `<span class="muted" style="font-size:12px">${ageText(birth, d)}</span>` : ""}</div>`).join("")}${ev.length > 12 && !showAll ? `<button class="btn small" id="grMore">顯示全部 ${ev.length} 筆</button>` : ""}</div>`
+      ${ev.length ? `<div style="display:flex;flex-direction:column;gap:6px">${(showAll ? ev : ev.slice(0, 12)).map(([d, k, x, by]) => `<div class="row" style="gap:10px;align-items:center"><span class="muted" style="font-size:13px;width:44px">${mdDate(d)}</span><span style="font-size:22px">${x[1]}</span><span style="flex:1;min-width:0">${k === "say" ? "🗣 會說" : "👆 會指"} <b>${esc(x[0])}</b>（${esc(x[3])}）${by && by !== "爸媽" ? `<br><span class="muted" style="font-size:12px">${esc(by)}記的</span>` : ""}</span>${k === "say" ? (fvList(bvKey(x[0])).length ? `<button class="btn small" data-gbp="${esc(x[0])}" aria-label="聽寶寶說 ${esc(x[0])}">▶ 👶</button>` : `<button class="btn small" data-gbr="${esc(x[0])}" aria-label="錄寶寶說 ${esc(x[0])}">🎙</button>`) : ""}${ageText(birth, d) ? `<span class="muted" style="font-size:12px">${ageText(birth, d)}</span>` : ""}</div>`).join("")}${ev.length > 12 && !showAll ? `<button class="btn small" id="grMore">顯示全部 ${ev.length} 筆</button>` : ""}</div>`
         : `<p class="muted" style="margin:0">還沒有紀錄。寶寶會指出某個東西、或說出某個字的時候，在下面點 👆 或 🗣，就會記下日期。</p>`}
     </section>
     <section style="display:flex;flex-direction:column;gap:10px"><h3 style="font-size:17px;margin:0">每個字的紀錄</h3>
@@ -3953,16 +4090,16 @@ function renderGrow() {
       ${BABY.map(([tn, ic, items]) => `<div><span class="eyebrow">${ic} ${esc(tn)}</span><div class="gwords" style="margin-top:4px">${items.map(x => { const e = get(x[0]); return `<span class="gw"><span aria-hidden="true">${x[1]}</span>${esc(x[0])}${e.heard ? `<small class="muted">🎧${e.heard}</small>` : ""}<button data-gw="${esc(x[0])}" data-gk="point" aria-pressed="${!!e.point}" aria-label="${esc(x[0])} 會指了">👆</button><button data-gw="${esc(x[0])}" data-gk="say" aria-pressed="${!!e.say}" aria-label="${esc(x[0])} 會說了">🗣</button></span>`; }).join("")}</div></div>`).join("")}
     </section>
     <div class="row bbctl"><button class="btn small" id="grCopy">📋 複製成文字（分享給家人）</button></div>`;
-  $("grBirth").onchange = e => { const v = String(e.target.value || ""); state.babyBirth = /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : ""; Store.save(); renderGrow(); if (fvCloud()) gs("growBirth", state.babyBirth, famTok()).then(growApply).catch(x => toast(backendError(x))); };
+  $("grBirth").onchange = e => { const v = String(e.target.value || ""); state.babyBirth = /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : ""; Store.save(); renderGrow(); if (growCloud()) gs("growBirth", state.babyBirth, famTok(), babyCur().id).then(growApply).catch(x => toast(backendError(x))); };
   if ($("grMore")) $("grMore").onclick = () => { GROW.all = true; renderGrow(); };
   $("bbView").querySelectorAll("[data-gw]").forEach(b => b.onclick = () => { if (growToggle(b.dataset.gw, b.dataset.gk)) renderGrow(); });
-  $("bbView").querySelectorAll("[data-gbp]").forEach(b => b.onclick = async () => { const ls = fvList("b:" + b.dataset.gbp); const u = ls.length ? await fvUrl("b:" + b.dataset.gbp, ls[0].who) : ""; if (u) playUrl(u); else toast("找不到這段錄音"); });
-  $("bbView").querySelectorAll("[data-gbr]").forEach(b => b.onclick = () => { const x = BABY.flatMap(t => t[2]).find(y => y[0] === b.dataset.gbr); if (x) openFamRec("b:" + x[0], `${x[1]} ${x[0]}`, `錄下寶寶說「${x[0]}」的聲音，以後可以回味`, 20, () => { if (bbView() === "grow") renderGrow(); }, null, true); });
+  $("bbView").querySelectorAll("[data-gbp]").forEach(b => b.onclick = async () => { const ls = fvList(bvKey(b.dataset.gbp)); const u = ls.length ? await fvUrl(bvKey(b.dataset.gbp), ls[0].who) : ""; if (u) playUrl(u); else toast("找不到這段錄音"); });
+  $("bbView").querySelectorAll("[data-gbr]").forEach(b => b.onclick = () => { const x = BABY.flatMap(t => t[2]).find(y => y[0] === b.dataset.gbr); if (x) openFamRec(bvKey(x[0]), `${x[1]} ${x[0]}`, `錄下寶寶說「${x[0]}」的聲音，以後可以回味`, 20, () => { if (bbView() === "grow") renderGrow(); }, null, true); });
   $("grCopy").onclick = () => {
-    const lines = ["寶寶的英文成長紀錄（English Quest）", `會指 ${nPoint} 個字・會說 ${nSay} 個字・聽過 ${nHeard} 個字`];
+    const lines = [`${babyName()}的英文成長紀錄（English Quest）`, `會指 ${nPoint} 個字・會說 ${nSay} 個字・聽過 ${nHeard} 個字`];
     ev.slice().reverse().forEach(([d, k, x]) => lines.push(`${d}${ageText(birth, d) ? `（${ageText(birth, d)}）` : ""} ${k === "say" ? "會說" : "會指"} ${x[0]}（${x[3]}）`));
     const txt = lines.join("\n");
-    (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("複製好了，可以貼到 LINE 給家人")).catch(() => { prompt("請複製下面的文字", txt); });
+    (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast(`${babyName()}的紀錄複製好了，可以貼到 LINE 給家人`)).catch(() => { prompt("請複製下面的文字", txt); });
   };
 }
 const GROW = { all: false };
@@ -4378,7 +4515,7 @@ function renderBaby(say) {
   const items = bbItems(); if (BB.i >= items.length) BB.i = 0;
   const [w, e, ph, zw, zp] = items[BB.i], gl = growLog()[w] || {}, fvn = fvList("w:" + w).length, daily = BB.t === BB_DAILY ? dailyPlan() : null;
   $("baby").innerHTML = `
-    <header class="top"><button class="icon-btn" id="bbBack" aria-label="離開">${ICON.x}</button><h2 style="font-size:22px;flex:1;min-width:0">寶寶聽力</h2><span class="muted" style="font-size:14px">${BB.i + 1} / ${items.length}</span></header>
+    <header class="top"><button class="icon-btn" id="bbBack" aria-label="離開">${ICON.x}</button><h2 style="font-size:22px;flex:1;min-width:0">寶寶聽力</h2>${bbWhoBtn()}<span class="muted" style="font-size:14px">${BB.i + 1} / ${items.length}</span></header>
     ${bbTabs()}
     ${bpicCan() && (BPICS.pending || []).length ? `<button class="btn small block" id="bpTop" style="background:var(--primary-soft)">📬 朋友提供了 ${BPICS.pending.length} 張照片等你確認</button>` : ""}
     <div class="bbthemes"><button class="tchip${BB.t === BB_DAILY ? " on" : ""}" data-bt="${BB_DAILY}"><span aria-hidden="true">⭐</span>今日 10 個字${state.babyDaily && state.babyDaily.d === today() && state.babyDaily.done ? " ✓" : ""}</button>${babyLists().map(l => `<button class="tchip${BB.t === BB_LIST && BB.list === l.id ? " on" : ""}" data-bl="${esc(l.id)}"><span aria-hidden="true">📋</span>${esc(l.name)}</button>`).join("")}<button class="tchip" id="bbNewList"><span aria-hidden="true">＋</span>自選清單</button>${BABY.map(([n, ic], k) => `<button class="tchip${k === BB.t ? " on" : ""}" data-bt="${k}"><span aria-hidden="true">${ic}</span>${esc(n)}</button>`).join("")}</div>
@@ -4388,7 +4525,7 @@ function renderBaby(say) {
       <span class="dailytag">${DAILY_TAG[(daily.w[BB.i] || [])[1]] || ""}</span></div>` : ""}
     <button class="bbcard" id="bbCard" aria-label="再聽一次 ${esc(w)}"><span class="bbvis" id="bbVis" aria-hidden="true"><span class="bbem">${e}</span></span><span class="bbw">${esc(w)}</span>${state.babySub === false ? "" : `<span class="bbzh">${esc(zw)}</span>`}</button>
     <p class="muted" id="bbCredit" hidden style="margin:-6px 0 0;font-size:11px;text-align:center"></p>
-    <div class="row bbctl" style="flex-wrap:wrap;gap:6px"><button class="btn small${gl.point ? " primary" : ""}" id="gPoint" aria-pressed="${!!gl.point}">👆 會指了${gl.point ? " " + mdDate(gl.point) : ""}</button><button class="btn small${gl.say ? " primary" : ""}" id="gSay" aria-pressed="${!!gl.say}">🗣 會說了${gl.say ? " " + mdDate(gl.say) : ""}</button>${gl.say ? `<button class="btn small" id="gBabyRec">${fvList("b:" + w).length ? "👶 寶寶的錄音" : "🎙 錄寶寶說"}</button>` : ""}<button class="btn small" id="bbRec">🎙 錄家人的聲音${fvn ? `（${fvn}）` : ""}</button></div>
+    <div class="row bbctl" style="flex-wrap:wrap;gap:6px"><button class="btn small${gl.point ? " primary" : ""}" id="gPoint" aria-pressed="${!!gl.point}">👆 會指了${gl.point ? " " + mdDate(gl.point) : ""}</button><button class="btn small${gl.say ? " primary" : ""}" id="gSay" aria-pressed="${!!gl.say}">🗣 會說了${gl.say ? " " + mdDate(gl.say) : ""}</button>${gl.say ? `<button class="btn small" id="gBabyRec">${fvList(bvKey(w)).length ? "👶 寶寶的錄音" : "🎙 錄寶寶說"}</button>` : ""}<button class="btn small" id="bbRec">🎙 錄家人的聲音${fvn ? `（${fvn}）` : ""}</button></div>
     ${bpicCan() ? (() => { const mine = (BPICS.pics[w] || []), c = k => mine.filter(x => x[1] === k).length; return `<div class="row bbctl" style="flex-wrap:wrap;gap:6px"><button class="btn small" id="bbUpBtn">📷 放我的照片（可選第 1～5 次）</button><input type="file" accept="image/*" id="bbUp" hidden><button class="btn small" id="bbAi">🎨 AI 產生照片</button><button class="btn small" id="bbUs">🔍 Unsplash 找照片</button>${mine.length ? `<span class="muted" style="font-size:12px">這個字：自己拍 ${c("mine")}・朋友 ${c("guest")}・AI ${c("ai")}</span>` : ""}</div>`; })()
       : Store.backend === "sheet" ? (isFam() ? `<div class="row bbctl" style="flex-wrap:wrap;gap:6px"><label class="btn small" style="cursor:pointer">📷 放照片<input type="file" accept="image/*" id="bbUp" hidden></label>${BPICS.usKey ? `<button class="btn small" id="bbUs">🔍 Unsplash 找照片</button>` : ""}<span class="muted" style="font-size:12px">👪 你是家人：${esc(famSt().name)}，放的照片會直接出現</span></div>`
         : `<div class="row bbctl" style="flex-wrap:wrap;gap:6px"><label class="btn small" style="cursor:pointer">📷 幫忙提供照片<input type="file" accept="image/*" id="bbUp" hidden></label><button class="btn small" id="famJoinBtn">${famSt().st === "pending" ? "👪 等作者確認中" : "👪 我是家人"}</button></div>`) : ""}
@@ -4413,7 +4550,7 @@ function renderBaby(say) {
   if ($("famJoinBtn")) $("famJoinBtn").onclick = openFamJoin;
   if ($("bbUs")) $("bbUs").onclick = () => { bbStopAll(); renderBaby(false); openUsPick(w); };
   if ($("famAdminBtn")) $("famAdminBtn").onclick = openFamAdmin;
-  if ($("gBabyRec")) $("gBabyRec").onclick = () => { bbStopAll(); renderBaby(false); openFamRec("b:" + w, `${e} ${w}`, `錄下寶寶說「${w}」的聲音，以後可以回味`, 20, () => { if (bbView() === "listen") renderBaby(false); }, null, true); };
+  if ($("gBabyRec")) $("gBabyRec").onclick = () => { bbStopAll(); renderBaby(false); openFamRec(bvKey(w), `${e} ${w}`, `錄下寶寶說「${w}」的聲音，以後可以回味`, 20, () => { if (bbView() === "listen") renderBaby(false); }, null, true); };
   if ($("bbFam")) $("bbFam").onclick = () => { state.babyFam = state.babyFam === false; Store.save(); renderBaby(false); };
   $("baby").querySelectorAll("[data-bt]").forEach(b => b.onclick = () => { BB.t = Number(b.dataset.bt); BB.i = 0; prefetchBaby(); renderBaby(true); });
   $("baby").querySelectorAll("[data-bl]").forEach(b => b.onclick = () => { BB.t = BB_LIST; BB.list = b.dataset.bl; BB.i = 0; BB.loop = 0; prefetchBaby(); renderBaby(true); });
@@ -6297,8 +6434,8 @@ function renderStats(focus) {
         ? `用 Google Gemini（${esc(AI.model || "gemini-flash-lite-latest")}）產生例句、閱讀短文和寫作批改。需要你自己的 Gemini API 金鑰，到 Google AI Studio 申請。金鑰存在這個 Apps Script 專案的「指令碼屬性」，只有你看得到。`
         : `用 Google Gemini（${esc(AI.model || "gemini-flash-lite-latest")}）產生例句、閱讀短文、寫作批改，並聽錄音評發音。需要你自己的 Gemini API 金鑰，到 Google AI Studio 申請。金鑰只存在這台電腦的 english_quest_config.json，不要把這個檔案分享給別人。`}</p>
       <p style="margin:0;font-size:14px" id="aiKeyState">${AI.localKey ? "目前狀態：已設定金鑰" : "目前狀態：尚未設定"}</p>
-      <label class="lbl" for="aiKeyIn">API 金鑰</label>
-      <input class="field" id="aiKeyIn" type="password" autocomplete="off" placeholder="AIza…">
+      <form onsubmit="return false" style="display:contents"><label class="lbl" for="aiKeyIn">API 金鑰</label>
+      <input class="field" id="aiKeyIn" type="password" autocomplete="off" placeholder="AIza…"></form>
       <div class="row"><button class="btn primary small" id="aiKeySave">儲存</button>${AI.localKey ? '<button class="btn small" id="aiKeyDel">移除金鑰</button>' : ""}</div>
     </section>` : ""}
     ${SHOW_SUPPORT() || CAN_FEEDBACK() ? `<section class="card flat" id="thanksCard"><h3>如果它剛好幫上了忙</h3>
