@@ -104,6 +104,7 @@ button.chip:hover{border-color:var(--primary)}
 .bbwho{flex:0 1 auto;min-width:0;max-width:46%;padding:6px 10px;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .byicons{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.byicons button{font-size:24px;width:44px;height:44px;border-radius:12px;border:1px solid var(--line,#ddd);background:var(--surface);cursor:pointer}.byicons button[aria-checked="true"]{border:2px solid var(--primary);background:var(--primary-soft)}
 .bysel{display:flex;align-items:center;gap:10px;flex:1;min-width:0;border:1px solid var(--line,#ddd);background:var(--surface);color:var(--ink);border-radius:14px;padding:8px 12px;cursor:pointer;font:inherit}.bysel[aria-pressed="true"]{border:2px solid var(--primary);background:var(--primary-soft)}
+.inappbar{position:sticky;top:0;z-index:60;display:flex;flex-direction:column;gap:6px;padding:12px 16px;background:#FFF4CC;color:#4A3B00;border-bottom:2px solid #F2C94C;font-size:14px;line-height:1.5}
 .bbthemes{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.bbthemes .tchip{flex:0 0 auto;white-space:nowrap}
 .tchip.on{background:var(--primary);color:#fff;border-color:var(--primary)}
 .bbcard{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;min-height:50vh;border:0;border-radius:28px;background:var(--surface);box-shadow:0 10px 30px -18px rgba(0,0,0,.35);cursor:pointer;color:var(--ink)}
@@ -724,7 +725,7 @@ let GUEST = false;
 let SPONSOR = "";
 let OWNER_WHO = "";
 const EQ_BUILD = "ea4f87";
-const EQ_WEB = "1618";
+const EQ_WEB = "f6c0";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -3796,6 +3797,8 @@ function openFamJoin() {
       famSetSt({ st: r.st, name, rel }); closeModal();
       toast(r.st === "ok" ? "你已經是家人了！" : "申請送出了！作者確認後就可以直接放照片和錄音");
       renderBaby(false);
+      let inv = ""; try { inv = localStorage.getItem("eq-inv") || ""; localStorage.removeItem("eq-inv"); } catch (x) { }
+      if (inv === "fam" && canInstallHint()) setTimeout(openInstall, 900);
     } catch (e) { $("fjGo").disabled = false; toast(/TOO_MANY/.test(String(e && e.message)) ? "現在申請的人太多了，請晚點再試" : backendError(e)); }
   };
 }
@@ -3811,11 +3814,18 @@ function drawFamAdmin() {
   openModal(`
     <div class="row"><h2 style="font-size:20px;flex:1;min-width:0">👪 家人群組</h2><button class="icon-btn" id="faClose" aria-label="關閉">${ICON.x}</button></div>
     <p class="muted" style="margin:0;font-size:13px">家人在自己的手機打開寶寶聽力，按「👪 我是家人」送出申請。你按「加入」之後，他們就能直接放照片、錄音，也能聽到家人和寶寶的錄音。不認識的人請按「拒絕」。</p>
+    <button class="btn primary block" id="faInvite">📤 邀請家人（傳 LINE 連結）</button>
+    <p class="muted" style="margin:-4px 0 0;font-size:12px">家人在 LINE 點這個連結，會自動改用手機的瀏覽器打開（才有聲音和麥克風），再一步一步帶他申請、加到手機桌面。</p>
     <section><span class="eyebrow">等你確認（${a.pending.length}）</span>
       ${a.pending.length ? `<div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">${a.pending.map(([id, n, r, t]) => `<div class="row" style="gap:8px;align-items:center"><span style="flex:1;min-width:0"><b>${esc(n)}</b>・${esc(rel(r))}<br><span class="muted" style="font-size:12px">${esc(t)} 申請</span></span><button class="btn small primary" data-fa="${esc(id)}" data-fd="ok">✅ 加入</button><button class="btn small" data-fa="${esc(id)}" data-fd="no">拒絕</button></div>`).join("")}</div>` : `<p class="muted" style="margin:4px 0 0">目前沒有新的申請。</p>`}</section>
     <section><span class="eyebrow">家人（${a.members.length}）</span>
       ${a.members.length ? `<div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">${a.members.map(([id, n, r, t]) => `<div class="row" style="gap:8px;align-items:center"><span style="flex:1;min-width:0"><b>${esc(n)}</b>・${esc(rel(r))}<br><span class="muted" style="font-size:12px">${esc(t)} 加入</span></span><button class="btn small" data-fa="${esc(id)}" data-fd="remove">移除</button></div>`).join("")}</div>` : `<p class="muted" style="margin:4px 0 0">還沒有家人加入。</p>`}</section>`);
   $("faClose").onclick = closeModal;
+  $("faInvite").onclick = async () => {
+    const text = "一起陪寶寶學英文！點下面的連結打開，按「申請加入家人」，再照畫面加到手機桌面就好 👶", all = text + "\n" + INVITE_URL;
+    try { if (navigator.share && isMobile()) { await navigator.share({ title: "English Quest 寶寶聽力", text, url: INVITE_URL }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+    (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(all) : Promise.reject()).then(() => toast("邀請連結複製好了，貼到 LINE 給家人")).catch(() => prompt("請複製下面的文字，貼到 LINE 給家人", all));
+  };
   $("gPanel").querySelectorAll("[data-fa]").forEach(b => b.onclick = async () => {
     if (b.dataset.fd === "remove" && !confirm("要把這位家人移出群組嗎？移出後他就不能再放照片、錄音。")) return;
     b.disabled = true;
@@ -6662,6 +6672,48 @@ function moveLink() {
     if (isStandalone()) history.replaceState(null, "", location.pathname + location.search);
   } catch (e) { }
 })();
+/* ===== 從 LINE／Facebook 裡面點開：那裡面的瀏覽器不能播聲音、不能錄音、也不能加到桌面，所以改用手機的瀏覽器開 ===== */
+const UA = navigator.userAgent || "";
+const isLineApp = () => /\bLine\x2f/i.test(UA);
+const inApp = () => /\bLine\x2f|FBAN|FBAV|FB_IAB|Instagram|MicroMessenger|KAKAOTALK/i.test(UA);
+const INVITE_URL = GH_URL + "?openExternalBrowser=1&eqinv=fam";
+(function eqEntry() {
+  try {
+    if (typeof GAS_RUN !== "undefined" && GAS_RUN) return;
+    const q = new URLSearchParams(location.search);
+    if (q.get("eqinv") === "fam") { try { localStorage.setItem("eq-inv", "fam"); } catch (e) { } }
+    /* LINE 看到網址有 openExternalBrowser=1，就會改用 Safari／Chrome 打開 */
+    if (isLineApp() && q.get("openExternalBrowser") !== "1") { q.set("openExternalBrowser", "1"); location.replace(location.pathname + "?" + q.toString() + location.hash); return; }
+    if (!inApp() && (q.has("openExternalBrowser") || q.has("eqinv"))) { q.delete("openExternalBrowser"); q.delete("eqinv"); const x = q.toString(); history.replaceState(history.state, "", location.pathname + (x ? "?" + x : "") + location.hash); }
+  } catch (e) { }
+})();
+function inAppBanner() {
+  if (!inApp() || (typeof GAS_RUN !== "undefined" && GAS_RUN) || $("inAppBar")) return;
+  let inv = ""; try { inv = localStorage.getItem("eq-inv") || ""; } catch (e) { }
+  const and = /android/i.test(UA), url = GH_URL + (inv === "fam" ? "?eqinv=fam" : "");
+  const d = document.createElement("div"); d.id = "inAppBar"; d.className = "inappbar"; d.setAttribute("role", "alert");
+  d.innerHTML = `<b>⚠️ 你現在是在 ${isLineApp() ? "LINE" : "App"} 裡面打開的</b><span>這裡面不能播放聲音、不能錄音，也不能加到手機桌面。${and ? "請按「用 Chrome 開」。" : "請按畫面上的 <b>⋯</b> 或 <b>⬆️</b>，選「<b>用 Safari 開啟</b>」（或「在瀏覽器中開啟」）。"}</span>
+    <div class="row" style="gap:8px;flex-wrap:wrap">${and ? `<a class="btn small primary" href="intent:${url.replace(/^https:/, "")}#Intent;scheme=https;package=com.android.chrome;end">用 Chrome 開</a>` : ""}<button class="btn small" id="inAppCopy">複製網址</button><button class="btn small" id="inAppX">先不要</button></div>`;
+  document.body.insertBefore(d, document.body.firstChild);
+  $("inAppCopy").onclick = () => (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast("網址複製好了，貼到 Safari／Chrome 的網址列")).catch(() => prompt("請複製下面的網址，貼到 Safari／Chrome", url));
+  $("inAppX").onclick = () => d.remove();
+}
+/* 家人點邀請連結進來：一步一步帶他申請加入、再加到手機桌面 */
+function inviteCheck() {
+  let inv = ""; try { inv = localStorage.getItem("eq-inv") || ""; } catch (e) { }
+  if (inv !== "fam" || inApp() || KEY_MODE() || !$("gModal").hidden) return;
+  const st = famSt();
+  if (st.st === "ok" || st.st === "pending") { try { localStorage.removeItem("eq-inv"); } catch (e) { } return; }
+  openModal(`<div class="row"><h2 style="font-size:20px;flex:1;min-width:0">👋 歡迎！一起陪寶寶學英文</h2><button class="icon-btn" id="ivClose" aria-label="關閉">${ICON.x}</button></div>
+    <p class="muted" style="margin:0;font-size:14px">家人邀請你加入「寶寶聽力」。只要兩個步驟：</p>
+    <ol style="margin:0;padding-left:22px;font-size:16px;line-height:1.9"><li><b>申請加入家人</b>：寫上你的稱呼（例如：奶奶）</li><li><b>加到手機桌面</b>：以後點桌面的圖示就能直接進來</li></ol>
+    <p class="muted" style="margin:0;font-size:13px">加入後，你可以放照片、錄下你唸的英文給寶寶聽，也能記錄寶寶會說的字。</p>
+    <button class="btn primary block" id="ivGo">① 申請加入家人</button>
+    <button class="btn small" id="ivLater" style="align-self:flex-start">先隨便看看</button>`);
+  $("ivClose").onclick = closeModal;
+  $("ivLater").onclick = () => { try { localStorage.removeItem("eq-inv"); } catch (e) { } closeModal(); };
+  $("ivGo").onclick = () => { modalHide(); NAV.modal = false; openBaby(); setTimeout(openFamJoin, 300); };
+}
 async function openInstall() {
   if (INSTALL_EVT) { const ev = INSTALL_EVT; INSTALL_EVT = null; try { ev.prompt(); const r = await ev.userChoice; toast(r && r.outcome === "accepted" ? "裝好了！到手機桌面找 English Quest 的圖示" : "之後想裝，再按一次就好"); } catch (e) { } renderWishBar(); return; }
   const gas = typeof GAS_RUN !== "undefined" && GAS_RUN, ios = isIOS();
@@ -6678,7 +6730,7 @@ async function openInstall() {
   $("inHide").onclick = () => { try { localStorage.setItem("eq-install-hide", "1"); } catch (e) { } closeModal(); renderWishBar(); };
 }
 async function boot() {
-  navInit();
+  navInit(); inAppBanner();
   try { if ("serviceWorker" in navigator && location.protocol === "https:" && /github\.io$/.test(location.hostname)) navigator.serviceWorker.register("sw.js").catch(() => { }); } catch (e) { }
   $("quitBtn").innerHTML = ICON.x; $("courseClose").innerHTML = ICON.x;
   $("quitBtn").onclick = quit;
@@ -6702,6 +6754,7 @@ async function boot() {
   if (Store.backend === "sheet") {
     gs("loadLibrary").then(lib => { mergeLibrary(lib); if (!$("home").hidden) renderHome(); }).catch(() => { });
     await checkStatus(3);
+    setTimeout(inviteCheck, 600);
     setTimeout(() => { if (AIV_CAN_MAKE()) aivRefresh(); }, 4000);
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") { clearTimeout(Store.timer); Store.flush(); } });
     renderHome();
