@@ -523,6 +523,7 @@ a.btn{text-decoration:none}
     <button class="tchip" id="tbPic" hidden><span aria-hidden="true">📬</span>朋友的照片<b id="tbPicN"></b></button>
     <button class="tchip" id="tbFam" hidden><span aria-hidden="true">👪</span>家人申請<b id="tbFamN"></b></button>
     <button class="tchip" id="tbInstall" hidden><span aria-hidden="true">📲</span>加到手機桌面</button>
+    <button class="tchip" id="tbShare"><span aria-hidden="true">📤</span>分享給朋友</button>
   </nav>
   <div id="sponsorWrap" class="sponsorwrap" hidden><span class="tlabel">💛 感謝</span><div id="sponsorWall"></div></div>
 
@@ -725,7 +726,7 @@ let GUEST = false;
 let SPONSOR = "";
 let OWNER_WHO = "";
 const EQ_BUILD = "ea4f87";
-const EQ_WEB = "f6c0";
+const EQ_WEB = "16fb";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -6307,7 +6308,7 @@ function renderWishBar() {
   const w = CAN_WISH(), sp = SHOW_SUPPORT(), pc = typeof BPICS !== "undefined" && bpicCan() ? (BPICS.pending || []).length : 0;
   const fc = typeof FAMG !== "undefined" && typeof bpicCan === "function" && bpicCan() ? FAMG.pending : 0;
   const ins = typeof canInstallHint === "function" && canInstallHint();
-  bar.hidden = !w && !sp && !pc && !fc && !ins;
+  bar.hidden = false; $("tbShare").onclick = shareApp;
   $("tbInstall").hidden = !ins; $("tbInstall").onclick = openInstall;
   $("tbFam").hidden = !fc; $("tbFamN").textContent = fc ? String(fc) : ""; $("tbFam").onclick = openFamAdmin;
   $("tbPic").hidden = !pc; $("tbPicN").textContent = pc ? String(pc) : ""; $("tbPic").onclick = () => openPicReview(0);
@@ -6676,12 +6677,12 @@ function moveLink() {
 const UA = navigator.userAgent || "";
 const isLineApp = () => /\bLine\x2f/i.test(UA);
 const inApp = () => /\bLine\x2f|FBAN|FBAV|FB_IAB|Instagram|MicroMessenger|KAKAOTALK/i.test(UA);
-const INVITE_URL = GH_URL + "?openExternalBrowser=1&eqinv=fam";
+const INVITE_URL = GH_URL + "?openExternalBrowser=1&eqinv=fam", FRIEND_URL = GH_URL + "?openExternalBrowser=1&eqinv=friend";
 (function eqEntry() {
   try {
     if (typeof GAS_RUN !== "undefined" && GAS_RUN) return;
     const q = new URLSearchParams(location.search);
-    if (q.get("eqinv") === "fam") { try { localStorage.setItem("eq-inv", "fam"); } catch (e) { } }
+    const iv = q.get("eqinv"); if (iv === "fam" || (iv === "friend" && !localStorage.getItem("eq-inv") && !localStorage.getItem("eq-fw"))) { try { localStorage.setItem("eq-inv", iv); } catch (e) { } }
     /* LINE 看到網址有 openExternalBrowser=1，就會改用 Safari／Chrome 打開 */
     if (isLineApp() && q.get("openExternalBrowser") !== "1") { q.set("openExternalBrowser", "1"); location.replace(location.pathname + "?" + q.toString() + location.hash); return; }
     if (!inApp() && (q.has("openExternalBrowser") || q.has("eqinv"))) { q.delete("openExternalBrowser"); q.delete("eqinv"); const x = q.toString(); history.replaceState(history.state, "", location.pathname + (x ? "?" + x : "") + location.hash); }
@@ -6690,7 +6691,7 @@ const INVITE_URL = GH_URL + "?openExternalBrowser=1&eqinv=fam";
 function inAppBanner() {
   if (!inApp() || (typeof GAS_RUN !== "undefined" && GAS_RUN) || $("inAppBar")) return;
   let inv = ""; try { inv = localStorage.getItem("eq-inv") || ""; } catch (e) { }
-  const and = /android/i.test(UA), url = GH_URL + (inv === "fam" ? "?eqinv=fam" : "");
+  const and = /android/i.test(UA), url = GH_URL + (inv === "fam" || inv === "friend" ? "?eqinv=" + inv : "");
   const d = document.createElement("div"); d.id = "inAppBar"; d.className = "inappbar"; d.setAttribute("role", "alert");
   d.innerHTML = `<b>⚠️ 你現在是在 ${isLineApp() ? "LINE" : "App"} 裡面打開的</b><span>這裡面不能播放聲音、不能錄音，也不能加到手機桌面。${and ? "請按「用 Chrome 開」。" : "請按畫面上的 <b>⋯</b> 或 <b>⬆️</b>，選「<b>用 Safari 開啟</b>」（或「在瀏覽器中開啟」）。"}</span>
     <div class="row" style="gap:8px;flex-wrap:wrap">${and ? `<a class="btn small primary" href="intent:${url.replace(/^https:/, "")}#Intent;scheme=https;package=com.android.chrome;end">用 Chrome 開</a>` : ""}<button class="btn small" id="inAppCopy">複製網址</button><button class="btn small" id="inAppX">先不要</button></div>`;
@@ -6701,7 +6702,9 @@ function inAppBanner() {
 /* 家人點邀請連結進來：一步一步帶他申請加入、再加到手機桌面 */
 function inviteCheck() {
   let inv = ""; try { inv = localStorage.getItem("eq-inv") || ""; } catch (e) { }
-  if (inv !== "fam" || inApp() || KEY_MODE() || !$("gModal").hidden) return;
+  if (inApp() || !$("gModal").hidden) return;
+  if (inv === "friend") { try { localStorage.removeItem("eq-inv"); } catch (e) { } if (!KEY_MODE()) friendWelcome(); return; }
+  if (inv !== "fam" || KEY_MODE()) return;
   const st = famSt();
   if (st.st === "ok" || st.st === "pending") { try { localStorage.removeItem("eq-inv"); } catch (e) { } return; }
   openModal(`<div class="row"><h2 style="font-size:20px;flex:1;min-width:0">👋 歡迎！一起陪寶寶學英文</h2><button class="icon-btn" id="ivClose" aria-label="關閉">${ICON.x}</button></div>
@@ -6713,6 +6716,25 @@ function inviteCheck() {
   $("ivClose").onclick = closeModal;
   $("ivLater").onclick = () => { try { localStorage.removeItem("eq-inv"); } catch (e) { } closeModal(); };
   $("ivGo").onclick = () => { modalHide(); NAV.modal = false; openBaby(); setTimeout(openFamJoin, 300); };
+}
+/* 朋友點分享連結進來：簡單介紹，再建議加到手機桌面 */
+function friendWelcome() {
+  try { localStorage.setItem("eq-fw", "1"); } catch (e) { }
+  const ins = canInstallHint();
+  openModal(`<div class="row"><h2 style="font-size:20px;flex:1;min-width:0">👋 歡迎來到 English Quest</h2><button class="icon-btn" id="fwClose" aria-label="關閉">${ICON.x}</button></div>
+    <p style="margin:0;font-size:15px;line-height:1.7">朋友推薦你來的！這裡可以：</p>
+    <ul style="margin:0;padding-left:20px;font-size:15px;line-height:1.8"><li>👶 寶寶英文聽力：單字、指指看、兒歌、爸媽小抄</li><li>📚 自己學英文：單字、聽力、閱讀、口說練習</li></ul>
+    <p class="muted" style="margin:0;font-size:13px">不用註冊、免費。你的進度只存在這支手機，不會跟別人混在一起。</p>
+    ${ins ? `<button class="btn primary block" id="fwInstall">📲 加到手機桌面（以後一點就進來）</button>` : ""}
+    <button class="btn${ins ? "" : " primary"} block" id="fwGo">開始看看</button>`);
+  $("fwClose").onclick = closeModal; $("fwGo").onclick = closeModal;
+  if ($("fwInstall")) $("fwInstall").onclick = () => { modalHide(); NAV.modal = false; openInstall(); };
+}
+/* 分享給朋友：一般的訪客連結（不帶作者或家人的身分） */
+async function shareApp() {
+  const text = "推薦一個免費學英文的小工具 English Quest：有寶寶英文聽力（單字、兒歌、指指看），也能自己練單字和口說。點連結就能用，不用註冊 👇", all = text + "\n" + FRIEND_URL;
+  try { if (navigator.share && isMobile()) { await navigator.share({ title: "English Quest", text, url: FRIEND_URL }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+  (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(all) : Promise.reject()).then(() => toast("分享連結複製好了，貼到 LINE 給朋友")).catch(() => prompt("請複製下面的文字，貼到 LINE 給朋友", all));
 }
 async function openInstall() {
   if (INSTALL_EVT) { const ev = INSTALL_EVT; INSTALL_EVT = null; try { ev.prompt(); const r = await ev.userChoice; toast(r && r.outcome === "accepted" ? "裝好了！到手機桌面找 English Quest 的圖示" : "之後想裝，再按一次就好"); } catch (e) { } renderWishBar(); return; }
