@@ -725,8 +725,8 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
-const EQ_BUILD = "67d619";
-const EQ_WEB = "03a0";
+const EQ_BUILD = "243ac4";
+const EQ_WEB = "6320";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -1256,9 +1256,44 @@ async function aivGenAll(babyFirst) {
   if (Store.backend !== "sheet") { aivQueue(all.map(x => [x.v, x.t])); toast(`開始產生 ${all.length} 段（電腦版要開著這頁）`); return; }
   try {
     for (let i = 0; i < all.length; i += 300) AIVS.st = await gs("ttsEnqueue", all.slice(i, i + 300));
-    toast(`已交給後台：${all.length} 段，每 10 分鐘自動做一批`);
+    toast(`已交給後台：${all.length} 段，每 5 分鐘自動做一批；想更快可以按「⚡ 開著這頁加速」`);
   } catch (e) { const m = String((e && e.message) || e); toast(/permission|權限|ScriptApp|authoriz/i.test(m) ? "要先授權：打開試算表 → 上方選單「English Quest」→「AI 語音：授權背景產生」" : backendError(e)); }
   aivStatusUi(); aivWatch();
+}
+/* ⚡ 開著這頁加速：網頁同時請後台做 3 段（跟每 5 分鐘的背景排程一起做，一個從前面、一個從後面，不會重複） */
+const TURBO = { on: false, made: 0, err: "", lock: null };
+function turboUi() {
+  document.querySelectorAll("[data-aivturbo]").forEach(b => { b.textContent = TURBO.on ? `⚡ 加速中…這頁做了 ${TURBO.made} 段（按一下停止）` : TURBO.made ? `⚡ 再加速（剛剛這頁做了 ${TURBO.made} 段）` : "⚡ 開著這頁加速"; b.classList.toggle("primary", TURBO.on); });
+  document.querySelectorAll("[data-aivturbomsg]").forEach(el => el.textContent = TURBO.err || (TURBO.on ? "加速時請不要關掉這頁、不要讓螢幕鎖住（電腦最好）。後台排程也同時在做。" : ""));
+}
+async function aivTurbo() {
+  if (TURBO.on) { TURBO.on = false; turboUi(); return; }
+  if (Store.backend !== "sheet") { aivGenAll(false); return; }
+  const list = aivAllItems(false, true).reverse();
+  if (!list.length) { toast("沒有要做的了"); return; }
+  Object.assign(TURBO, { on: true, made: 0, err: "" }); turboUi();
+  try { if (navigator.wakeLock) TURBO.lock = await navigator.wakeLock.request("screen"); } catch (e) { }
+  let idx = 0, rl = 0;
+  const lane = async () => {
+    while (TURBO.on && idx < list.length) {
+      const it = list[idx++]; if (AIV.have.has(it.k)) continue;
+      let r; try { r = await gs("ttsMake", [{ k: it.k, v: it.v, t: it.t }], true); } catch (e) { r = { error: String((e && e.message) || e) }; }
+      if (r && r[it.k]) { AIV.have.add(it.k); TURBO.made++; rl = 0; turboUi(); continue; }
+      const m = String((r && r.error) || "");
+      if (/RATE_LIMITED/.test(m)) {
+        if (r.daily) { TURBO.err = "Gemini 今天的額度用完了，明天會自動接著做（後台排程不用管它）。"; TURBO.on = false; break; }
+        list.push(it); if (++rl >= 6) { TURBO.err = "Gemini 一直說太快了，先停下來；後台排程會慢慢接著做。"; TURBO.on = false; break; }
+        TURBO.err = "Gemini 說太快了，休息 30 秒再繼續…"; turboUi(); await waitMs(30000); TURBO.err = ""; continue;
+      }
+      if (/BAD_KEY|NO_KEY|MODEL_NOT_FOUND|NOT_OWNER|UNKNOWN_FN/.test(m)) { TURBO.err = /UNKNOWN_FN/.test(m) ? "後台還是舊版，請先部署新版的 Code.gs。" : "停下來了：" + m.slice(0, 80); TURBO.on = false; break; }
+      if (m) { TURBO.err = "有一段沒做成功，先跳過：" + m.slice(0, 60); turboUi(); }
+    }
+  };
+  await Promise.all([lane(), lane(), lane()]);
+  const finished = TURBO.on; TURBO.on = false;
+  try { if (TURBO.lock) await TURBO.lock.release(); } catch (e) { } TURBO.lock = null;
+  if (finished) toast(`加速完成：這頁做了 ${TURBO.made} 段`);
+  turboUi(); aivRefresh();
 }
 async function aivRefresh() {
   if (Store.backend !== "sheet" || !AIV_CAN_MAKE()) return;
@@ -1275,8 +1310,8 @@ function aivStatusUi() {
   const S2 = AIVS.st;
   document.querySelectorAll("[data-aivsrv]").forEach(el => {
     if (!S2) { el.textContent = ""; return; }
-    const errTxt = S2.err === "RATE_LIMITED" ? "Gemini 額度暫時用完，後台會每 30 分鐘再試，額度恢復就自動接著做。" : S2.err ? "上次的問題：" + S2.err : "";
-    el.innerHTML = S2.pending ? `<b>後台產生中</b>：已經存了 ${S2.total} 段，還有 ${S2.pending} 段排隊中${S2.running ? "（每 10 分鐘自動做一批，關掉網頁也會繼續）" : "（排程沒有開，請再按一次）"}${errTxt ? "<br>" + esc(errTxt) : ""}`
+    const errTxt = S2.err === "DAILY_LIMIT" ? "Gemini 今天的額度用完了，後台過幾個小時會自動再試。" : S2.err === "RATE_LIMITED" ? "Gemini 說太快了，後台休息 10 分鐘會自動放慢接著做。" : S2.err ? "上次的問題：" + S2.err : "";
+    el.innerHTML = S2.pending ? `<b>後台產生中</b>：已經存了 ${S2.total} 段，還有 ${S2.pending} 段排隊中${S2.running ? "（每 5 分鐘自動做一批，關掉網頁也會繼續）" : "（排程沒有開，請再按一次）"}${errTxt ? "<br>" + esc(errTxt) : ""}`
       : `已經存了 ${S2.total} 段，沒有排隊中的工作 ✓${errTxt ? "<br>" + esc(errTxt) : ""}`;
   });
   document.querySelectorAll("[data-aivcancel]").forEach(b => { b.hidden = !(S2 && S2.pending); });
@@ -4611,7 +4646,7 @@ function renderBaby(say) {
       ${bbOrder() === "zhfirst" || bbOrder() === "zh" ? `<div class="row" style="gap:8px;justify-content:center"><span class="muted" style="font-size:13px">中文唸</span><div class="seg">${[1, 2, 3, 4, 5].map(n => `<button data-zhn="${n}" aria-pressed="${bbZhN() === n}">${n}</button>`).join("")}</div><span class="muted" style="font-size:13px">次</span></div>` : ""}
       ${bbOrder() !== "zh" ? `<div class="row" style="gap:8px;justify-content:center"><span class="muted" style="font-size:13px">${bbOrder() === "alt" ? "英＋中各唸" : "英文唸"}</span><div class="seg" id="bbReps">${[1, 2, 3, 4, 5].map(n => `<button data-reps="${n}" aria-pressed="${bbEnN() === n}">${n}</button>`).join("")}</div><span class="muted" style="font-size:13px">次</span></div>` : ""}
       <span class="muted" style="font-size:12px">${(() => { const o = bbOrder(), z = bbZhN(), e = bbEnN(); return o === "zhfirst" ? `先講中文 ${z} 次，再講英文 ${e} 次` : o === "alt" ? `英文、中文輪流，共 ${e} 輪` : o === "zh" ? `只講中文 ${z} 次` : `只講英文 ${e} 次`; })()}</span></div>
-    ${AIV_CAN_MAKE() && AIV_ON() ? (() => { const its = babyAivItems(), todo = aivTodo(its); return todo ? `<div class="reply" style="display:flex;flex-direction:column;gap:6px;border-radius:12px;padding:10px 12px"><b>AI 語音（單字 4 種聲音＋中文、兒歌、小抄）還有 ${todo} / ${its.length} 段沒產生</b><span class="muted" style="font-size:13px">還沒產生的先用原本的聲音。按一次「一鍵產生全部」，${Store.backend === "sheet" ? "後台會自己慢慢做（先做這個主題），關掉網頁也會繼續" : "這頁開著就會慢慢做"}。</span><div class="row" style="flex-wrap:wrap"><button class="btn small primary" id="bbGen">一鍵產生全部</button><button class="btn small" data-aivstop hidden>停止</button></div><span style="font-size:13px" data-aivsrv></span><span style="font-size:13px" data-aivout></span></div>` : ""; })() : ""}
+    ${AIV_CAN_MAKE() && AIV_ON() ? (() => { const its = babyAivItems(), todo = aivTodo(its); return todo ? `<div class="reply" style="display:flex;flex-direction:column;gap:6px;border-radius:12px;padding:10px 12px"><b>AI 語音（單字 4 種聲音＋中文、兒歌、小抄）還有 ${todo} / ${its.length} 段沒產生</b><span class="muted" style="font-size:13px">還沒產生的先用原本的聲音。按一次「一鍵產生全部」，${Store.backend === "sheet" ? "後台會自己慢慢做（先做這個主題），關掉網頁也會繼續" : "這頁開著就會慢慢做"}。</span><div class="row" style="flex-wrap:wrap"><button class="btn small primary" id="bbGen">一鍵產生全部</button>${Store.backend === "sheet" ? `<button class="btn small" data-aivturbo>⚡ 開著這頁加速</button>` : ""}<button class="btn small" data-aivstop hidden>停止</button></div><span style="font-size:13px" data-aivsrv></span><span style="font-size:13px" data-aivout></span><span class="muted" style="font-size:12px" data-aivturbomsg></span></div>` : ""; })() : ""}
     ${bpicCan() ? `<div class="reply" style="display:flex;flex-direction:column;gap:6px;border-radius:12px;padding:10px 12px"><b>作者小幫手（只有你看得到）</b><button class="btn small" id="famAdminBtn" style="align-self:flex-start">👪 家人群組${FAMG.admin ? `（${FAMG.admin.members.length} 人${FAMG.admin.pending.length ? `・${FAMG.admin.pending.length} 個申請` : ""}）` : ""}</button>${(BPICS.pending || []).length ? `<button class="btn primary" id="bpReview">📬 朋友提供了 ${BPICS.pending.length} 張照片，點這裡一張一張確認</button><span class="muted" style="font-size:12px">${[...new Set(BPICS.pending.map(x => x[1]))].slice(0, 8).map(esc).join("、")}${new Set(BPICS.pending.map(x => x[1])).size > 8 ? "…" : ""}</span>` : ""}<span class="muted" style="font-size:13px">第 1～5 次都可以放你的照片（按「放我的照片」選位置）；第 2、4 次沒指定時，自動依序用：自己拍的 → 家人放的 → 朋友提供的 → AI 畫的 → Unsplash 照片（你挑的優先）→ 維基百科。照片不對就按照片下方的「這張不對」。AI 畫圖要 Gemini 付費（一張約 1 塊台幣）。</span><div class="row" style="flex-wrap:wrap;gap:6px"><button class="btn small" id="bpAll">${BPAI.on ? "停止" : "AI 幫每個沒照片的字畫一張"}</button><span style="font-size:13px" id="bpAllOut"></span></div></div>` : ""}
     <p class="muted" style="margin:0;font-size:13px;text-align:center">點大圖可以再聽一次。建議爸媽陪著一起聽、跟著唸、指給寶寶看；自動播放 10 分鐘會自己停下來休息。</p>
     ${BB.dark ? `<button class="bbdark" id="bbLight">聲音播放中・點一下回到畫面</button>` : ""}`;
@@ -4643,6 +4678,7 @@ function renderBaby(say) {
   $("baby").querySelectorAll("[data-zhn]").forEach(b => b.onclick = () => { state.babyZhN = Number(b.dataset.zhn); Store.save(); renderBaby(false); });
   $("baby").querySelectorAll("[data-bord]").forEach(b => b.onclick = () => { state.babyOrder = b.dataset.bord; Store.save(); if (state.babyOrder !== "en" && TTS && !AIV_ON() && !zhVoice()) toast("這台裝置找不到中文語音，請到系統設定加入「中文（台灣）」語音"); renderBaby(false); });
   if ($("bbGen")) $("bbGen").onclick = () => aivGenAll(true);
+  $("baby").querySelectorAll("[data-aivturbo]").forEach(b => b.onclick = aivTurbo); turboUi();
   aivStatusUi();
   $("baby").querySelectorAll("[data-aivstop]").forEach(b => b.onclick = () => { AIV.stop = true; });
   aivUi();
@@ -6496,9 +6532,9 @@ function renderStats(focus) {
         <span class="muted" style="font-size:13px">已經產生 ${AIV.have.size} 段。產生好的語音存在你的雲端硬碟「English Quest AI 語音」，朋友打開也直接用，不會再花額度。</span>
         ${AIV_CAN_MAKE() ? (() => { const tc = aivTodo(courseAivItems()), tw = aivTodo(courseWordAivItems()), tb = aivTodo(babyAivItems()); return `<button class="btn primary block" id="aivAll" ${tc + tb + tw ? "" : "disabled"}>${tc + tb + tw ? `一鍵產生全部（寶寶聽力 ${tb} 段＋課程句子最多 ${tc} 句＋單字最多 ${tw} 個）` : "全部都產生好了 ✓"}</button>
           <span class="muted" style="font-size:12px">按下去會先對一次雲端的「_真人句子」「_真人單字」，還沒查過的先查；有真人錄音的句子和單字不產生，只做真的沒有的。</span>
-          <span style="font-size:13px" data-aivsrv></span><span style="font-size:13px" data-aivout></span>
-          <div class="row" style="flex-wrap:wrap;gap:6px"><button class="btn small" data-aivcancel hidden>取消排隊</button><button class="btn small" data-aivstop hidden>停止</button><button class="btn small" id="aivRef">更新進度</button></div>
-          <span class="muted" style="font-size:12px">${Store.backend === "sheet" ? "按一次就好：清單交給後台，每 10 分鐘自動做一批，關掉網頁、手機也會繼續做。第一次用請先在試算表上方選單「English Quest」→「AI 語音：授權背景產生」按一次。" : "電腦版要開著這頁才會繼續做。"}已經有真人錄音的句子會跳過。</span>`; })() : `<span class="muted" style="font-size:12px">只有分享者（有 Gemini 金鑰）可以產生新的 AI 語音。</span>`}
+          <span style="font-size:13px" data-aivsrv></span><span style="font-size:13px" data-aivout></span><span class="muted" style="font-size:12px" data-aivturbomsg></span>
+          <div class="row" style="flex-wrap:wrap;gap:6px">${Store.backend === "sheet" ? `<button class="btn small" data-aivturbo>⚡ 開著這頁加速</button>` : ""}<button class="btn small" data-aivcancel hidden>取消排隊</button><button class="btn small" data-aivstop hidden>停止</button><button class="btn small" id="aivRef">更新進度</button></div>
+          <span class="muted" style="font-size:12px">${Store.backend === "sheet" ? "按一次就好：清單交給後台，每 5 分鐘自動做一批（一次同時做好幾段），關掉網頁、手機也會繼續做。想更快可以按「⚡ 開著這頁加速」。第一次用請先在試算表上方選單「English Quest」→「AI 語音：授權背景產生」按一次。" : "電腦版要開著這頁才會繼續做。"}已經有真人錄音的句子會跳過。</span>`; })() : `<span class="muted" style="font-size:12px">只有分享者（有 Gemini 金鑰）可以產生新的 AI 語音。</span>`}
       </div>
       <label class="lbl" for="voiceSel">朗讀的聲音</label>
       <select class="field" id="voiceSel"><option value="">自動選擇美式英文</option>${vOpts}</select>
@@ -6671,7 +6707,8 @@ function renderStats(focus) {
   $("stats").querySelectorAll("[data-aiv]").forEach(b => b.onclick = () => { state.aiVoiceId = b.dataset.aiv; Store.save(); $("stats").querySelectorAll("[data-aiv]").forEach(x => x.setAttribute("aria-pressed", x === b)); });
   if ($("aivAll")) $("aivAll").onclick = () => aivGenAll(false);
   if ($("aivRef")) $("aivRef").onclick = () => aivRefresh();
-  $("stats").querySelectorAll("[data-aivcancel]").forEach(b => b.onclick = async () => { try { AIVS.st = await gs("ttsCancel"); } catch (e) { } aivStatusUi(); });
+  $("stats").querySelectorAll("[data-aivturbo]").forEach(b => b.onclick = aivTurbo); turboUi();
+  $("stats").querySelectorAll("[data-aivcancel]").forEach(b => b.onclick = async () => { TURBO.on = false; try { AIVS.st = await gs("ttsCancel"); } catch (e) { } aivStatusUi(); });
   aivStatusUi(); if (AIV_CAN_MAKE()) aivRefresh().then(aivWatch);
   $("stats").querySelectorAll("[data-aivstop]").forEach(b => b.onclick = () => { AIV.stop = true; });
   aivUi();
