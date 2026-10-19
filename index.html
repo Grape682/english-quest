@@ -105,6 +105,7 @@ button.chip:hover{border-color:var(--primary)}
 .byicons{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.byicons button{font-size:24px;width:44px;height:44px;border-radius:12px;border:1px solid var(--line,#ddd);background:var(--surface);cursor:pointer}.byicons button[aria-checked="true"]{border:2px solid var(--primary);background:var(--primary-soft)}
 .bysel{display:flex;align-items:center;gap:10px;flex:1;min-width:0;border:1px solid var(--line,#ddd);background:var(--surface);color:var(--ink);border-radius:14px;padding:8px 12px;cursor:pointer;font:inherit}.bysel[aria-pressed="true"]{border:2px solid var(--primary);background:var(--primary-soft)}
 .inappbar{position:sticky;top:0;z-index:60;display:flex;flex-direction:column;gap:6px;padding:12px 16px;background:#FFF4CC;color:#4A3B00;border-bottom:2px solid #F2C94C;font-size:14px;line-height:1.5}
+.gth{display:grid;grid-template-columns:7.2em 1fr auto;gap:8px;align-items:center;font-size:14px}.gbar{height:10px;background:var(--line,#e5e7eb);border-radius:99px;overflow:hidden}.gbar i{display:block;height:100%;background:var(--primary);border-radius:99px}
 .bbthemes{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.bbthemes .tchip{flex:0 0 auto;white-space:nowrap}
 .tchip.on{background:var(--primary);color:#fff;border-color:var(--primary)}
 .bbcard{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;min-height:50vh;border:0;border-radius:28px;background:var(--surface);box-shadow:0 10px 30px -18px rgba(0,0,0,.35);cursor:pointer;color:var(--ink)}
@@ -725,8 +726,8 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
-const EQ_BUILD = "243ac4";
-const EQ_WEB = "41c6";
+const EQ_BUILD = "133e12";
+const EQ_WEB = "7020";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -1311,8 +1312,9 @@ function aivStatusUi() {
   document.querySelectorAll("[data-aivsrv]").forEach(el => {
     if (!S2) { el.textContent = ""; return; }
     const errTxt = S2.err === "DAILY_LIMIT" ? "Gemini 今天的額度用完了，後台過幾個小時會自動再試。" : S2.err === "RATE_LIMITED" ? "Gemini 說太快了，後台休息 10 分鐘會自動放慢接著做。" : S2.err ? "上次的問題：" + S2.err : "";
-    el.innerHTML = S2.pending ? `<b>後台產生中</b>：已經存了 ${S2.total} 段，還有 ${S2.pending} 段排隊中${S2.running ? "（每 5 分鐘自動做一批，關掉網頁也會繼續）" : "（排程沒有開，請再按一次）"}${errTxt ? "<br>" + esc(errTxt) : ""}`
-      : `已經存了 ${S2.total} 段，沒有排隊中的工作 ✓${errTxt ? "<br>" + esc(errTxt) : ""}`;
+    const detail = (S2.model ? `目前用的語音模型：${S2.model}。` : "") + (S2.err && S2.raw ? `Google 回的原話：${S2.raw}` : "");
+    el.innerHTML = S2.pending ? `<b>後台產生中</b>：已經存了 ${S2.total} 段，還有 ${S2.pending} 段排隊中${S2.running ? "（每 5 分鐘自動做一批，關掉網頁也會繼續）" : "（排程沒有開，請再按一次）"}${errTxt ? "<br>" + esc(errTxt) : ""}${detail ? `<br><span class="muted" style="font-size:12px;word-break:break-all">${esc(detail)}</span>` : ""}`
+      : `已經存了 ${S2.total} 段，沒有排隊中的工作 ✓${errTxt ? "<br>" + esc(errTxt) : ""}${detail ? `<br><span class="muted" style="font-size:12px;word-break:break-all">${esc(detail)}</span>` : ""}`;
   });
   document.querySelectorAll("[data-aivcancel]").forEach(b => { b.hidden = !(S2 && S2.pending); });
 }
@@ -4116,7 +4118,45 @@ function openBabies(edit) {
 
 /* ---------- 成長紀錄 ---------- */
 function growLog() { if (!state.babyLog || typeof state.babyLog !== "object" || Array.isArray(state.babyLog)) state.babyLog = {}; return state.babyLog; }
-function growMark(w, k) { const e = growLog()[w] = growLog()[w] || {}; e[k] = (Number(e[k]) || 0) + 1; if (k === "pt" && !e.pt1) e.pt1 = today(); Store.save(); }
+function growMark(w, k) {
+  const e = growLog()[w] = growLog()[w] || {}; e[k] = (Number(e[k]) || 0) + 1; if (k === "pt" && !e.pt1) e.pt1 = today();
+  if ((k === "heard" || k === "pt") && fvCloud()) { const q = heardQ(), id = babyCur().id, x = (q[id] = q[id] || {})[w] = (q[id] || {})[w] || [0, 0]; x[k === "heard" ? 0 : 1]++; heardSoon(); }
+  Store.save();
+}
+/* 聽過幾次、指指看答對：先記在這台，過一下再把「新增的次數」送到雲端加總（全家共用同一份） */
+const HEARD = { timer: 0, busy: false, off: false };
+function heardQ() { if (!state.heardQ || typeof state.heardQ !== "object" || Array.isArray(state.heardQ)) state.heardQ = {}; return state.heardQ; }
+function heardSoon() { clearTimeout(HEARD.timer); HEARD.timer = setTimeout(heardSync, 20000); }
+async function heardSync() {
+  clearTimeout(HEARD.timer);
+  if (!fvCloud() || HEARD.busy || HEARD.off || GROWC.multi !== true) return;
+  HEARD.busy = true;
+  /* 第一次：把這台以前記的次數全部當成「新增」送上去 */
+  if (!state.heardMig) {
+    const q = heardQ();
+    babies().forEach(b => { Object.entries(babyData(b.id).log || {}).forEach(([w, e]) => { const h = Number(e && e.heard) || 0, p = Number(e && e.pt) || 0; if (!h && !p) return; const x = (q[b.id] = q[b.id] || {})[w] = (q[b.id] || {})[w] || [0, 0]; x[0] += h; x[1] += p; }); });
+    state.heardMig = true; Store.save();
+  }
+  const send = state.heardQ || {}; state.heardQ = {};
+  let r;
+  try { r = await gs("heardSync", send, famTok()); }
+  catch (e) {
+    const q = heardQ(); Object.entries(send).forEach(([id, m]) => Object.entries(m).forEach(([w, v]) => { const x = (q[id] = q[id] || {})[w] = (q[id] || {})[w] || [0, 0]; x[0] += v[0]; x[1] += v[1]; }));
+    if (/UNKNOWN_FN|is not a function/.test(String((e && e.message) || e))) { HEARD.off = true; }
+    Store.save(); HEARD.busy = false; return;
+  }
+  HEARD.busy = false;
+  if (r && typeof r === "object") heardApply(r);
+}
+function heardApply(r) {
+  const q = heardQ();
+  babies().forEach(b => {
+    const m = r[b.id] || {}, L = babyData(b.id).log, pend = q[b.id] || {};
+    Object.keys(m).forEach(w => { const e = L[w] = L[w] || {}, pq = pend[w] || [0, 0]; e.heard = m[w][0] + pq[0]; e.pt = m[w][1] + pq[1]; if (!e.heard) delete e.heard; if (!e.pt) delete e.pt; });
+  });
+  Store.save();
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && Object.keys(state.heardQ || {}).length) heardSync(); });
 function growToggle(w, k) {
   const e = growLog()[w] = growLog()[w] || {}, who = babies().length > 1 ? babyName() + "・" : "", id = babyCur().id;
   if (e[k]) { if (!confirm(`要取消「${who}${w}・${k === "point" ? "會指了" : "會說了"}」的紀錄嗎？${growCloud() ? "（全家的紀錄都會一起取消）" : ""}`)) return false; delete e[k]; delete e[k + "By"]; }
@@ -4166,6 +4206,7 @@ async function growSync() {
     state.babyMig = true;
   }
   growApply(r);
+  await heardSync();
   if (!$("baby").hidden && BB && (bbView() === "grow" || (bbView() === "listen" && !BB.auto))) renderBaby(false);
 }
 function ageText(birth, d) {
@@ -4185,7 +4226,7 @@ function renderGrow() {
   $("bbView").innerHTML = `
     <div class="reply" style="display:flex;flex-direction:column;gap:8px;border-radius:14px;padding:12px 14px">
       <label class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><span style="font-size:14px">${esc(babyName())}的生日</span><input type="date" id="grBirth" value="${esc(birth)}" style="flex:1;min-width:150px"></label>
-      <span class="muted" style="font-size:12px">${growCloud() ? "☁️ 全家共用：家人群組的每個人都能記，大家看到的是同一份。" : "紀錄存在這台裝置。"}${babies().length > 1 ? `這裡是 ${esc(babyName())} 的紀錄，點上面的 ${babyCur().ic} 可以換寶寶。` : "家裡有兩位以上的寶寶？點上面的 👶 新增。"}填了生日，紀錄會顯示寶寶當時幾個月大。寶寶說出新的字時，點 🎙 就能把寶寶的聲音錄下來。</span></div>
+      <span class="muted" style="font-size:12px">${growCloud() ? "☁️ 全家共用：家人群組的每個人都能記，聽過幾次也是全家的手機一起算。" : "紀錄存在這台裝置。"}${babies().length > 1 ? `這裡是 ${esc(babyName())} 的紀錄，點上面的 ${babyCur().ic} 可以換寶寶。` : "家裡有兩位以上的寶寶？點上面的 👶 新增。"}填了生日，紀錄會顯示寶寶當時幾個月大。寶寶說出新的字時，點 🎙 就能把寶寶的聲音錄下來。</span></div>
     <div class="gtiles">
       <div class="gtile"><b>${nPoint}</b>👆 會指了</div><div class="gtile"><b>${nSay}</b>🗣 會說了</div>
       <div class="gtile"><b>${nHeard}<small> / ${all.length}</small></b>🎧 聽過的字</div><div class="gtile"><b>${ptSum}</b>👆 指指看答對</div></div>
@@ -4193,6 +4234,10 @@ function renderGrow() {
     <section><h3 style="font-size:17px;margin:0 0 6px">時間軸</h3>
       ${ev.length ? `<div style="display:flex;flex-direction:column;gap:6px">${(showAll ? ev : ev.slice(0, 12)).map(([d, k, x, by]) => `<div class="row" style="gap:10px;align-items:center"><span class="muted" style="font-size:13px;width:44px">${mdDate(d)}</span><span style="font-size:22px">${x[1]}</span><span style="flex:1;min-width:0">${k === "say" ? "🗣 會說" : "👆 會指"} <b>${esc(x[0])}</b>（${esc(x[3])}）${by && by !== "爸媽" ? `<br><span class="muted" style="font-size:12px">${esc(by)}記的</span>` : ""}</span>${k === "say" ? (fvList(bvKey(x[0])).length ? `<button class="btn small" data-gbp="${esc(x[0])}" aria-label="聽寶寶說 ${esc(x[0])}">▶ 👶</button>` : `<button class="btn small" data-gbr="${esc(x[0])}" aria-label="錄寶寶說 ${esc(x[0])}">🎙</button>`) : ""}${ageText(birth, d) ? `<span class="muted" style="font-size:12px">${ageText(birth, d)}</span>` : ""}</div>`).join("")}${ev.length > 12 && !showAll ? `<button class="btn small" id="grMore">顯示全部 ${ev.length} 筆</button>` : ""}</div>`
         : `<p class="muted" style="margin:0">還沒有紀錄。寶寶會指出某個東西、或說出某個字的時候，在下面點 👆 或 🗣，就會記下日期。</p>`}
+    </section>
+    <section style="display:flex;flex-direction:column;gap:8px"><h3 style="font-size:17px;margin:0">主題進度</h3>
+      <p class="muted" style="margin:0;font-size:12px">長條＝聽過的字（至少聽過一次）；後面是聽過幾個字、會指或會說的有幾個。${growCloud() ? "聽過的次數全家的手機一起算。" : ""}</p>
+      <div style="display:flex;flex-direction:column;gap:6px">${BABY.map(([tn, ic, items]) => { const h = items.filter(x => get(x[0]).heard).length, k = items.filter(x => get(x[0]).say || get(x[0]).point).length, pc = Math.round(h / items.length * 100); return `<div class="gth"><span>${ic} ${esc(tn)}</span><span class="gbar" role="img" aria-label="${esc(tn)} 聽過 ${h} / ${items.length}"><i style="width:${pc}%"></i></span><span class="muted">${h}/${items.length}${k ? `・會 ${k}` : ""}${h === items.length ? " ✓" : ""}</span></div>`; }).join("")}</div>
     </section>
     <section style="display:flex;flex-direction:column;gap:10px"><h3 style="font-size:17px;margin:0">每個字的紀錄</h3>
       <p class="muted" style="margin:0;font-size:12px">點 👆＝會指了、🗣＝會說了（再點一次可以取消）。🎧 後面是聽過幾次。</p>
@@ -4501,19 +4546,36 @@ function renderSongs() {
 const BB_DAILY = -1;
 function babyWordMap() { if (!babyWordMap.m) { babyWordMap.m = {}; BABY.forEach(t => t[2].forEach(x => babyWordMap.m[x[0]] = x)); babyCustom().forEach(x => { if (!babyWordMap.m[x[0]]) babyWordMap.m[x[0]] = x; }); } return babyWordMap.m; }
 function seededRand(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
-function dailyPlan() {
+/* 新的字每天換一個主題（跟昨天不一樣），按「🔀 換主題」可以再換 */
+function dailyPlan(again) {
   const d = today(), cur = state.babyDaily;
-  if (cur && cur.d === d && Array.isArray(cur.w) && cur.w.length && cur.w.every(x => babyWordMap()[x[0]])) return cur;
-  const L = growLog(), rnd = seededRand(hashStr("daily|" + d)), all = BABY.flatMap(t => t[2].map(x => x[0]));
+  if (!again && cur && cur.d === d && cur.th != null && Array.isArray(cur.w) && cur.w.length && cur.w.every(x => babyWordMap()[x[0]])) return cur;
+  const n = again && cur && cur.d === d ? (Number(cur.n) || 0) + 1 : 0;
+  const L = growLog(), rnd = seededRand(hashStr("daily|" + d + "|" + babyCur().id + "|" + n)), all = BABY.flatMap(t => t[2].map(x => x[0]));
   const learned = w => !!(L[w] && (L[w].say || L[w].point)), heard = w => Number(L[w] && L[w].heard) || 0;
   const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-  const review = shuffle(all.filter(w => heard(w) && !learned(w))).sort((a, b) => heard(a) - heard(b)).slice(0, 5).map(w => [w, "review"]);
+  /* 今天的主題：還有沒聽過的字的主題裡隨機挑一個，不跟上一次一樣 */
+  const hist = (cur && Array.isArray(cur.hist) ? cur.hist : []).concat(cur && cur.th != null ? [cur.th] : []).slice(-4), unheard = w => !heard(w) && !learned(w);
+  const left = i => BABY[i][2].filter(x => unheard(x[0])).length, idx = BABY.map((t, i) => i);
+  /* 先挑最近沒出現過、還有夠多新字的主題；都不夠就挑還有新字的；全部聽過就隨便換一個 */
+  let cands = idx.filter(i => !hist.includes(i) && left(i) >= 4);
+  if (!cands.length) cands = idx.filter(i => !hist.slice(-1).includes(i) && left(i) > 0);
+  if (!cands.length) cands = idx.filter(i => !hist.slice(-1).includes(i));
+  const th = cands[Math.floor(rnd() * cands.length)];
+  const review = shuffle(all.filter(w => heard(w) && !learned(w))).sort((a, b) => heard(a) - heard(b)).slice(0, 4).map(w => [w, "review"]);
   const known = shuffle(all.filter(learned)).slice(0, 1).map(w => [w, "known"]);
-  const fresh = all.filter(w => !heard(w) && !learned(w)).slice(0, 10 - review.length - known.length).map(w => [w, "new"]);
+  const need = 10 - review.length - known.length, have = new Set(review.concat(known).map(x => x[0]));
+  const themeNew = shuffle(BABY[th][2].map(x => x[0]).filter(w => !have.has(w) && unheard(w)));
+  const themeAny = shuffle(BABY[th][2].map(x => x[0]).filter(w => !have.has(w) && !unheard(w)));
+  let fresh = themeNew.slice(0, need).map(w => [w, "new"]);
+  if (fresh.length < need) fresh = fresh.concat(themeAny.slice(0, need - fresh.length).map(w => [w, learned(w) ? "known" : "review"]));
+  if (fresh.length < need) { fresh.forEach(x => have.add(x[0])); fresh = fresh.concat(shuffle(all.filter(w => !have.has(w) && unheard(w))).slice(0, need - fresh.length).map(w => [w, "new"])); }
   let list = review.concat(fresh, known);
-  if (list.length < 10) { const have = new Set(list.map(x => x[0])); shuffle(all.filter(w => !have.has(w))).slice(0, 10 - list.length).forEach(w => list.push([w, learned(w) ? "known" : "review"])); }
-  list = shuffle(list.slice(0, 10));
-  state.babyDaily = { d, w: list, done: false }; Store.save();
+  if (list.length < 10) { const h2 = new Set(list.map(x => x[0])); shuffle(all.filter(w => !h2.has(w))).slice(0, 10 - list.length).forEach(w => list.push([w, learned(w) ? "known" : "review"])); }
+  /* 同一個主題的字排在一起，複習和已經會的穿插在前後 */
+  const tw = list.filter(x => BABY[th][2].some(y => y[0] === x[0])), other = shuffle(list.filter(x => !tw.includes(x)));
+  list = other.slice(0, Math.ceil(other.length / 2)).concat(tw, other.slice(Math.ceil(other.length / 2))).slice(0, 10);
+  state.babyDaily = { d, w: list, done: false, th, n, hist }; Store.save();
   return state.babyDaily;
 }
 const DAILY_TAG = { new: "🆕 新的字", review: "🔁 複習", known: "⭐ 已經會了" };
@@ -4629,7 +4691,7 @@ function renderBaby(say) {
     ${bpicCan() && (BPICS.pending || []).length ? `<button class="btn small block" id="bpTop" style="background:var(--primary-soft)">📬 朋友提供了 ${BPICS.pending.length} 張照片等你確認</button>` : ""}
     <div class="bbthemes"><button class="tchip${BB.t === BB_DAILY ? " on" : ""}" data-bt="${BB_DAILY}"><span aria-hidden="true">⭐</span>今日 10 個字${state.babyDaily && state.babyDaily.d === today() && state.babyDaily.done ? " ✓" : ""}</button>${babyLists().map(l => `<button class="tchip${BB.t === BB_LIST && BB.list === l.id ? " on" : ""}" data-bl="${esc(l.id)}"><span aria-hidden="true">📋</span>${esc(l.name)}</button>`).join("")}<button class="tchip" id="bbNewList"><span aria-hidden="true">＋</span>自選清單</button>${BABY.map(([n, ic], k) => `<button class="tchip${k === BB.t ? " on" : ""}" data-bt="${k}"><span aria-hidden="true">${ic}</span>${esc(n)}</button>`).join("")}</div>
     ${BB.t === BB_LIST ? (() => { const l = bbList(); return l ? `<div class="reply dailybox"><div class="row" style="gap:8px;align-items:center"><span style="flex:1;min-width:0"><b>📋 ${esc(l.name)}</b><br><span class="muted" style="font-size:12px">${l.words.length} 個字・整份播 ${l.loops ? l.loops + " 遍" : "一直播（10 分鐘會休息）"}・英文唸 ${bbEnN()} 次、中文唸 ${bbZhN()} 次${BB.auto && l.loops > 1 ? `・第 ${(BB.loop || 0) + 1} 遍` : ""}</span></span><button class="btn small" id="listEdit">✏️ 編輯</button><button class="btn small primary" id="listGo">▶ 從頭播</button></div></div>` : `<div class="reply dailybox"><b>這份清單不見了</b><button class="btn small" id="bbNewList2">建立新的清單</button></div>`; })() : ""}
-    ${daily ? `<div class="reply dailybox"><div class="row" style="gap:8px;align-items:center"><span style="flex:1;min-width:0"><b>⭐ 今日推薦 10 個字</b><br><span class="muted" style="font-size:12px">${(() => { const c = k => daily.w.filter(x => x[1] === k).length; return `複習 ${c("review")}・新的字 ${c("new")}・已經會的 ${c("known")}`; })()}${daily.done ? "・今天聽完了 🎉" : ""}</span></span><button class="btn small primary" id="dailyGo">▶ 從頭播到尾</button></div>
+    ${daily ? `<div class="reply dailybox"><div class="row" style="gap:8px;align-items:center"><span style="flex:1;min-width:0"><b>⭐ 今日推薦 10 個字</b>${daily.th != null && BABY[daily.th] ? `<br><span style="font-size:13px">今天的新主題：${BABY[daily.th][1]} ${esc(BABY[daily.th][0])}</span>` : ""}<br><span class="muted" style="font-size:12px">${(() => { const c = k => daily.w.filter(x => x[1] === k).length; return `複習 ${c("review")}・新的字 ${c("new")}・已經會的 ${c("known")}`; })()}${daily.done ? "・今天聽完了 🎉" : ""}</span></span><span style="display:flex;flex-direction:column;gap:6px"><button class="btn small primary" id="dailyGo">▶ 從頭播到尾</button><button class="btn small" id="dailyNew">🔀 換主題</button></span></div>
       <div class="dailydots" aria-hidden="true">${daily.w.map((x, i) => `<span class="${i === BB.i ? "on" : i < BB.i ? "done" : ""}" title="${esc(x[0])}">${babyWordMap()[x[0]][1]}</span>`).join("")}</div>
       <span class="dailytag">${DAILY_TAG[(daily.w[BB.i] || [])[1]] || ""}</span></div>` : ""}
     <button class="bbcard" id="bbCard" aria-label="再聽一次 ${esc(w)}"><span class="bbvis" id="bbVis" aria-hidden="true"><span class="bbem">${e}</span></span><span class="bbw">${esc(w)}</span>${state.babySub === false ? "" : `<span class="bbzh">${esc(zw)}</span>`}</button>
@@ -4667,6 +4729,7 @@ function renderBaby(say) {
   if ($("bbNewList2")) $("bbNewList2").onclick = () => openListEdit("");
   if ($("listEdit")) $("listEdit").onclick = () => { bbStopAll(); renderBaby(false); openListEdit(BB.list); };
   if ($("listGo")) $("listGo").onclick = () => { BB.tok++; BB.i = 0; BB.loop = 0; BB.auto = true; BB.started = Date.now(); renderBaby(true); };
+  if ($("dailyNew")) $("dailyNew").onclick = () => { bbStopAll(); dailyPlan(true); BB.i = 0; prefetchBaby(); renderBaby(true); toast(`換好了：${BABY[state.babyDaily.th][1]} ${BABY[state.babyDaily.th][0]}`); };
   if ($("dailyGo")) $("dailyGo").onclick = () => { BB.tok++; BB.i = 0; BB.auto = true; BB.started = Date.now(); renderBaby(true); };
   $("bbCard").onclick = () => sayCard();
   $("bbPrev").onclick = () => { BB.i = (BB.i - 1 + items.length) % items.length; renderBaby(true); };
