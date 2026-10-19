@@ -727,7 +727,7 @@ let GUEST = false;
 let SPONSOR = "";
 let OWNER_WHO = "";
 const EQ_BUILD = "133e12";
-const EQ_WEB = "7020";
+const EQ_WEB = "6fb9";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -3872,7 +3872,7 @@ async function famRefresh() {
   if (Store.backend !== "sheet" || KEY_MODE() || !famTok()) return;
   const before = famSt().st;
   try { const r = await gs("famStatus", famTok()); if (r && r.st) famSetSt(r); } catch (e) { return; }
-  if (famSt().st === "ok" && before !== "ok") { toast(`作者已經確認了！你現在是家人群組的一員（${famSt().name}）`); FV.synced = false; fvSync(); }
+  if (famSt().st === "ok" && before !== "ok") { toast(`作者已經確認了！你現在是家人群組的一員（${famSt().name}）`); FV.synced = false; fvSync(); growSync(); }
   if (famSt().st !== before && !$("baby").hidden) renderBaby(false);
 }
 function openFamJoin() {
@@ -4109,8 +4109,10 @@ function openBabies(edit) {
       <button class="bysel" data-bysw="${b.id}" aria-pressed="${b.id === cur.id}"><span style="font-size:30px" aria-hidden="true">${b.ic}</span><span style="flex:1;min-width:0;text-align:left"><b>${esc(babyName(b))}</b>${b.id === cur.id ? ` <span class="muted" style="font-size:12px">（現在）</span>` : ""}<br><span class="muted" style="font-size:12px">${age ? age + "・" : ""}會指 ${np}・會說 ${ns}</span></span></button>
       <button class="btn small" data-byed="${b.id}" aria-label="改 ${esc(babyName(b))} 的名字和生日">✏️</button></div>`; }).join("")}</div>
     ${!cur.n ? `<p class="muted" style="margin:0;font-size:12px">以前記的紀錄都在「${esc(babyName(babies()[0]))}」這裡，點 ✏️ 幫他取個名字吧。</p>` : ""}
-    ${L.length < 10 ? `<button class="btn block" id="byAdd">＋ 新增寶寶</button>` : ""}`);
+    ${L.length < 10 ? `<button class="btn block" id="byAdd">＋ 新增寶寶</button>` : ""}
+    <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><span class="muted" style="font-size:12px;flex:1;min-width:0">${(() => { const g = GROWC.st; const who = KEY_MODE() ? "作者" : isFam() ? `家人：${esc(famSt().name)}` : famSt().st === "pending" ? "等作者確認中" : "訪客"; const off = !fvCloud() ? (Store.backend !== "sheet" ? "這個版本沒有連到雲端" : famSt().st === "pending" ? "還在等作者確認加入家人群組" : "還不是家人群組（請按「👪 我是家人」申請）") : ""; if (off) return `${who}・⚠️ 沒同步：${off}・版本 ${EQ_WEB}`; return `${who}・${g ? (g.ok ? `☁️ 已同步 ${new Date(g.at).toTimeString().slice(0, 5)}（雲端有 ${g.n} 位寶寶）` : `⚠️ 沒同步：${esc(g.err)}`) : "還沒同步"}・版本 ${EQ_WEB}`; })()}</span><button class="btn small" id="bySync">🔄 重新同步</button></div>`);
   $("byClose").onclick = closeModal;
+  $("bySync").onclick = async () => { $("bySync").disabled = true; $("bySync").textContent = "同步中…"; await famRefresh(); await growSync(); openBabies(); toast(GROWC.st && GROWC.st.ok ? "同步好了" : "沒同步成功：" + ((GROWC.st && GROWC.st.err) || "")); };
   $("gPanel").querySelectorAll("[data-bysw]").forEach(x => x.onclick = () => { bbStopAll(); babySwitch(x.dataset.bysw); closeModal(); toast(`現在是 ${babyName()} ${babyCur().ic}`); renderBaby(false); });
   $("gPanel").querySelectorAll("[data-byed]").forEach(x => x.onclick = () => openBabies(x.dataset.byed));
   if ($("byAdd")) $("byAdd").onclick = () => openBabies("new");
@@ -4166,7 +4168,7 @@ function growToggle(w, k) {
   return true;
 }
 /* 成長紀錄：作者和家人群組共用雲端那一份（聽過幾次、指指看次數還是各自記） */
-const GROWC = { at: 0, multi: undefined };
+const GROWC = { at: 0, multi: undefined, st: null };
 function growApply(r) {
   if (!r || typeof r.m !== "object") return;
   const multi = !!(r.bm && typeof r.bm === "object" && Array.isArray(r.babies));
@@ -4181,9 +4183,10 @@ function growApply(r) {
   Store.save();
 }
 async function growSync() {
-  if (!fvCloud()) return;
+  if (!fvCloud()) { GROWC.st = { ok: false, at: Date.now(), err: Store.backend !== "sheet" ? "這個版本沒有連到雲端" : famSt().st === "pending" ? "還在等作者確認加入家人群組" : "還不是家人群組（請按「👪 我是家人」申請）" }; return; }
   GROWC.at = Date.now(); let r;
-  try { r = await gs("growGet", famTok()); } catch (e) { return; }
+  try { r = await gs("growGet", famTok()); } catch (e) { GROWC.st = { ok: false, at: Date.now(), err: backendError(e) }; return; }
+  GROWC.st = { ok: true, at: Date.now(), n: Array.isArray(r && r.babies) ? r.babies.length : 1 };
   const multi = !!(r && r.bm && Array.isArray(r.babies)); GROWC.multi = multi;
   if (!state.growMig) {
     const d1 = babyData("b1"), up = []; Object.entries(d1.log).forEach(([w, e]) => ["point", "say"].forEach(k => { if (e[k] && !(r.m[w] && r.m[w][k])) up.push([w, k, e[k]]); }));
@@ -4208,6 +4211,7 @@ async function growSync() {
   growApply(r);
   await heardSync();
   if (!$("baby").hidden && BB && (bbView() === "grow" || (bbView() === "listen" && !BB.auto))) renderBaby(false);
+  else if ($("bbWho")) { const b = babyCur(); $("bbWho").innerHTML = `<span aria-hidden="true">${b.ic}</span>${esc(babyName(b))} ▾`; }
 }
 function ageText(birth, d) {
   const b = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(birth || "")), x = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(d || "")); if (!b || !x) return "";
