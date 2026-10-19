@@ -726,8 +726,8 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
-const EQ_BUILD = "133e12";
-const EQ_WEB = "6fb9";
+const EQ_BUILD = "c5e55a";
+const EQ_WEB = "7d54";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -1312,7 +1312,7 @@ function aivStatusUi() {
   document.querySelectorAll("[data-aivsrv]").forEach(el => {
     if (!S2) { el.textContent = ""; return; }
     const errTxt = S2.err === "DAILY_LIMIT" ? "Gemini 今天的額度用完了，後台過幾個小時會自動再試。" : S2.err === "RATE_LIMITED" ? "Gemini 說太快了，後台休息 10 分鐘會自動放慢接著做。" : S2.err ? "上次的問題：" + S2.err : "";
-    const detail = (S2.model ? `目前用的語音模型：${S2.model}。` : "") + (S2.err && S2.raw ? `Google 回的原話：${S2.raw}` : "");
+    const detail = (S2.model ? `目前用的語音模型：${S2.model}。` : "") + (S2.keys > 1 ? `金鑰 ${S2.keys} 把，現在用第 ${S2.keyNow} 把。` : "") + (S2.err && S2.raw ? `Google 回的原話：${S2.raw}` : "");
     el.innerHTML = S2.pending ? `<b>後台產生中</b>：已經存了 ${S2.total} 段，還有 ${S2.pending} 段排隊中${S2.running ? "（每 5 分鐘自動做一批，關掉網頁也會繼續）" : "（排程沒有開，請再按一次）"}${errTxt ? "<br>" + esc(errTxt) : ""}${detail ? `<br><span class="muted" style="font-size:12px;word-break:break-all">${esc(detail)}</span>` : ""}`
       : `已經存了 ${S2.total} 段，沒有排隊中的工作 ✓${errTxt ? "<br>" + esc(errTxt) : ""}${detail ? `<br><span class="muted" style="font-size:12px;word-break:break-all">${esc(detail)}</span>` : ""}`;
   });
