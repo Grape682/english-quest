@@ -728,7 +728,7 @@ let GUEST = false;
 let SPONSOR = "";
 let OWNER_WHO = "";
 const EQ_BUILD = "245d6f";
-const EQ_WEB = "c758";
+const EQ_WEB = "c150";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -1332,7 +1332,7 @@ function aivStatusUi() {
 const HS = { mem: {}, wait: {}, told: {} };
 try { localStorage.removeItem("eq-human-s"); } catch (e) { }
 const normSent = t => String(t || "").toLowerCase().replace(/[\u2018\u2019`\u00b4]/g, "'").replace(/[^a-z0-9' ]+/g, " ").split(" ").map(w => w.replace(/^'+|'+$/g, "")).filter(Boolean).join(" ");
-const canHumanSent = t => { t = String(t || "").trim(); if (state.human === false || state.humanSent === false || UK() || canHuman(t) || t.length > 140 || !/[a-z]/i.test(t) || /[^\x20-\x7E\u2018\u2019\u201c\u201d\u2014\u2013\u2026]/.test(t)) return false; const n = normSent(t).split(" ").length; return n >= 2 && n <= 16; };
+const canHumanSent = t => { t = String(t || "").trim(); if (state.human === false || state.humanSent !== true || UK() || canHuman(t) || t.length > 140 || !/[a-z]/i.test(t) || /[^\x20-\x7E\u2018\u2019\u201c\u201d\u2014\u2013\u2026]/.test(t)) return false; const n = normSent(t).split(" ").length; return n >= 2 && n <= 16; };
 function hsCache() { try { return JSON.parse(localStorage.getItem("eq-human-s2") || "{}"); } catch (e) { return {}; } }
 function hsSave(k, v) { try { const c = hsCache(); c[k] = v; const ks = Object.keys(c); if (ks.length > 800) ks.slice(0, ks.length - 800).forEach(x => delete c[x]); localStorage.setItem("eq-human-s2", JSON.stringify(c)); } catch (e) { } }
 const TATOEBA = "https:\/\/tatoeba.org";
@@ -1397,7 +1397,7 @@ function fetchSents(keys) {
 const splitSents = t => (String(t || "").replace(/\s+/g, " ").match(/[^.!?]+[.!?]*/g) || []).map(x => x.trim()).filter(Boolean);
 /* 先在背景查好（只有接後台時才批次查，避免一次打太多次 Tatoeba） */
 function prefetchSents(texts) {
-  if (state.human === false || state.humanSent === false || (Store.backend !== "sheet" && Store.backend !== "computer")) return;
+  if (state.human === false || state.humanSent !== true || (Store.backend !== "sheet" && Store.backend !== "computer")) return;
   const keys = [...new Set(texts.flatMap(splitSents).filter(canHumanSent).map(normSent))].filter(k => sentCached(k) === undefined);
   for (let i = 0; i < keys.length && i < 48; i += 8) setTimeout(() => fetchSents(keys.slice(i, i + 8)), 400 * (i / 8));
 }
@@ -1492,6 +1492,9 @@ function speak(text, slow, fixedRate) {
   /* 真人錄音、AI 語音也跟著「語速」設定（慢／正常／快） */
   const rate = fixedRate ? Math.max(0.6, Math.min(1.2, fixedRate)) : (slow ? 0.75 : 1) * Math.max(0.8, Math.min(1.2, Number(state.rate) || 1));
   const fallback = () => { if (tok === speak.t) speakAiOr(text, slow, fixedRate, rate, tok); };
+  /* 雲端已經有這段 AI 語音：直接播 AI 語音（單字、句子都一樣），不用先查真人錄音 */
+  const t0 = String(text || "").trim();
+  if (AIV_ON() && t0 && AIV.have.has(aiKey(aivFor(t0), t0))) { stopHuman(); if (TTS) speechSynthesis.cancel(); fallback(); return; }
   if (canHuman(text)) {
     if (TTS) speechSynthesis.cancel();
     /* 單字真人錄音：還沒查過的最多等 1 秒，查不到就先用別的聲音，查好的結果下次直接用 */
@@ -1500,10 +1503,10 @@ function speak(text, slow, fixedRate) {
   }
   if (canHumanSent(text)) {
     stopHuman(); if (TTS) speechSynthesis.cancel();
-    /* 還沒查過有沒有真人錄音：雲端已經有 AI 語音就直接播，真人錄音在背景查好留給下次；沒有 AI 語音也最多等 1.2 秒 */
-    const sk = normSent(text), known = sentCached(sk), t0 = String(text || "").trim();
-    if (known === undefined && AIV_ON() && AIV.have.has(aiKey(aivFor(t0), t0))) { fetchSents([sk]); fallback(); return; }
-    raceMs(sentVoice(text), known === undefined ? 1200 : 2500).then(v => {
+    /* 不等 Tatoeba：還沒查過的句子直接用 AI 語音（沒有就用電腦語音），真人錄音在背景查好，下次再用 */
+    const sk = normSent(text), known = sentCached(sk);
+    if (known === undefined) { fetchSents([sk]); fallback(); return; }
+    raceMs(sentVoice(text), 2500).then(v => {
       if (tok !== speak.t) return;
       if (v && v.u) {
         if (v.t && !HS.told[v.t]) { HS.told[v.t] = 1; toast("真人錄音是口語縮寫：" + v.t); }
@@ -6667,7 +6670,7 @@ function renderStats(focus) {
     </section>
     <section class="card flat"><h3>聲音設定</h3>
       <label class="row" style="gap:8px;font-size:15px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="humanOn" style="margin-top:4px" ${state.human !== false ? "checked" : ""}><span>單字用<b>真人錄音</b>發音（找不到才用電腦語音）</span></label>
-      <label class="row" style="gap:8px;font-size:15px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="humanSentOn" style="margin-top:4px" ${state.human !== false && state.humanSent !== false ? "checked" : ""} ${state.human === false ? "disabled" : ""}><span>句子也先找<b>真人錄音</b>（同一句才有，縮寫也算）</span></label>
+      <label class="row" style="gap:8px;font-size:15px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="humanSentOn" style="margin-top:4px" ${state.human !== false && state.humanSent === true ? "checked" : ""} ${state.human === false ? "disabled" : ""}><span>句子也先找 Tatoeba 的<b>真人錄音</b>（預設關閉：句子直接用 AI 語音比較快、聲音也一致）</span></label>
       ${KEY_MODE() ? `<div class="reply" style="display:flex;flex-direction:column;gap:6px"><b>先把錄音全部查好（播放就不會卡）</b><span class="muted" style="font-size:13px">一次查完所有單字和句子，結果存在後台大家共用，朋友打開也直接有真人聲音。之後 AI 新產生的句子會自動查。</span><div class="row" style="flex-wrap:wrap"><button class="btn small primary" id="scanBtn">一次掃描全部</button><span style="font-size:13px" id="scanOut"></span></div></div>` : ""}
       <p class="muted" style="margin:0;font-size:12px">單字真人錄音來自 Wiktionary 志工（CC BY-SA，透過 Free Dictionary API）；句子真人錄音來自 Tatoeba 志工（例如 CK），依各錄音者的 CC 授權使用。找不到的句子才用下面選的語音；Edge 的「Natural」聲音、iPhone 下載的「增強版」聲音最接近真人。</p>
       <div class="reply" style="display:flex;flex-direction:column;gap:8px;border-radius:12px;padding:10px 12px">
@@ -6859,7 +6862,7 @@ function renderStats(focus) {
   $("voiceSel").onchange = e => { state.voice = e.target.value; Store.save(); speak("Hello! Let's learn English."); };
   $("rateSeg").querySelectorAll("button").forEach(b => b.onclick = () => { state.rate = Number(b.dataset.r); Store.save(); renderStats(); speak("This is my family."); });
   $("testVoice").onclick = () => speak("Hello! Let's learn English together.");
-  $("humanOn").onchange = e => { state.human = e.target.checked; Store.save(); const hs = $("humanSentOn"); if (hs) { hs.disabled = !state.human; hs.checked = state.human && state.humanSent !== false; } speak("family"); };
+  $("humanOn").onchange = e => { state.human = e.target.checked; Store.save(); const hs = $("humanSentOn"); if (hs) { hs.disabled = !state.human; hs.checked = state.human && state.humanSent === true; } speak("family"); };
   if ($("scanBtn")) { $("scanBtn").onclick = scanVoices; scanUi(SCAN.on ? "掃描中…" : ""); }
   $("aivOn").onchange = e => { state.aiVoice = e.target.checked; Store.save(); };
   $("stats").querySelectorAll("[data-acc]").forEach(b => b.onclick = () => { state.aiAccent = b.dataset.acc; Store.save(); HUMAN.mem = {}; renderStats(); toast(UK() ? "改成英式口音：單字用英式真人錄音，句子用英式 AI 語音（要另外產生）" : "改回美式口音"); });
