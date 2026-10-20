@@ -728,7 +728,7 @@ let GUEST = false;
 let SPONSOR = "";
 let OWNER_WHO = "";
 const EQ_BUILD = "245d6f";
-const EQ_WEB = "ea03";
+const EQ_WEB = "2334";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -1116,6 +1116,14 @@ function aiVoiceUrl(v, t) {
     } catch (e) { return ""; } finally { delete AIV.wait[k]; }
   })());
 }
+/* 雲端已經有這段 AI 語音：第一次要先下載，最多等 7 秒，不要一下子就改用電腦語音 */
+async function aivWait(v, t, ms) {
+  if (!AIV_ON()) return "";
+  const k = aiKey(v, t);
+  if (AIV.url[k]) return AIV.url[k];
+  if (!AIV.have.has(k)) return "";
+  return (await raceMs(aiVoiceUrl(v, t), ms || 7000)) || "";
+}
 /* 先把接下來要播的下載好（一次最多 6 段） */
 async function aivPrefetch(pairs) {
   if (!AIV_ON() || Store.backend !== "sheet") { pairs.forEach(([v, t]) => aiVoiceUrl(v, t)); return; }
@@ -1409,16 +1417,18 @@ const wordTodo = w => Store.backend === "sheet" ? !VOICE_SRV.w.has(w) : !(w in H
 function saveWordVoice(k, url) { HUMAN.mem[k] = url; try { const c = JSON.parse(localStorage.getItem("eq-human") || "{}"); if (url) c[k] = url; else c["@" + k] = Date.now(); localStorage.setItem("eq-human", JSON.stringify(c)); } catch (e) { } }
 /* 開始一回練習時，先把這回會用到的錄音下載好，按下去就馬上有聲音 */
 function preloadQuiz(items) {
-  if (state.human === false) return;
-  const sents = [];
-  items.slice(0, 15).forEach(it => {
+  const sents = [], ai = [];
+  items.slice(0, 15).forEach((it, idx) => {
     let w = null; try { w = (it.note || it.line || it.phrase || it.mis) ? pseudoWord(it) : it.w ? BY_EN[it.w] : null; } catch (e) { }
     if (!w) return;
-    if (w.en && canHuman(w.en)) { const u = HUMAN.mem[w.en.trim().toLowerCase()]; if (u) preloadAudio(u); }
+    if (w.en && canHuman(w.en)) { const u = HUMAN.mem[w.en.trim().toLowerCase()]; if (u) preloadAudio(u); else if (idx < 8) ai.push(w.en.trim()); }
+    else if (w.en && idx < 8) ai.push(String(w.en).trim());
     let S = null; try { S = sentenceOf(w); } catch (e) { }
+    if (S && S.s && idx < 8) { const v = canHumanSent(S.s) ? sentCached(normSent(S.s)) : null; if (!(v && v.u)) ai.push(String(S.s).trim()); }
     if (S && S.s) splitSents(S.s).forEach(x => { if (!canHumanSent(x)) return; const v = sentCached(normSent(x)); if (v && v.u) preloadAudio(v.u); else if (v === undefined) sents.push(x); });
   });
-  if (sents.length) prefetchSents(sents);
+  if (sents.length && state.human !== false) prefetchSents(sents);
+  if (ai.length) aivPrefetch([...new Set(ai)].map(t => [aivFor(t), t]));
 }
 /* 一次掃描全部：課程單字、例句、AI 例句、記憶卡、急救包、寶寶聽力、閱讀短文、字幕、台詞本 */
 function voiceInventory() {
@@ -1504,7 +1514,7 @@ function speak(text, slow, fixedRate) {
 async function speakAiOr(text, slow, fixedRate, rate, tok) {
   const t = String(text || "").trim();
   if (AIV_ON() && t && t.length <= 200 && /[a-z]/i.test(t)) {
-    const v = aivFor(t), u = AIV.have.has(aiKey(v, t)) ? await raceMs(aiVoiceUrl(v, t), 3000) : "";
+    const v = aivFor(t), u = await aivWait(v, t);
     if (tok !== speak.t) return;
     if (u) { stopHuman(); if (TTS) speechSynthesis.cancel(); if (await playUrl(u, rate)) return; if (tok !== speak.t) return; }
     else aivQueue([[v, t]]);
@@ -3845,7 +3855,7 @@ function renderBabyView() {
 }
 /* 唸一句英文：有 AI 語音就用 AI，沒有就用電腦語音（作者那邊會排隊產生） */
 async function sayLine(text, slow) {
-  const v = aivFor(text), u = AIV_ON() ? await raceMs(aiVoiceUrl(v, text), 2500) : "";
+  const v = aivFor(text), u = await aivWait(v, text);
   if (u && await playUrl(u, slow ? 0.85 : 1)) return;
   if (AIV_ON()) aivQueue([[v, text]]);
   await sayTTS(text, slow ? 0.72 : 0.9);
@@ -4317,7 +4327,7 @@ const PT_RETRY = ["Try again!"];
 const PT_CHEER_ZH = "好棒！找到了！", PT_RETRY_ZH = "再試一次！";
 /* 中文語音：有 AI 中文聲音就用，沒有就用電腦的中文語音 */
 async function sayZhLine(text, slow) {
-  const u = AIV_ON() ? await raceMs(aiVoiceUrl("zh", text), 2500) : "";
+  const u = await aivWait("zh", text);
   if (u && await playUrl(u, slow ? 0.85 : 1)) return;
   if (AIV_ON()) aivQueue([["zh", text]]);
   await sayZh(text, slow ? 0.75 : 0.9);
@@ -4834,21 +4844,21 @@ async function sayCard() {
     if (fj >= 0 && fj < fam.length) {
       if (!(await playUrl(fam[fj].u, slow ? 0.9 : 1)) && tok === BB.tok) await bbOldEn(w, ph, tok);
     } else if (!st.zh && cap && cap.en) {
-      const vid = aivFor(cap.en), u = AIV_ON() ? await raceMs(aiVoiceUrl(vid, cap.en), 2500) : "";
+      const vid = aivFor(cap.en), u = await aivWait(vid, cap.en);
       if (tok !== BB.tok) return;
       if (!(u && await playUrl(u, slow ? 0.85 : 1))) { if (AIV_ON() && !u) aivQueue([[vid, cap.en]]); if (tok !== BB.tok) return; await sayTTS(cap.en, bbRate(false)); }
     } else if (st.zh && cap && cap.zh) {
-      const zu = AIV_ON() ? await raceMs(aiVoiceUrl("zh", cap.zh), 2500) : "";
+      const zu = await aivWait("zh", cap.zh);
       if (tok !== BB.tok) return;
       if (!(zu && await playUrl(zu, slow ? 0.85 : 1))) { if (AIV_ON() && !zu) aivQueue([["zh", cap.zh]]); await sayZh(cap.zh, slow ? 0.75 : 0.9); }
     } else if (!st.zh) {
       const vid = AIV_LIST[(fj - fam.length) % 4][0];
-      const u = AIV_ON() ? await raceMs(aiVoiceUrl(vid, en), 2500) : "";
+      const u = await aivWait(vid, en);
       if (tok !== BB.tok) return;
       if (u) { if (!(await playUrl(u, slow ? 0.85 : 1)) && tok === BB.tok) await bbOldEn(w, ph, tok); }
       else { if (AIV_ON()) aivQueue([[vid, en]]); await bbOldEn(w, ph, tok); }
     } else {
-      const zu = AIV_ON() ? await raceMs(aiVoiceUrl("zh", zt), 2500) : "";
+      const zu = await aivWait("zh", zt);
       if (tok !== BB.tok) return;
       if (!(zu && await playUrl(zu, slow ? 0.85 : 1))) { if (AIV_ON() && !zu) aivQueue([["zh", zt]]); await sayZh(zw, slow ? 0.75 : 0.9); await waitMs(300); if (tok !== BB.tok) return; await sayZh(zp, slow ? 0.75 : 0.9); }
     }
@@ -4894,7 +4904,7 @@ function spkLine(t, bi) {
 function spkStreak() { let n = 0, d = new Date(); const done = spkS().done; if (!done[ymd(d)]) d.setDate(d.getDate() - 1); while (done[ymd(d)]) { n++; d.setDate(d.getDate() - 1); } return n; }
 function spkMark(step) { const d = today(), s = spkS(); (s.steps[d] = s.steps[d] || {})[step] = 1; Store.save(); }
 async function sayVoice(text, v, slow) {
-  const u = AIV_ON() ? await raceMs(aiVoiceUrl(v, text), 2500) : "";
+  const u = await aivWait(v, text);
   if (u && await playUrl(u, slow ? 0.85 : 1)) return;
   if (AIV_ON()) aivQueue([[v, text]]);
   await sayTTS(text, slow ? 0.72 : 0.9);
@@ -5963,6 +5973,7 @@ function renderHeader() {
 }
 function renderItem() {
   const it = Q.items[Q.i]; Q.answered = false; Q.extraKey = null;
+  if (Q.i > 0 && Q.i % 4 === 0) { try { preloadQuiz(Q.items.slice(Q.i + 4, Q.i + 12)); } catch (e) { } }
   renderHeader();
   $("qtype").textContent = (TYPE_LABEL[it.t] || "") + (it.review ? "・複習" : "") + (it.note ? "・台詞本" : "") + (it.line ? "・字幕" : "") + (it.phrase ? "・急救包" : "") + (it.mis ? "・錯誤本" : "");
   const rng = Q.kind === "daily" ? seeded(state.daily.date + "|" + Q.i) : Math.random;
@@ -6768,7 +6779,21 @@ function renderStats(focus) {
     const btn = $("svList"); btn.disabled = true; btn.textContent = "讀取中…";
     try {
       const list = await gs("listSaves");
-      $("svOut").innerHTML = list.length ? list.map((s, k) => `<div class="li" style="flex-wrap:wrap"><div style="flex:1;min-width:0"><b>${esc(s.label)}</b>${s.updated ? `<span class="muted" style="font-size:13px">　${esc(s.updated)}</span>` : ""}<div class="muted" style="font-size:13px">${s.xp} XP・第 ${s.week} 週・${esc((DIFF[s.diff] || DIFF[1]).name)}・程度測驗 ${s.assess} 次・學過 ${s.words} 個字${s.last ? `・最後練習 ${esc(s.last)}` : ""}</div></div>${s.kind === "owner" ? `<span class="chip">使用中</span>` : `<button class="btn small" data-sv="${k}">換成這份</button>`}</div>`).join("") : `<p class="muted" style="margin:0">試算表裡還沒有其他進度存檔。</p>`;
+      /* 整理：相同內容的備份只留最新一份；最上面直接推薦「最新的」和「分數最高的」，其他收起來 */
+      const row = (s, k, tags) => `<div class="li" style="flex-wrap:wrap"><div style="flex:1;min-width:0">${tags ? tags + " " : ""}<b>${esc(s.label)}</b>${s.updated ? `<span class="muted" style="font-size:13px">　${esc(s.updated)}</span>` : ""}<div class="muted" style="font-size:13px">${s.xp} XP・第 ${s.week} 週・${esc((DIFF[s.diff] || DIFF[1]).name)}・程度測驗 ${s.assess} 次・學過 ${s.words} 個字${s.last ? `・最後練習 ${esc(s.last)}` : ""}</div></div>${s.kind === "owner" ? `<span class="chip">使用中</span>` : `<button class="btn small" data-sv="${k}">換成這份</button>`}</div>`;
+      const sig = s => [s.xp, s.week, s.words, s.assess, s.last].join("|"), when = s => (s.last || "") + " " + (s.updated || "");
+      const cur = list.findIndex(s => s.kind === "owner"), curSig = cur >= 0 ? sig(list[cur]) : "";
+      const mine = list.map((s, k) => [s, k]).filter(([s]) => s.kind !== "owner" && !(s.kind === "guest" && !/換回前備份/.test(s.label)));
+      const seen = new Set(), uniq = mine.sort((a, b) => when(b[0]) < when(a[0]) ? -1 : 1).filter(([s]) => { const g = sig(s); if (seen.has(g) || g === curSig) return false; seen.add(g); return true; });
+      const guests = list.map((s, k) => [s, k]).filter(([s]) => s.kind === "guest" && !/換回前備份/.test(s.label));
+      const newest = uniq[0], best = uniq.slice().sort((a, b) => b[0].xp - a[0].xp || (when(b[0]) < when(a[0]) ? -1 : 1))[0];
+      const picks = []; if (newest) picks.push(newest); if (best && best !== newest) picks.push(best);
+      const tag = x => [x === newest ? `<span class="chip">🕒 最新</span>` : "", x === best ? `<span class="chip">🏆 分數最高</span>` : ""].join("");
+      const rest = uniq.filter(x => !picks.includes(x));
+      $("svOut").innerHTML = (cur >= 0 ? row(list[cur], cur, "") : "")
+        + (picks.length ? `<span class="eyebrow" style="margin-top:8px">建議換回</span>${picks.map(x => row(x[0], x[1], tag(x))).join("")}` : `<p class="muted" style="margin:6px 0 0">沒有跟現在不一樣的備份，不用換。</p>`)
+        + (rest.length ? `<details style="margin-top:8px"><summary class="muted" style="cursor:pointer">其他備份 ${rest.length} 份（相同內容的只留一份，共省略 ${mine.length - uniq.length} 份）</summary>${rest.map(x => row(x[0], x[1], "")).join("")}</details>` : "")
+        + (guests.length ? `<details style="margin-top:8px"><summary class="muted" style="cursor:pointer">訪客的進度 ${guests.length} 份（朋友用的，通常不用換）</summary>${guests.sort((a, b) => b[0].xp - a[0].xp).map(x => row(x[0], x[1], "")).join("")}</details>` : "");
       $("svOut").querySelectorAll("[data-sv]").forEach(b => b.onclick = async () => {
         const s = list[Number(b.dataset.sv)];
         if (b.dataset.ok !== "1") { b.dataset.ok = "1"; b.textContent = "確定換成這份？再按一次"; return; }
