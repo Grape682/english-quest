@@ -106,6 +106,7 @@ button.chip:hover{border-color:var(--primary)}
 .bysel{display:flex;align-items:center;gap:10px;flex:1;min-width:0;border:1px solid var(--line,#ddd);background:var(--surface);color:var(--ink);border-radius:14px;padding:8px 12px;cursor:pointer;font:inherit}.bysel[aria-pressed="true"]{border:2px solid var(--primary);background:var(--primary-soft)}
 .inappbar{position:sticky;top:0;z-index:60;display:flex;flex-direction:column;gap:6px;padding:12px 16px;background:#FFF4CC;color:#4A3B00;border-bottom:2px solid #F2C94C;font-size:14px;line-height:1.5}
 .gth{display:grid;grid-template-columns:7.2em 1fr auto;gap:8px;align-items:center;font-size:14px}.gbar{height:10px;background:var(--line,#e5e7eb);border-radius:99px;overflow:hidden}.gbar i{display:block;height:100%;background:var(--primary);border-radius:99px}
+.capslot{display:flex;gap:10px;align-items:flex-start}.capth{position:relative;flex:0 0 72px;height:72px;border-radius:12px;background:var(--surface-2,#f1f3f8);display:flex;align-items:center;justify-content:center;overflow:hidden}.capth b{position:absolute;left:4px;top:2px;font-size:12px;background:var(--surface);border-radius:99px;padding:0 6px}
 .bbthemes{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.bbthemes .tchip{flex:0 0 auto;white-space:nowrap}
 .tchip.on{background:var(--primary);color:#fff;border-color:var(--primary)}
 .bbcard{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;min-height:50vh;border:0;border-radius:28px;background:var(--surface);box-shadow:0 10px 30px -18px rgba(0,0,0,.35);cursor:pointer;color:var(--ink)}
@@ -698,7 +699,7 @@ function setOwnerToken(t) { try { if (t) localStorage.setItem("eq-owner-token", 
 /* 呼叫後台：同時最多 6 個（Google 對同時執行的次數有限制，太多會被擋、看起來像 CORS 錯誤）；
    讀資料的請求遇到 Google 暫時出錯會自動再試 2 次，寫入的不重試，避免重複存 */
 const GSQ = { n: 0, q: [] };
-const GS_RETRY = new Set(["aiStatus", "voiceListGet", "loadLibrary", "loadProgress", "ttsGet", "ttsStatus", "babyPicGet", "famStatus", "famAdmin", "famVoiceList", "famVoiceGet", "growGet", "growSet", "newsHeadlines", "newsGet", "findVoice", "findWords", "listWishes", "listSaves", "unsplashFind", "saveProgress"]);
+const GS_RETRY = new Set(["aiStatus", "capList", "voiceListGet", "loadLibrary", "loadProgress", "ttsGet", "ttsStatus", "babyPicGet", "famStatus", "famAdmin", "famVoiceList", "famVoiceGet", "growGet", "growSet", "newsHeadlines", "newsGet", "findVoice", "findWords", "listWishes", "listSaves", "unsplashFind", "saveProgress"]);
 function gsSlot() { return new Promise(res => { if (GSQ.n < 6) { GSQ.n++; res(); } else GSQ.q.push(res); }); }
 function gsDone() { const nx = GSQ.q.shift(); if (nx) nx(); else GSQ.n = Math.max(0, GSQ.n - 1); }
 async function apiCall(fn, args) {
@@ -726,8 +727,8 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
-const EQ_BUILD = "c5e55a";
-const EQ_WEB = "c9a9";
+const EQ_BUILD = "245d6f";
+const EQ_WEB = "ea03";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -1166,7 +1167,8 @@ function aivUi() {
 }
 const babyEn = (w, ph) => w.charAt(0).toUpperCase() + w.slice(1) + "! ... " + ph;
 const babyZhT = (zw, zp) => zw + "。" + zp;
-function babyAivItems() { const out = []; BABY.concat([["", "", typeof babyCustom === "function" ? babyCustom() : []]]).forEach(t => t[2].forEach(([w, , ph, zw, zp]) => { AIV_LIST.forEach(([v]) => out.push([v, babyEn(w, ph)])); out.push(["zh", babyZhT(zw, zp)]); })); return out.concat(babyExtraAivItems()); }
+function capAivItems() { const out = []; Object.values(typeof capAll === "function" ? capAll() : {}).forEach(m => Object.values(m).forEach(([en, zh]) => { if (en) out.push([aivFor(en), en]); if (zh) out.push(["zh", zh]); })); return out; }
+function babyAivItems() { const out = []; BABY.concat([["", "", typeof babyCustom === "function" ? babyCustom() : []]]).forEach(t => t[2].forEach(([w, , ph, zw, zp]) => { AIV_LIST.forEach(([v]) => out.push([v, babyEn(w, ph)])); out.push(["zh", babyZhT(zw, zp)]); })); return out.concat(babyExtraAivItems(), capAivItems()); }
 /* 課程裡會唸到的句子（例句、記憶卡、急救包、片語、文法、AI 例句） */
 function courseSentTexts() {
   const set = new Set(), out = [];
@@ -4122,6 +4124,48 @@ function openBabies(edit) {
   if ($("byAdd")) $("byAdd").onclick = () => openBabies("new");
 }
 
+/* ---------- 每張圖自己的一句話（作者和家人群組共用） ---------- */
+const CAPS = { m: null, at: 0 };
+function capAll() { if (!CAPS.m) { try { CAPS.m = JSON.parse(localStorage.getItem("eq-caps") || "{}") || {}; } catch (e) { CAPS.m = {}; } } return CAPS.m; }
+function capSave(m) { CAPS.m = m && typeof m === "object" ? m : {}; try { localStorage.setItem("eq-caps", JSON.stringify(CAPS.m)); } catch (e) { } }
+/* 只有作者和家人看得到（可能是家裡的事），訪客播的是原本的句子 */
+const capOn = () => fvCloud();
+function capFor(w, n) { if (!capOn()) return null; const x = (capAll()[w] || {})[n]; return x && (x[0] || x[1]) ? { en: x[0] || "", zh: x[1] || "" } : null; }
+async function capSync() { if (!capOn()) return; try { const r = await gs("capList", famTok()); if (r && typeof r === "object") { capSave(r); CAPS.at = Date.now(); } } catch (e) { } }
+async function openCapEdit(w, e) {
+  const it = babyWordMap()[w] || bbItems()[BB.i], [, , ph, zw, zp] = it, defEn = babyEn(w, ph).replace(" ... ", " "), defZh = `${zw}。${zp}`;
+  let frames = null; try { frames = await raceMs(bbFrames(w, e), 6000); } catch (x) { }
+  const thumb = f => !f ? `<span class="bbem" style="font-size:40px">${e}</span>` : f.img ? `<img src="${esc(f.img.u)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:10px">` : (() => { const cm = /^#(\d{1,2}):(.+)$/.exec(String(f.em)); return `<span style="font-size:${cm ? 18 : 40}px;line-height:1.1;text-align:center">${cm ? Array(Number(cm[1])).fill(cm[2]).join("") : f.em}</span>`; })();
+  openModal(`<div class="row"><h2 style="font-size:20px;flex:1;min-width:0">✏️ ${e} ${esc(w)}：每張圖的句子</h2><button class="icon-btn" id="cpClose" aria-label="關閉">${ICON.x}</button></div>
+    <p class="muted" style="margin:0;font-size:13px">播放時圖片照第 1→5 張輪流。哪一張想說不一樣的話，就在那一張填上英文和中文；空白就用原本的句子。改好全家的手機都會一起換。</p>
+    <div style="display:flex;flex-direction:column;gap:12px">${[1, 2, 3, 4, 5].map(n => { const c = capFor(w, n) || { en: "", zh: "" }; return `<div class="capslot">
+      <div class="capth" aria-hidden="true">${thumb(frames && frames[n - 1])}<b>${n}</b></div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0">
+        <input data-cpen="${n}" maxlength="140" value="${esc(c.en)}" placeholder="${esc(defEn)}" aria-label="第 ${n} 張的英文" autocomplete="off">
+        <input data-cpzh="${n}" maxlength="70" value="${esc(c.zh)}" placeholder="${esc(defZh)}" aria-label="第 ${n} 張的中文" autocomplete="off">
+        <div class="row" style="gap:6px"><button class="btn small" data-cptry="${n}">▶ 試聽</button>${c.en || c.zh ? `<button class="btn small" data-cpclr="${n}">還原成原本的</button>` : ""}</div>
+      </div></div>`; }).join("")}</div>
+    <button class="btn primary block" id="cpSave">存起來</button>
+    <p class="muted" style="margin:0;font-size:12px">例如第 2 張是你家狗狗的照片，就寫「This is Lucky! Woof woof!／這是 Lucky！汪汪！」。改過的句子，作者的 AI 語音會自動排隊產生，產生好之前先用電腦的聲音。</p>`);
+  $("cpClose").onclick = closeModal;
+  const val = (k, n) => String(($("gPanel").querySelector(`[data-cp${k}="${n}"]`) || {}).value || "").trim();
+  $("gPanel").querySelectorAll("[data-cptry]").forEach(b => b.onclick = async () => { const n = b.dataset.cptry, en = val("en", n) || defEn, zh = val("zh", n) || defZh; await sayTTS(en, 0.9); await waitMs(300); await sayZh(zh, 0.9); });
+  $("gPanel").querySelectorAll("[data-cpclr]").forEach(b => b.onclick = () => { const n = b.dataset.cpclr; $("gPanel").querySelector(`[data-cpen="${n}"]`).value = ""; $("gPanel").querySelector(`[data-cpzh="${n}"]`).value = ""; b.remove(); });
+  $("cpSave").onclick = async () => {
+    $("cpSave").disabled = true; let r = null, changed = 0;
+    try {
+      for (const n of [1, 2, 3, 4, 5]) {
+        const en = val("en", n), zh = val("zh", n), c = capFor(w, n) || { en: "", zh: "" };
+        if (en === c.en && zh === c.zh) continue;
+        r = await gs("capSet", w, n, en, zh, famTok()); changed++;
+      }
+      if (r) capSave(r);
+      if (changed && AIV_CAN_MAKE() && AIV_ON()) { const its = []; [1, 2, 3, 4, 5].forEach(n => { const c = capFor(w, n); if (c && c.en) its.push([aivFor(c.en), c.en]); if (c && c.zh) its.push(["zh", c.zh]); }); aivQueue(its.filter(([v, t]) => !AIV.have.has(aiKey(v, t)))); }
+      closeModal(); toast(changed ? "存好了！下次播放就會用新的句子" : "沒有改動"); BB.tok++; renderBaby(false);
+    } catch (x) { $("cpSave").disabled = false; toast(backendError(x)); }
+  };
+}
+
 /* ---------- 成長紀錄 ---------- */
 function growLog() { if (!state.babyLog || typeof state.babyLog !== "object" || Array.isArray(state.babyLog)) state.babyLog = {}; return state.babyLog; }
 function growMark(w, k) {
@@ -4684,7 +4728,7 @@ function openBaby(t) {
   BB = BB || { t: BB_DAILY, i: 0, auto: false, dark: false, tok: 0, started: 0 };
   if (t != null) { BB.t = t; BB.i = 0; }
   babyCustomApply();
-  famRefresh().then(() => { fvSync(); growSync(); });
+  famRefresh().then(() => { fvSync(); growSync(); capSync().then(() => { if (!$("baby").hidden && bbView() === "listen" && !BB.auto) renderBaby(false); }); });
   if (bpicCan()) gs("famAdmin").then(a => { FAMG.admin = a; FAMG.pending = a.pending.length; renderWishBar(); if (!$("baby").hidden && bbView() === "listen") renderBaby(false); }).catch(() => { });
   prefetchBaby();
   renderBaby(true);
@@ -4704,7 +4748,7 @@ function renderBaby(say) {
       <span class="dailytag">${DAILY_TAG[(daily.w[BB.i] || [])[1]] || ""}</span></div>` : ""}
     <button class="bbcard" id="bbCard" aria-label="再聽一次 ${esc(w)}"><span class="bbvis" id="bbVis" aria-hidden="true"><span class="bbem">${e}</span></span><span class="bbw">${esc(w)}</span>${state.babySub === false ? "" : `<span class="bbzh">${esc(zw)}</span>`}</button>
     <p class="muted" id="bbCredit" hidden style="margin:-6px 0 0;font-size:11px;text-align:center"></p>
-    <div class="row bbctl" style="flex-wrap:wrap;gap:6px"><button class="btn small${gl.point ? " primary" : ""}" id="gPoint" aria-pressed="${!!gl.point}">👆 會指了${gl.point ? " " + mdDate(gl.point) : ""}</button><button class="btn small${gl.say ? " primary" : ""}" id="gSay" aria-pressed="${!!gl.say}">🗣 會說了${gl.say ? " " + mdDate(gl.say) : ""}</button>${gl.say ? `<button class="btn small" id="gBabyRec">${fvList(bvKey(w)).length ? "👶 寶寶的錄音" : "🎙 錄寶寶說"}</button>` : ""}<button class="btn small" id="bbRec">🎙 錄家人的聲音${fvn ? `（${fvn}）` : ""}</button></div>
+    <div class="row bbctl" style="flex-wrap:wrap;gap:6px"><button class="btn small${gl.point ? " primary" : ""}" id="gPoint" aria-pressed="${!!gl.point}">👆 會指了${gl.point ? " " + mdDate(gl.point) : ""}</button><button class="btn small${gl.say ? " primary" : ""}" id="gSay" aria-pressed="${!!gl.say}">🗣 會說了${gl.say ? " " + mdDate(gl.say) : ""}</button>${gl.say ? `<button class="btn small" id="gBabyRec">${fvList(bvKey(w)).length ? "👶 寶寶的錄音" : "🎙 錄寶寶說"}</button>` : ""}<button class="btn small" id="bbRec">🎙 錄家人的聲音${fvn ? `（${fvn}）` : ""}</button>${capOn() ? `<button class="btn small" id="bbCap">✏️ 每張圖的句子${Object.keys(capAll()[w] || {}).length ? `（${Object.keys(capAll()[w]).length}）` : ""}</button>` : ""}</div>
     ${bpicCan() ? (() => { const mine = (BPICS.pics[w] || []), c = k => mine.filter(x => x[1] === k).length; return `<div class="row bbctl" style="flex-wrap:wrap;gap:6px"><button class="btn small" id="bbUpBtn">📷 放我的照片（可選第 1～5 張）</button><input type="file" accept="image/*" id="bbUp" hidden><button class="btn small" id="bbAi">🎨 AI 產生照片</button><button class="btn small" id="bbUs">🔍 Unsplash 找照片</button>${mine.length ? `<span class="muted" style="font-size:12px">這個字：自己拍 ${c("mine")}・朋友 ${c("guest")}・AI ${c("ai")}</span>` : ""}</div>`; })()
       : Store.backend === "sheet" ? (isFam() ? `<div class="row bbctl" style="flex-wrap:wrap;gap:6px"><label class="btn small" style="cursor:pointer">📷 放照片<input type="file" accept="image/*" id="bbUp" hidden></label>${BPICS.usKey ? `<button class="btn small" id="bbUs">🔍 Unsplash 找照片</button>` : ""}<span class="muted" style="font-size:12px">👪 你是家人：${esc(famSt().name)}，放的照片會直接出現</span></div>`
         : `<div class="row bbctl" style="flex-wrap:wrap;gap:6px"><label class="btn small" style="cursor:pointer">📷 幫忙提供照片<input type="file" accept="image/*" id="bbUp" hidden></label><button class="btn small" id="famJoinBtn">${famSt().st === "pending" ? "👪 等作者確認中" : "👪 我是家人"}</button></div>`) : ""}
@@ -4727,6 +4771,7 @@ function renderBaby(say) {
   $("gSay").onclick = () => { if (growToggle(w, "say")) renderBaby(false); };
   $("bbRec").onclick = () => { bbStopAll(); renderBaby(false); openFamRec("w:" + w, `${e} ${w}`, `可以只唸「${w}」，也可以唸整句：${ph}`, 15, () => { if (bbView() === "listen") renderBaby(false); }); };
   if ($("famJoinBtn")) $("famJoinBtn").onclick = openFamJoin;
+  if ($("bbCap")) $("bbCap").onclick = () => { bbStopAll(); renderBaby(false); openCapEdit(w, e); };
   if ($("bbUs")) $("bbUs").onclick = () => { bbStopAll(); renderBaby(false); openUsPick(w); };
   if ($("famAdminBtn")) $("famAdminBtn").onclick = openFamAdmin;
   if ($("gBabyRec")) $("gBabyRec").onclick = () => { bbStopAll(); renderBaby(false); openFamRec(bvKey(w), `${e} ${w}`, `錄下寶寶說「${w}」的聲音，以後可以回味`, 20, () => { if (bbView() === "listen") renderBaby(false); }, null, true); };
@@ -4774,18 +4819,28 @@ async function sayCard() {
   const fam = [];
   if (state.babyFam !== false && steps.some(x => !x.zh)) for (const f of fvList("w:" + w)) { const u = await raceMs(fvUrl("w:" + w, f.who), 3000); if (u) fam.push({ u, name: f.name }); }
   if (tok !== BB.tok) return;
-  const subEn = en.replace(" ... ", " "), subZh = `${zw}。${zp}`;
+  const subEn0 = en.replace(" ... ", " "), subZh0 = `${zw}。${zp}`;
   for (let i = 0; i < steps.length; i++) {
-    const st = steps[i];
+    const st = steps[i], cap = capFor(w, (i % 5) + 1), subEn = cap && cap.en ? cap.en : subEn0, subZh = cap && cap.zh ? cap.zh : subZh0;
     /* 每唸一次就換下一張圖（1→5 輪流）；字幕和「第幾次」跟著這一次的語言一起換 */
     bbShowFrame(frames[i % 5], w, items[BB.i][1]);
-    const fj = st.zh ? -1 : st.r % (fam.length + 4);
+    /* 這一張有自己的英文句子：不用家人錄的單字，直接唸這一句 */
+    const fj = st.zh ? -1 : cap && cap.en ? fam.length + (st.r % 4) : st.r % (fam.length + 4);
     if (st.zh) BB.rep = `中文 第 ${st.k + 1} / ${st.n} 次`;
+    else if (cap && cap.en) BB.rep = `英文 第 ${st.r + 1} / ${st.n} 次・第 ${(i % 5) + 1} 張的句子`;
     else if (fj >= 0 && fj < fam.length) BB.rep = `英文 第 ${st.r + 1} / ${st.n} 次・${fam[fj].name}的聲音`;
     else BB.rep = `英文 第 ${st.r + 1} / ${st.n} 次・${AIV_ON() ? AIV_LIST[(fj - fam.length) % 4][1] : "電腦語音"}`;
     bbSub(subEn, subZh, st.zh ? "zh" : "en");
     if (fj >= 0 && fj < fam.length) {
       if (!(await playUrl(fam[fj].u, slow ? 0.9 : 1)) && tok === BB.tok) await bbOldEn(w, ph, tok);
+    } else if (!st.zh && cap && cap.en) {
+      const vid = aivFor(cap.en), u = AIV_ON() ? await raceMs(aiVoiceUrl(vid, cap.en), 2500) : "";
+      if (tok !== BB.tok) return;
+      if (!(u && await playUrl(u, slow ? 0.85 : 1))) { if (AIV_ON() && !u) aivQueue([[vid, cap.en]]); if (tok !== BB.tok) return; await sayTTS(cap.en, bbRate(false)); }
+    } else if (st.zh && cap && cap.zh) {
+      const zu = AIV_ON() ? await raceMs(aiVoiceUrl("zh", cap.zh), 2500) : "";
+      if (tok !== BB.tok) return;
+      if (!(zu && await playUrl(zu, slow ? 0.85 : 1))) { if (AIV_ON() && !zu) aivQueue([["zh", cap.zh]]); await sayZh(cap.zh, slow ? 0.75 : 0.9); }
     } else if (!st.zh) {
       const vid = AIV_LIST[(fj - fam.length) % 4][0];
       const u = AIV_ON() ? await raceMs(aiVoiceUrl(vid, en), 2500) : "";
