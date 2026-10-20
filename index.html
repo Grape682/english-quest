@@ -728,7 +728,7 @@ let GUEST = false;
 let SPONSOR = "";
 let OWNER_WHO = "";
 const EQ_BUILD = "245d6f";
-const EQ_WEB = "2334";
+const EQ_WEB = "c758";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -1489,16 +1489,21 @@ const raceMs = (p, ms) => Promise.race([p, new Promise(r => setTimeout(() => r(u
 function prefetchHuman(words) { if (state.human === false) return; words.filter(canHuman).slice(0, 12).forEach((w, k) => setTimeout(() => humanUrl(w), 300 * k)); }
 function speak(text, slow, fixedRate) {
   const tok = (speak.t = (speak.t || 0) + 1);
-  const rate = fixedRate ? Math.max(0.6, Math.min(1.2, fixedRate)) : slow ? 0.75 : 1;
+  /* 真人錄音、AI 語音也跟著「語速」設定（慢／正常／快） */
+  const rate = fixedRate ? Math.max(0.6, Math.min(1.2, fixedRate)) : (slow ? 0.75 : 1) * Math.max(0.8, Math.min(1.2, Number(state.rate) || 1));
   const fallback = () => { if (tok === speak.t) speakAiOr(text, slow, fixedRate, rate, tok); };
   if (canHuman(text)) {
     if (TTS) speechSynthesis.cancel();
-    playHuman(text, rate).then(ok => { if (!ok) fallback(); });
+    /* 單字真人錄音：還沒查過的最多等 1 秒，查不到就先用別的聲音，查好的結果下次直接用 */
+    raceMs(humanUrl(text), 1000).then(u => { if (tok !== speak.t) return; if (u) playUrl(u, rate).then(ok => { if (!ok) fallback(); }); else fallback(); });
     return;
   }
   if (canHumanSent(text)) {
     stopHuman(); if (TTS) speechSynthesis.cancel();
-    raceMs(sentVoice(text), 2500).then(v => {
+    /* 還沒查過有沒有真人錄音：雲端已經有 AI 語音就直接播，真人錄音在背景查好留給下次；沒有 AI 語音也最多等 1.2 秒 */
+    const sk = normSent(text), known = sentCached(sk), t0 = String(text || "").trim();
+    if (known === undefined && AIV_ON() && AIV.have.has(aiKey(aivFor(t0), t0))) { fetchSents([sk]); fallback(); return; }
+    raceMs(sentVoice(text), known === undefined ? 1200 : 2500).then(v => {
       if (tok !== speak.t) return;
       if (v && v.u) {
         if (v.t && !HS.told[v.t]) { HS.told[v.t] = 1; toast("真人錄音是口語縮寫：" + v.t); }
