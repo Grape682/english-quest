@@ -107,6 +107,7 @@ button.chip:hover{border-color:var(--primary)}
 .inappbar{position:sticky;top:0;z-index:60;display:flex;flex-direction:column;gap:6px;padding:12px 16px;background:#FFF4CC;color:#4A3B00;border-bottom:2px solid #F2C94C;font-size:14px;line-height:1.5}
 .gth{display:grid;grid-template-columns:7.2em 1fr auto;gap:8px;align-items:center;font-size:14px}.gbar{height:10px;background:var(--line,#e5e7eb);border-radius:99px;overflow:hidden}.gbar i{display:block;height:100%;background:var(--primary);border-radius:99px}
 .capslot{display:flex;gap:10px;align-items:flex-start}.capth{position:relative;flex:0 0 72px;height:72px;border-radius:12px;background:var(--surface-2,#f1f3f8);display:flex;align-items:center;justify-content:center;overflow:hidden}.capth b{position:absolute;left:4px;top:2px;font-size:12px;background:var(--surface);border-radius:99px;padding:0 6px}
+.savebadge{position:fixed;left:12px;bottom:12px;z-index:70;max-width:calc(100% - 24px);border:1px solid #F2C94C;background:#FFF4CC;color:#4A3B00;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.12)}
 .bbthemes{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.bbthemes .tchip{flex:0 0 auto;white-space:nowrap}
 .tchip.on{background:var(--primary);color:#fff;border-color:var(--primary)}
 .bbcard{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;min-height:50vh;border:0;border-radius:28px;background:var(--surface);box-shadow:0 10px 30px -18px rgba(0,0,0,.35);cursor:pointer;color:var(--ink)}
@@ -728,7 +729,7 @@ let GUEST = false;
 let SPONSOR = "";
 let OWNER_WHO = "";
 const EQ_BUILD = "245d6f";
-const EQ_WEB = "c150";
+const EQ_WEB = "7e92";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -934,8 +935,20 @@ const Store = {
   async load() {
     if (GAS) {
       this.backend = "sheet";
-      try { const t = await gs("loadProgress", guestCode()); if (t) return normalize(JSON.parse(t)); } catch (e) { toast("讀取試算表進度失敗，先使用這台裝置的暫存"); }
-      return normalize(this.readLocal());
+      const local = this.readLocal();
+      try {
+        const t = await gs("loadProgress", guestCode());
+        if (t) {
+          const remote = JSON.parse(t);
+          /* 這台裝置上有比雲端還新的進度（上次沒存上去）：用這台的，等一下自動補存 */
+          if (local && local._who === saveWho() && (Number(local.savedAt) || 0) > (Number(remote.savedAt) || 0) + 1000 && (local.xp || 0) >= (remote.xp || 0)) {
+            setTimeout(() => { this.save(true); toast("這台手機有還沒存到雲端的進度，已經幫你補存"); }, 1500);
+            return normalize(local);
+          }
+          return normalize(remote);
+        }
+      } catch (e) { toast("讀取試算表進度失敗，先使用這台裝置的暫存"); }
+      return normalize(local);
     }
     let s = this.readLocal();
     try {
@@ -969,21 +982,41 @@ const Store = {
     } catch (e) { this.ref = null; if (this.backend === "account") this.backend = "browser"; }
     renderStorage();
   },
-  save(now) { this.writeLocal(); clearTimeout(this.timer); this.timer = setTimeout(() => this.flush(), now ? 0 : (this.backend === "sheet" ? 2500 : 900)); },
+  okAt: 0, err: "", fails: 0, dirty: false, retry: null, ready: false,
+  save(now) { if (!this.ready) return; state.savedAt = Date.now(); state._who = saveWho(); this.writeLocal(); this.dirty = true; clearTimeout(this.timer); this.timer = setTimeout(() => this.flush(), now ? 0 : (this.backend === "sheet" ? 1500 : 900)); },
   async flush() {
     if (this.writing) { this.again = true; return; }
-    this.writing = true;
+    this.writing = true; clearTimeout(this.retry); this.dirty = false;
     try {
       if (this.backend === "sheet") await gs("saveProgress", JSON.stringify(state, (k, v) => (k === "aiBank" || k === "readings" || k === "dict" || k === "dialogues" || k === "cards" || (k === "diary" && !GUEST)) ? undefined : v), guestCode());
       else if (this.backend === "computer") await apiFetch("api/progress", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(state) });
       else if (this.backend === "account" && this.ref) { trimForSize(); await this.ref.set(clone(state)); }
+      const was = this.err; this.okAt = Date.now(); this.err = ""; this.fails = 0;
+      if (was) toast("剛剛沒存到的進度，已經補存到雲端了 ☁️");
     } catch (e) {
       if (e && ["invalid_argument", "revoked", "not_granted", "capability_disabled"].includes(e.code)) { this.backend = "browser"; this.ref = null; renderStorage(); }
+      else if (this.backend === "sheet" || this.backend === "computer") {
+        /* 沒存到雲端（網路斷了、Google 忙）：進度還在這台手機，過一下自動再試 */
+        this.dirty = true; this.fails++; this.err = String((e && e.message) || e).slice(0, 80);
+        this.retry = setTimeout(() => this.flush(), Math.min(60000, 5000 * Math.pow(2, this.fails - 1)));
+      }
     }
+    saveBadge();
     this.writing = false;
     if (this.again) { this.again = false; this.flush(); }
   },
 };
+
+/* 存檔的人：作者或這組學習代碼（同一台裝置換身分時，不會把別人的進度當成自己的） */
+function saveWho() { return ownerToken() ? "owner" : guestCode(); }
+/* 雲端存檔失敗時，左下角顯示一個小提示，存好了就消失 */
+function saveBadge() {
+  let b = document.getElementById("saveBadge");
+  if (!Store.err) { if (b) b.remove(); return; }
+  if (!b) { b = document.createElement("button"); b.id = "saveBadge"; b.className = "savebadge"; b.onclick = () => { toast("重新存檔中…"); Store.flush(); }; document.body.appendChild(b); }
+  b.textContent = navigator.onLine === false ? "⚠️ 沒有網路，進度先存在這台手機" : "⚠️ 進度還沒存到雲端，會自動再試（點我馬上存）";
+}
+window.addEventListener("online", () => { if (Store.dirty || Store.err) Store.flush(); });
 
 /* ================= progress rules ================= */
 const LEVELS = [[0, "新手村民"], [100, "小小探險家"], [300, "冒險家"], [600, "英語勇者"], [1000, "動畫達人"], [1600, "影集通"], [2400, "對話高手"], [3500, "傳說大師"]];
@@ -6625,7 +6658,7 @@ function renderStorage() {
   renderWishBar();
   const map = { sheet: "進度存在你的 Google 試算表。", browser: "進度存在這個瀏覽器裡。", account: "進度存在你的 Claude 帳號，換裝置也找得到。", computer: "進度存在電腦上的 english_quest_web_save.json。" };
   if (GUEST) { $("storageNote").textContent = `分享版：你的進度用學習代碼 ${guestCode()} 存在分享者那邊，換裝置時到「我的成就」輸入代碼就能接著練。AI 功能沒有開放，練習內容來自共用題庫。`; return; }
-  $("storageNote").textContent = map[Store.backend] + (AUDIO_AI() ? "" : GAS ? "　設定 Gemini 金鑰後，口說題可以錄音給 AI 評發音。" : CAN_SPEAK ? "" : "　想要錄音評發音，請用 Google 試算表版。");
+  $("storageNote").textContent = map[Store.backend] + (Store.okAt ? `（最後存檔 ${new Date(Store.okAt).toTimeString().slice(0, 5)}）` : "") + (AUDIO_AI() ? "" : GAS ? "　設定 Gemini 金鑰後，口說題可以錄音給 AI 評發音。" : CAN_SPEAK ? "" : "　想要錄音評發音，請用 Google 試算表版。");
 }
 
 /* ================= stats ================= */
@@ -7028,7 +7061,7 @@ async function boot() {
   $("assessStart").onclick = startAssess;
   $("assessSkip").onclick = () => { state.assessSkipped = true; Store.save(); renderHome(); };
   renderHome();
-  state = await Store.load();
+  state = await Store.load(); Store.ready = true;
   renderHome();
   mergeMyWords();
   $("dueBtn").onclick = () => startPractice("due");
