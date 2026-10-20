@@ -729,7 +729,7 @@ let GUEST = false;
 let SPONSOR = "";
 let OWNER_WHO = "";
 const EQ_BUILD = "245d6f";
-const EQ_WEB = "7e92";
+const EQ_WEB = "3a5e";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -945,6 +945,11 @@ const Store = {
             setTimeout(() => { this.save(true); toast("這台手機有還沒存到雲端的進度，已經幫你補存"); }, 1500);
             return normalize(local);
           }
+          /* 舊版存的（還沒有存檔時間）：這台的分數比雲端高，就問一下要用哪一份 */
+          if (local && !local._who && (local.xp || 0) > (remote.xp || 0) && confirm(`這台手機上的進度（${local.xp} XP）比雲端的（${remote.xp || 0} XP）還多，可能上次沒存上去。\n要用這台手機的進度嗎？\n\n按「確定」用這台的並補存到雲端；按「取消」用雲端的。`)) {
+            setTimeout(() => { this.save(true); toast("已經用這台手機的進度，並補存到雲端"); }, 1500);
+            return normalize(local);
+          }
           return normalize(remote);
         }
       } catch (e) { toast("讀取試算表進度失敗，先使用這台裝置的暫存"); }
@@ -993,6 +998,7 @@ const Store = {
       else if (this.backend === "account" && this.ref) { trimForSize(); await this.ref.set(clone(state)); }
       const was = this.err; this.okAt = Date.now(); this.err = ""; this.fails = 0;
       if (was) toast("剛剛沒存到的進度，已經補存到雲端了 ☁️");
+      try { if (!$("home").hidden) renderStorage(); } catch (x) { }
     } catch (e) {
       if (e && ["invalid_argument", "revoked", "not_granted", "capability_disabled"].includes(e.code)) { this.backend = "browser"; this.ref = null; renderStorage(); }
       else if (this.backend === "sheet" || this.backend === "computer") {
@@ -1131,8 +1137,21 @@ const AIV_ON = () => state.aiVoice !== false;
 const AIV_CAN_MAKE = () => KEY_MODE() && !!AI.kind;
 const aivFor = t => state.aiVoiceId && state.aiVoiceId !== "mix" ? state.aiVoiceId.replace(/b$/, "") + (UK() ? "b" : "") : AIV_LIST[hashStr(String(t).trim()) % 4][0];
 function b64Blob(b64) { const bin = atob(b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new Blob([u], { type: "audio/wav" }); }
-async function aivCacheGet(k) { try { const c = await caches.open("eq-aivoice"), r = await c.match("/aiv/" + k); return r ? await r.blob() : null; } catch (e) { return null; } }
-async function aivCachePut(k, blob) { try { const c = await caches.open("eq-aivoice"); await c.put("/aiv/" + k, new Response(blob, { headers: { "Content-Type": "audio/wav" } })); } catch (e) { } }
+/* 手機裡存的 AI 語音：最多約 80 MB，超過就把最久沒播的刪掉（需要時會再從雲端下載） */
+const AIVC = { cap: 80e6, keep: 65e6, idx: null, t: 0 };
+function aivcIdx() { if (!AIVC.idx) { try { AIVC.idx = JSON.parse(localStorage.getItem("eq-aivc") || "{}") || {}; } catch (e) { AIVC.idx = {}; } } return AIVC.idx; }
+function aivcSave() { clearTimeout(AIVC.t); AIVC.t = setTimeout(() => { try { localStorage.setItem("eq-aivc", JSON.stringify(AIVC.idx || {})); } catch (e) { } }, 800); }
+const aivcBytes = () => Object.values(aivcIdx()).reduce((a, x) => a + (Number(x[0]) || 0), 0);
+async function aivCacheGet(k) { try { const c = await caches.open("eq-aivoice"), r = await c.match("/aiv/" + k); if (!r) return null; const b = await r.blob(); const ix = aivcIdx(); ix[k] = [b.size, Date.now()]; aivcSave(); return b; } catch (e) { return null; } }
+async function aivCachePut(k, blob) {
+  try {
+    const c = await caches.open("eq-aivoice"); await c.put("/aiv/" + k, new Response(blob, { headers: { "Content-Type": "audio/wav" } }));
+    const ix = aivcIdx(); ix[k] = [blob.size, Date.now()];
+    if (aivcBytes() > AIVC.cap) { let tot = aivcBytes(); for (const [kk] of Object.entries(ix).sort((a, b) => a[1][1] - b[1][1])) { if (tot <= AIVC.keep) break; if (kk === k) continue; tot -= Number(ix[kk][0]) || 0; delete ix[kk]; c.delete("/aiv/" + kk); } }
+    aivcSave();
+  } catch (e) { }
+}
+async function aivCacheClear() { try { await caches.delete("eq-aivoice"); } catch (e) { } AIVC.idx = {}; try { localStorage.removeItem("eq-aivc"); } catch (e) { } Object.values(AIV.url).forEach(u => { try { URL.revokeObjectURL(u); } catch (e) { } }); AIV.url = {}; }
 function aivSet(k, blob) { if (AIV.url[k]) return AIV.url[k]; return (AIV.url[k] = URL.createObjectURL(blob)); }
 /* 拿到已經產生好的語音網址；還沒有就回傳空字串 */
 function aiVoiceUrl(v, t) {
@@ -1162,12 +1181,14 @@ async function aivPrefetch(pairs) {
   if (!AIV_ON() || Store.backend !== "sheet") { pairs.forEach(([v, t]) => aiVoiceUrl(v, t)); return; }
   const need = [];
   for (const [v, t] of pairs) { const k = aiKey(v, t); if (AIV.have.has(k) && !AIV.url[k] && !AIV.wait[k] && !need.includes(k)) { const b = await aivCacheGet(k); if (b) aivSet(k, b); else need.push(k); } }
-  for (let i = 0; i < need.length; i += 6) {
-    const part = need.slice(i, i + 6); let res = null;
+  const all = [];
+  for (let i = 0; i < need.length; i += 4) {
+    const part = need.slice(i, i + 4); let res = null;
     const p = gs("ttsGet", part).then(m => { res = m || {}; part.forEach(k => { if (res[k]) { const b = b64Blob(res[k]); aivCachePut(k, b); aivSet(k, b); } }); }).catch(() => { });
     part.forEach(k => AIV.wait[k] = p.then(() => AIV.url[k] || "").finally(() => delete AIV.wait[k]));
-    await p;
+    all.push(p);
   }
+  await Promise.all(all);
 }
 /* 你自己（有金鑰）才會產生：排隊一段一段做，額度用完就停，明天再繼續 */
 function aivQueue(items) {
@@ -4950,6 +4971,12 @@ async function sayVoice(text, v, slow) {
   if (AIV_ON()) aivQueue([[v, text]]);
   await sayTTS(text, slow ? 0.72 : 0.9);
 }
+function spkPrefetch(t) {
+  SP.pf = SP.pf || {}; if (!t || SP.pf[t.id] || !AIV_ON()) return; SP.pf[t.id] = 1;
+  const first = t.b.map((b, i) => [spkVoice(), spkLine(t, i).en]).concat(t.b.map(b => [spkVoice(), b.v[0][0]]));
+  const rest = t.b.map(b => [spkPartner(), b.q[0]]).concat(t.b.flatMap((b, i) => spkVars(t, i).map(v => [spkVoice(), v[0]])));
+  aivPrefetch(first).then(() => aivPrefetch(rest));
+}
 function spkAivItems() { const out = []; spkAll().forEach(t => t.b.forEach((b, bi) => { out.push([spkPartner(), b.q[0]]); spkVars(t, bi).forEach(v => out.push([spkVoice(), v[0]])); })); return out; }
 function spkStop() { if (SP) SP.tok++; stopHuman(); if (TTS) speechSynthesis.cancel(); }
 function openSpeak(tid) {
@@ -4982,6 +5009,7 @@ function renderSpeak() {
   chipCenter($("speak"));
   ({ 1: spkStep1, 2: spkStep2, 3: spkStep3, 4: spkStep4, role: spkRole })[SP.tab](t);
   if (keepY > 0) window.scrollTo(0, keepY);
+  spkPrefetch(t);
 }
 function spkBlocksHtml(t, mine) {
   return `<div class="spblocks">${t.b.map((b, i) => { const L = mine ? spkLine(t, i) : { en: b.v[0][0], zh: b.v[0][1] }; return `<div class="spblk c${i}" data-spb="${i}"><span class="spk-k">${i + 1} ${esc(b.k)}・${esc(b.kz)}</span><div class="en">${esc(L.en)}</div><div class="zh">${esc(L.zh)}</div></div>`; }).join("")}</div>`;
@@ -6656,9 +6684,10 @@ function renderWishes() {
 function renderStorage() {
   renderSponsorWall();
   renderWishBar();
-  const map = { sheet: "進度存在你的 Google 試算表。", browser: "進度存在這個瀏覽器裡。", account: "進度存在你的 Claude 帳號，換裝置也找得到。", computer: "進度存在電腦上的 english_quest_web_save.json。" };
-  if (GUEST) { $("storageNote").textContent = `分享版：你的進度用學習代碼 ${guestCode()} 存在分享者那邊，換裝置時到「我的成就」輸入代碼就能接著練。AI 功能沒有開放，練習內容來自共用題庫。`; return; }
-  $("storageNote").textContent = map[Store.backend] + (Store.okAt ? `（最後存檔 ${new Date(Store.okAt).toTimeString().slice(0, 5)}）` : "") + (AUDIO_AI() ? "" : GAS ? "　設定 Gemini 金鑰後，口說題可以錄音給 AI 評發音。" : CAN_SPEAK ? "" : "　想要錄音評發音，請用 Google 試算表版。");
+  const saved = Store.okAt ? `（最後存檔 ${new Date(Store.okAt).toTimeString().slice(0, 5)}）` : "";
+  const map = { sheet: "進度存在你的 Google 試算表的「_進度存檔」分頁（作者身分）。", browser: "進度存在這個瀏覽器裡。", account: "進度存在你的 Claude 帳號，換裝置也找得到。", computer: "進度存在電腦上的 english_quest_web_save.json。" };
+  if (GUEST) { $("storageNote").textContent = `分享版：你的進度用學習代碼 ${guestCode()} 存在分享者那邊${saved}，換裝置時到「我的成就」輸入代碼就能接著練。AI 功能沒有開放，練習內容來自共用題庫。`; return; }
+  $("storageNote").textContent = map[Store.backend] + saved + (AUDIO_AI() ? "" : GAS ? "　設定 Gemini 金鑰後，口說題可以錄音給 AI 評發音。" : CAN_SPEAK ? "" : "　想要錄音評發音，請用 Google 試算表版。");
 }
 
 /* ================= stats ================= */
@@ -6710,7 +6739,7 @@ function renderStats(focus) {
         <label class="row" style="gap:8px;font-size:15px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="aivOn" style="margin-top:4px" ${AIV_ON() ? "checked" : ""}><span>沒有真人錄音時，用 <b>Gemini AI 語音</b>（聽起來像真人）</span></label>
         <div class="row" style="flex-wrap:wrap;gap:6px"><span class="muted" style="font-size:13px">英文聲音</span><div class="seg" id="aivSeg" style="flex-wrap:wrap">${[["mix", "四種輪流"]].concat(AIV_BASE).map(([k, n]) => `<button data-aiv="${k}" aria-pressed="${(state.aiVoiceId || "mix") === k}">${n}</button>`).join("")}</div></div>
         <div class="row" style="flex-wrap:wrap;gap:6px"><span class="muted" style="font-size:13px">口音</span><div class="seg" id="accSeg">${[["us", "美式（建議）"], ["uk", "英式"]].map(([k, n]) => `<button data-acc="${k}" aria-pressed="${(UK() ? "uk" : "us") === k}">${n}</button>`).join("")}</div></div>
-        <span class="muted" style="font-size:13px">已經產生 ${AIV.have.size} 段。產生好的語音存在你的雲端硬碟「English Quest AI 語音」，朋友打開也直接用，不會再花額度。</span>
+        <span class="muted" style="font-size:13px">這台手機存了 <b id="aivcSize">${(aivcBytes() / 1e6).toFixed(1)}</b> MB 的語音（最多約 80 MB，舊的會自動清掉）<button class="btn small" id="aivcClr" style="padding:2px 8px;margin-left:6px">清除</button><br>已經產生 ${AIV.have.size} 段。產生好的語音存在你的雲端硬碟「English Quest AI 語音」，朋友打開也直接用，不會再花額度。</span>
         ${AIV_CAN_MAKE() ? (() => { const tc = aivTodo(courseAivItems()), tw = aivTodo(courseWordAivItems()), tb = aivTodo(babyAivItems()); return `<button class="btn primary block" id="aivAll" ${tc + tb + tw ? "" : "disabled"}>${tc + tb + tw ? `一鍵產生全部（寶寶聽力 ${tb} 段＋課程句子最多 ${tc} 句＋單字最多 ${tw} 個）` : "全部都產生好了 ✓"}</button>
           <span class="muted" style="font-size:12px">按下去會先對一次雲端的「_真人句子」「_真人單字」，還沒查過的先查；有真人錄音的句子和單字不產生，只做真的沒有的。</span>
           <span style="font-size:13px" data-aivsrv></span><span style="font-size:13px" data-aivout></span><span class="muted" style="font-size:12px" data-aivturbomsg></span>
@@ -6903,6 +6932,7 @@ function renderStats(focus) {
   if ($("aivAll")) $("aivAll").onclick = () => aivGenAll(false);
   if ($("aivRef")) $("aivRef").onclick = () => aivRefresh();
   $("stats").querySelectorAll("[data-aivturbo]").forEach(b => b.onclick = aivTurbo); turboUi();
+  if ($("aivcClr")) $("aivcClr").onclick = async () => { if (!confirm("要清除這台手機存的 AI 語音嗎？雲端的不會刪，之後播放時會再下載。")) return; await aivCacheClear(); $("aivcSize").textContent = "0.0"; toast("清除好了"); };
   $("stats").querySelectorAll("[data-aivcancel]").forEach(b => b.onclick = async () => { TURBO.on = false; try { AIVS.st = await gs("ttsCancel"); } catch (e) { } aivStatusUi(); });
   aivStatusUi(); if (AIV_CAN_MAKE()) aivRefresh().then(aivWatch);
   $("stats").querySelectorAll("[data-aivstop]").forEach(b => b.onclick = () => { AIV.stop = true; });
