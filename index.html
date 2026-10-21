@@ -108,6 +108,10 @@ button.chip:hover{border-color:var(--primary)}
 .gth{display:grid;grid-template-columns:7.2em 1fr auto;gap:8px;align-items:center;font-size:14px}.gbar{height:10px;background:var(--line,#e5e7eb);border-radius:99px;overflow:hidden}.gbar i{display:block;height:100%;background:var(--primary);border-radius:99px}
 .capslot{display:flex;gap:10px;align-items:flex-start}.capth{position:relative;flex:0 0 72px;height:72px;border-radius:12px;background:var(--surface-2,#f1f3f8);display:flex;align-items:center;justify-content:center;overflow:hidden}.capth b{position:absolute;left:4px;top:2px;font-size:12px;background:var(--surface);border-radius:99px;padding:0 6px}
 .savebadge{position:fixed;left:12px;bottom:12px;z-index:70;max-width:calc(100% - 24px);border:1px solid #F2C94C;background:#FFF4CC;color:#4A3B00;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.pclist{display:flex;flex-direction:column;gap:6px}.pcitem{display:flex;gap:10px;align-items:center;border:1px solid var(--line,#ddd);background:var(--surface);color:var(--ink);border-radius:12px;padding:8px 12px;cursor:pointer;font:inherit;font-size:15px}.pcitem>span:first-child{font-size:22px}
+.palinks{display:flex;flex-wrap:wrap;gap:8px}.chal{gap:8px}.tklist{display:flex;flex-direction:column;gap:6px}.cdrow{display:flex;gap:8px;align-items:center;padding:4px 0}
+.tkcmp{width:100%;border-collapse:collapse;font-size:14px}.tkcmp th,.tkcmp td{padding:6px 4px;border-bottom:1px solid var(--line,#e5e7eb);text-align:center}.tkcmp th:first-child{text-align:left;font-weight:600}.tkcmp small{font-weight:400;color:var(--muted,#667)}
+.good{color:#1a7f37;font-weight:700}.bad{color:#c0392b;font-weight:700}.goalnow{border:2px solid var(--primary)}
 .bbthemes{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.bbthemes .tchip{flex:0 0 auto;white-space:nowrap}
 .tchip.on{background:var(--primary);color:#fff;border-color:var(--primary)}
 .bbcard{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;min-height:50vh;border:0;border-radius:28px;background:var(--surface);box-shadow:0 10px 30px -18px rgba(0,0,0,.35);cursor:pointer;color:var(--ink)}
@@ -565,6 +569,8 @@ a.btn{text-decoration:none}
     </div>
   </section>
 
+  <section class="card flat" id="pathCard" aria-label="我的學習路線"></section>
+
   <section class="card flat" aria-labelledby="epTitle">
     <div class="ep">
       <div class="ep-code" id="epCode"></div>
@@ -623,6 +629,7 @@ a.btn{text-decoration:none}
 <main id="chunk" class="wrap" hidden></main>
 <main id="speak" class="wrap" hidden></main>
 <main id="news" class="wrap" hidden></main>
+<main id="path" class="wrap" hidden></main>
 <main id="diary" class="wrap" hidden></main>
 <main id="pairs" class="wrap" hidden></main>
 <main id="travel" class="wrap" hidden></main>
@@ -728,8 +735,8 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
-const EQ_BUILD = "245d6f";
-const EQ_WEB = "3a5e";
+const EQ_BUILD = "9f4945";
+const EQ_WEB = "f7cd";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -1934,7 +1941,8 @@ async function reviewWriting(task, text) {
     `The student's writing:\n"""\n${text}\n"""\n` +
     "Evaluate the writing. Keep corrections minimal and keep the student's meaning. Choose the 6 most important issues at most. " +
     "All explanations must be in Traditional Chinese (Taiwan). If the text is not English, give score 0 and explain in tip_zh.\n" +
-    'Reply with only JSON: {"score":0-100,"level":"CEFR estimate like A2","corrected":"the full text with corrections","issues":[{"wrong":"...","right":"...","why_zh":"..."}],"better":"a more natural version, one level above the student","praise_zh":"one specific praise","tip_zh":"one concrete tip for next time"}';
+    (state.advFb ? "The student is advanced. Also list up to 5 places where the English is correct but a native speaker would usually say it differently, in \"native\": [{\"yours\":\"...\",\"native\":\"...\",\"why_zh\":\"...\"}] (explain nuance, register or collocation in Traditional Chinese).\n" : "") +
+    'Reply with only JSON: {"score":0-100,"level":"CEFR estimate like A2","corrected":"the full text with corrections","issues":[{"wrong":"...","right":"...","why_zh":"..."}],"better":"a more natural version, one level above the student","praise_zh":"one specific praise","tip_zh":"one concrete tip for next time"' + (state.advFb ? ',"native":[{"yours":"...","native":"...","why_zh":"..."}]' : "") + '}';
   let r;
   try { r = await AI.json(prompt); } catch (e) { toast(aiErrorText(e)); btn.disabled = false; btn.textContent = "送出批改"; $("wrIn").disabled = false; return; }
   if (!r || typeof r.corrected !== "string") { toast("AI 回傳的批改格式不完整，請再送一次"); btn.disabled = false; btn.textContent = "送出批改"; $("wrIn").disabled = false; return; }
@@ -1953,6 +1961,7 @@ async function reviewWriting(task, text) {
       <p class="prose">${esc(r.corrected)}</p>
       ${issues.length ? `<span class="eyebrow">要注意的地方</span><div class="list">${issues.map(x => `<div class="issue"><div><del>${esc(x.wrong)}</del> → <ins>${esc(x.right || "")}</ins></div><span>${esc(x.why_zh || "")}</span></div>`).join("")}</div>` : `<p style="margin:0">沒有找到需要修正的地方，很棒！</p>`}
       ${r.better ? `<div class="row"><span class="eyebrow">更自然的寫法</span><div class="spacer"></div><button class="btn small" id="wrPlayB">${ICON.spk}朗讀</button></div><p class="prose">${esc(r.better)}</p>` : ""}
+      ${state.advFb && Array.isArray(r.native) && r.native.filter(x => x && x.native).length ? `<span class="eyebrow">🔬 文法沒錯，但母語者比較常說</span><div class="list">${r.native.filter(x => x && x.native).slice(0, 5).map(x => `<div class="issue"><div>${esc(x.yours || "")} → <ins>${esc(x.native)}</ins></div><span>${esc(x.why_zh || "")}</span></div>`).join("")}</div>` : ""}
       ${r.tip_zh ? `<p class="muted" style="margin:0">下次可以試試：${esc(r.tip_zh)}</p>` : ""}
       <p class="muted" style="margin:0;font-size:13px">建議：把「修正後」的句子大聲念三次，再抄一遍，印象最深。</p>
       <div class="row"><button class="btn primary" id="wrAgain">再寫一篇</button><button class="btn" id="wrHome">回首頁</button></div>
@@ -2056,6 +2065,7 @@ function pronPrompt(target, opts) {
     "Rate EVERY word of the target in order as \"good\", \"ok\" or \"bad\".\n" +
     "For up to 5 problem words, explain what was wrong (for example th said as s, final consonant dropped, vowel too short, r/l confusion, v said as w, wrong word stress) and exactly how to fix it (tongue, lips, jaw, airflow), in Traditional Chinese (Taiwan). Include the correct IPA.\n" +
     "Also comment briefly on intonation, word stress, linking and pace in Traditional Chinese (Taiwan).\n" +
+    (state.advFb ? "The learner is advanced: in intonation_zh be specific about which syllable or word should be stressed, where words should link, and where the pitch should rise or fall.\n" : "") +
     'Reply with only JSON: {"heard":"...","score":0,"accuracy":0,"fluency":0,"intonation":0,"completeness":0,"words":[{"w":"word","r":"good"}],"issues":[{"word":"...","ipa":"/.../","problem_zh":"...","fix_zh":"..."}],"intonation_zh":"...","tip_zh":"..."}';
 }
 function normPron(r, target) {
@@ -5497,6 +5507,11 @@ const SCENES = [
   { id: "doctor", name: "看醫生", role: "a kind doctor at a clinic", goal: "說明哪裡不舒服、多久了，並問藥要怎麼吃" },
   { id: "friend", name: "認識新朋友", role: "a new friend you meet at a party", goal: "自我介紹、聊彼此的興趣，最後約下次見面" },
   { id: "interview", name: "工作面試", role: "an interviewer for an office job", goal: "介紹自己的經驗和優點，並問一個關於工作的問題" },
+  { id: "interview_hard", push: 1, name: "🔥 追問式面試", role: "a sharp but fair interviewer for a job the learner wants", goal: "回答面試官的追問，每個回答都要舉具體的例子" },
+  { id: "doctor_hard", push: 1, name: "🔥 看醫生（醫生會追問）", role: "a busy doctor who asks many follow-up questions", goal: "說清楚症狀、多久了、有沒有過敏，並問清楚藥怎麼吃" },
+  { id: "service_hard", push: 1, name: "🔥 跟客服理論", role: "a customer service agent who first refuses a refund and asks for details", goal: "客氣但堅定地說明問題，最後拿到退款或換貨" },
+  { id: "landlord_hard", push: 1, name: "🔥 跟房東溝通修繕", role: "a landlord who is not in a hurry to fix things", goal: "說明哪裡壞了、影響多大，約好修理的時間" },
+  { id: "meeting_hard", push: 1, name: "🔥 會議中被追問", role: "a manager in a meeting who challenges the learner's proposal", goal: "說明你的提案，回答主管的質疑，最後說服他試試看" },
 ];
 let CH = null;
 function openChat() {
@@ -5573,6 +5588,7 @@ async function chatTurn(userText) {
   const prompt = `You are role-playing with a Taiwanese learner of English. Stay in character as ${CH.sc.role || "a friendly partner"}.\n` +
     `The learner's goal (in Chinese): ${CH.sc.goal}\n` +
     `Learner level: ${D().ai}. Speak simple, natural spoken English at that level. Keep each reply to 1-3 short sentences and end with a question or prompt that moves the scene toward the goal. Do not quote or name any real TV show or movie.\n` +
+    (CH.sc.push ? "Be realistic and a little challenging: ask follow-up questions about the details the learner gives (why, when, how, for example). If the learner's answer is vague, unclear or off-topic, politely interrupt (for example: \"Sorry, let me stop you there. What exactly do you mean by...?\"). Do not let them reach the goal too easily; aim for about 6 to 8 turns.\n" : "") +
     `If it fits naturally, use some of these words: ${CH.words.join(", ")}.\n` +
     (CH.msgs.length ? `Conversation so far:\n${chatTranscript()}\n` : "The conversation has not started. Open the scene with your first line.\n") +
     (userText ? "Check the learner's LAST message. If it has grammar or word-choice problems, set ok to false and give a corrected natural version and a one-sentence explanation in Traditional Chinese (Taiwan). If it is fine, set ok to true.\n" : "") +
@@ -6030,7 +6046,7 @@ function startPractice(mode) {
 function openQuiz() { show("quiz"); try { preloadQuiz(Q.items); } catch (e) { } renderItem(); }
 function show(view) { navShow(view); if (rainState && view !== "rain") stopRain();
   if (DI && DI.on && view !== "diary") diaryStop();
-  for (const v of ["home", "quiz", "result", "stats", "assess", "chat", "notes", "rain", "subs", "pairs", "travel", "map", "mis", "ladder", "dialog", "diary", "coach", "baby", "chunk", "speak", "news"]) $(v).hidden = v !== view;
+  for (const v of ["home", "quiz", "result", "stats", "assess", "chat", "notes", "rain", "subs", "pairs", "travel", "map", "mis", "ladder", "dialog", "diary", "coach", "baby", "chunk", "speak", "news", "path"]) $(v).hidden = v !== view;
   if (view !== "speak" && typeof SP !== "undefined" && SP) SP.tok++;
   if (view !== "baby" && typeof BB !== "undefined" && BB) { BB.tok++; BB.auto = false; } closeSheet(); window.scrollTo(0, 0); }
 
@@ -6553,6 +6569,7 @@ function renderHome() {
   const SKILL = { spkDaily: "說", news: "聽・讀", ckDaily: "每天固定", ckGram: "文法", ckLearn: "觀念", ckLib: "模組", ckBuild: "組合", ckListen: "聽", ckTalk: "說・寫", baby: "聽・親子", wish: "一起變更好", support: "一起變更好", cards: "讀・記憶", pic: "讀", mc: "讀", listen: "聽", cloze: "讀", build: "寫", spell: "寫", dictation: "聽・寫", match: "讀", blitz: "讀", speak: "說", review: "複習", assess: "測驗", reading: "讀", writing: "寫", chat: "說・寫", notes: "台詞", rain: "寫・遊戲", due: "複習", coach: "說", trans: "寫", mistakes: "寫・複習", ladder: "聽・說", dialog: "聽", diary: "說", subs: "聽・說", pairs: "聽・說", travel: "說", map: "進度" };
   $("modeGrid").outerHTML = `<div id="modeGrid" style="display:flex;flex-direction:column;gap:10px">${groups.map(([g, cards]) => `<div class="group-h">${g}</div><div class="grid">${cards.map(([k, tag, desc]) => `<button class="mode" data-m="${k}"><span class="tagline">${esc(SKILL[k] + (tag ? " · " + tag : ""))}</span><b>${esc(MODES[k].name)}</b><small>${esc(desc || MODES[k].desc)}</small></button>`).join("")}</div>`).join("")}</div>`;
   $("modeGrid").querySelectorAll(".mode").forEach(b => b.onclick = () => startPractice(b.dataset.m));
+  try { renderPathCard(); } catch (e) { }
   renderStorage();
 }
 function wallHtml() {
@@ -6978,6 +6995,437 @@ document.addEventListener("keydown", e => {
   if (Q && !Q.answered && Q.extraKey && Q.extraKey(e)) e.preventDefault();
 });
 
+/* ================= 學習路線：陪寶寶・入門・中階・進階，各自挑選想做的挑戰 ================= */
+const PATHS = [
+  { id: "baby", ic: "👶", name: "陪寶寶", who: "爸媽、阿公阿嬤、保母", desc: "每天陪寶寶聽 10 分鐘英文，全家一起記錄寶寶的成長。" },
+  { id: "start", ic: "🌱", name: "敢開口・入門", who: "學過英文，但話到嘴邊說不出口", desc: "每天一點點：先把常用的區塊說順，再套進生活情境。" },
+  { id: "mid", ic: "🧗", name: "中階・說得出來", who: "看得懂、聽懂一半，但說不流暢", desc: "看得見自己的進步：錄音對比、目標倒數、「我會了」清單、會追問的對話。" },
+  { id: "adv", ic: "🚀", name: "進階・說得道地", who: "能溝通，想更自然、更精準", desc: "用自己的材料練、更細的回饋、每天開口、教別人、每週挑戰。" },
+];
+const PATH_LINKS = {
+  baby: [["🎧", "寶寶聽力", () => openBaby()], ["⭐", "今日 10 個字", () => openBaby(BB_DAILY)], ["👆", "指指看", () => { openBaby(); BB.view = "point"; renderBaby(false); }], ["🎵", "兒歌", () => { openBaby(); BB.view = "song"; renderBaby(false); }], ["📝", "爸媽小抄", () => { openBaby(); BB.view = "tips"; renderBaby(false); }], ["🌱", "成長紀錄", () => { openBaby(); BB.view = "grow"; renderBaby(false); }]],
+  start: [["📅", "今日任務", () => startDaily()], ["🧱", "今日積木", () => startPractice("ckDaily")], ["🎤", "情境口說", () => startPractice("spkDaily")], ["🧳", "出國急救包", () => startPractice("travel")], ["💬", "角色對話", () => startPractice("chat")], ["📔", "說的日記", () => startPractice("diary")], ["🧪", "程度測驗", () => startPractice("assess")]],
+};
+const CHAL = {
+  m1: { p: "mid", ic: "🎙", name: "我的 1 分鐘（每月）", desc: "同一個題目每月錄一次。第 1 次和最新一次並排播放，AI 算出說了幾個字、卡住幾次、用了幾個片語。" },
+  w1: { p: "mid", ic: "📼", name: "每週 1 分鐘", desc: "每週錄一段 1 分鐘自我介紹，存起來一週一週對比。" },
+  goal: { p: "mid", ic: "🎯", name: "目標倒數", desc: "例如「6 週後去日本自助旅行」，自動排成每週的練習計畫，倒數讓你有動力。" },
+  cando: { p: "mid", ic: "✅", name: "「我會了」清單", desc: "「我能點餐並提出特別要求」「我能在電話裡約時間」…做完練習就打勾。" },
+  push: { p: "mid", ic: "🔥", name: "會追問的對話", desc: "面試、看醫生、跟客服理論：AI 會追問細節、聽不懂會打斷你。" },
+  mine: { p: "adv", ic: "📄", name: "用自己的材料練", desc: "貼上明天的會議議程、要回的 Email、喜歡的影集台詞，AI 做成你專屬的情境口說。" },
+  detail: { p: "adv", ic: "🔬", name: "更細的回饋", desc: "寫作、口說批改時，多告訴你「文法沒錯，但母語者比較常說…」和重音問題。" },
+  imp3: { p: "adv", ic: "⏱", name: "每天 3 分鐘即興", desc: "每天一個問題，即興說 3 分鐘，AI 給回饋。最缺的就是每天固定開口。" },
+  teach: { p: "adv", ic: "🧑‍🏫", name: "當老師", desc: "把你做好的情境、寶寶單字清單做成連結，分享給家人朋友或孩子用。" },
+  weekly: { p: "adv", ic: "🏆", name: "每週挑戰", desc: "每週一題，例如「60 秒說服我買你的產品」，AI 評分，跟上週的自己比。" },
+};
+const pathS = () => { if (!state.pathx || typeof state.pathx !== "object") state.pathx = { route: "", chal: {}, talks: [], goal: null, cando: {}, push: 0, teach: 0, mine: 0, topic: {} }; const x = state.pathx; ["chal", "cando", "topic"].forEach(k => { if (!x[k] || typeof x[k] !== "object") x[k] = {}; }); if (!Array.isArray(x.talks)) x.talks = []; return x; };
+const chalOn = id => !!pathS().chal[id];
+
+/* ---------- 期間：每天／每週／每月 ---------- */
+function isoWeek(d) { d = d ? new Date(d + "T12:00:00") : new Date(); const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const day = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - day); const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return t.getUTCFullYear() + "-W" + String(Math.ceil(((t - y0) / 864e5 + 1) / 7)).padStart(2, "0"); }
+const periodKey = (per, d) => per === "month" ? (d || today()).slice(0, 7) : per === "week" ? isoWeek(d) : (d || today());
+
+/* ---------- 錄音題目 ---------- */
+const TALK_TOPICS = [
+  ["Introduce yourself: who you are, what you do, and what you enjoy.", "自我介紹：你是誰、做什麼、喜歡什麼"],
+  ["Talk about your job or school: what you do every day and what is hard.", "說說你的工作或學校：每天做什麼、什麼最難"],
+  ["Describe a normal weekend for you.", "說說你平常的週末"],
+  ["Talk about your family.", "介紹你的家人"],
+  ["Talk about something you are learning now and why.", "說說你最近在學的東西，還有為什麼想學"],
+];
+const IMPROV = [["What did you do yesterday, and what was the best part?", "你昨天做了什麼？最棒的是哪一刻？"], ["Describe your favorite place in your city.", "介紹你住的城市裡你最喜歡的地方"], ["If you could live in any country for a year, where would you go and why?", "如果可以去任何國家住一年，你會去哪裡？為什麼？"], ["What is a habit you want to change?", "你想改掉或養成什麼習慣？"], ["Tell me about a movie or show you recommend.", "推薦一部電影或影集"], ["What is the best advice you have ever received?", "你收過最好的建議是什麼？"], ["Describe a problem you solved at work or at home.", "說一個你在工作或家裡解決過的問題"], ["What would you do with an extra hour every day?", "如果每天多一小時，你會做什麼？"], ["Talk about a person who influenced you.", "說說一個影響你很深的人"], ["What is something people often misunderstand about you?", "別人常誤會你的一件事是什麼？"], ["Describe your perfect breakfast.", "描述你心目中完美的早餐"], ["Should children learn English from a very young age? Why?", "小孩應該很小就學英文嗎？為什麼？"], ["What technology could you not live without?", "哪一樣科技產品你沒有它就活不下去？"], ["Tell me about a trip that did not go as planned.", "說一次不照計畫走的旅行"], ["What makes a good boss or a good teacher?", "怎樣才是好主管或好老師？"], ["Describe the most beautiful place you have seen.", "描述你看過最美的地方"], ["What is a small thing that makes you happy?", "什麼小事會讓你很開心？"], ["How do you deal with stress?", "你怎麼面對壓力？"], ["What was your favorite subject at school and why?", "你求學時最喜歡哪一科？為什麼？"], ["If you started a small business, what would it be?", "如果你要開一家小店，會開什麼？"], ["Talk about a skill you would like to master.", "說一個你想精通的技能"], ["What do you usually do to relax on a weekday night?", "平日晚上你通常怎麼放鬆？"], ["Describe a festival or holiday in Taiwan to a foreigner.", "跟外國人介紹一個台灣的節日"], ["What is the hardest part of learning English for you?", "學英文對你來說最難的是什麼？"], ["Tell me about your favorite food and how to make it.", "介紹你最愛的食物，還有怎麼做"], ["Would you rather live in the city or the countryside? Why?", "你比較想住城市還是鄉下？為什麼？"], ["Describe a time you helped someone.", "說一次你幫助別人的經驗"], ["What will your life look like in five years?", "五年後你的生活會是什麼樣子？"], ["Talk about a book, podcast or channel you like.", "介紹你喜歡的一本書、Podcast 或頻道"], ["What rule would you change in your company or school?", "你想改公司或學校的哪一條規定？"]];
+const WEEKLY = [["You have 60 seconds: convince me to buy your product (any product you like).", "60 秒說服我買你的產品（什麼產品都可以）"], ["Explain your job to a 6-year-old in 60 seconds.", "用 60 秒跟 6 歲小孩解釋你的工作"], ["Persuade your team to try a new idea.", "說服你的團隊試試一個新點子"], ["Give a 60-second toast at a friend's wedding.", "在朋友婚禮上做 60 秒的祝酒詞"], ["Complain politely about a late delivery and ask for a solution.", "客氣地抱怨貨送晚了，並要求解決辦法"], ["Pitch a weekend trip to your family.", "向家人推銷一趟週末小旅行"], ["Explain the pros and cons of working from home.", "說說在家工作的優點和缺點"], ["Introduce Taiwan to a visitor who has one day here.", "跟只停留一天的旅客介紹台灣"], ["Say no to an extra task from your boss, politely.", "客氣地拒絕主管多交代的工作"], ["Describe your dream home and why it suits you.", "描述你的夢想之家，還有為什麼適合你"], ["Give feedback to a coworker: one praise, one suggestion.", "給同事回饋：一個稱讚、一個建議"], ["Convince a friend to start exercising.", "說服朋友開始運動"], ["Tell a short story with a surprise ending.", "說一個有意外結局的短故事"], ["Explain how to make your favorite dish, step by step.", "一步一步說明怎麼做你最愛的菜"], ["Argue for or against: phones should be banned in classrooms.", "正方或反方：教室應該禁止手機"], ["Apologize for a mistake at work and explain your fix.", "為工作上的錯誤道歉，並說明你的補救方法"]];
+const TALK_SERIES = {
+  m1: { name: "我的 1 分鐘（每月）", per: "month", max: 75, cmp: "first" },
+  w1: { name: "每週 1 分鐘", per: "week", max: 75, cmp: "first" },
+  imp3: { name: "每天 3 分鐘即興", per: "day", max: 190, cmp: "prev" },
+  weekly: { name: "每週挑戰", per: "week", max: 75, cmp: "prev", judge: true },
+};
+function talkTopic(s) {
+  if (s === "imp3") { const q = IMPROV[hashStr("imp|" + today()) % IMPROV.length]; return { en: q[0], zh: q[1] }; }
+  if (s === "weekly") { const q = WEEKLY[hashStr("wk|" + isoWeek()) % WEEKLY.length]; return { en: q[0], zh: q[1] }; }
+  const i = Number(pathS().topic[s]) || 0, q = TALK_TOPICS[i] || TALK_TOPICS[0]; return { en: q[0], zh: q[1] };
+}
+const talksOf = s => pathS().talks.filter(x => x.s === s).sort((a, b) => a.d < b.d ? -1 : a.d > b.d ? 1 : (a.t || 0) - (b.t || 0));
+const talkThis = s => talksOf(s).filter(x => x.p === periodKey(TALK_SERIES[s].per)).slice(-1)[0] || null;
+function talkStreak() { let n = 0, d = new Date(); const has = k => pathS().talks.some(x => x.s === "imp3" && x.d === k); if (!has(ymd(d))) d.setDate(d.getDate() - 1); while (has(ymd(d))) { n++; d.setDate(d.getDate() - 1); } return n; }
+
+/* ---------- 錄音檔：存在這台裝置；作者另外備份到雲端硬碟 ---------- */
+async function talkPut(id, blob) { try { const c = await caches.open("eq-talk"); await c.put("/talk/" + id, new Response(blob, { headers: { "Content-Type": blob.type || "audio/webm" } })); } catch (e) { } }
+async function talkUrl(x) {
+  try { const c = await caches.open("eq-talk"), r = await c.match("/talk/" + x.id); if (r) return URL.createObjectURL(await r.blob()); } catch (e) { }
+  if (x.aid && Store.backend === "sheet" && KEY_MODE()) { try { const g = await gs("talkAudioGet", x.aid); if (g && g.b64) { const b = b64ToBlob(g.b64, g.mime); talkPut(x.id, b); return URL.createObjectURL(b); } } catch (e) { } }
+  return "";
+}
+
+/* ---------- 首頁的小卡片 ---------- */
+function chalStatus(id) {
+  const P = pathS();
+  if (TALK_SERIES[id]) {
+    const n = talksOf(id).length, cur = talkThis(id), last = talksOf(id).slice(-1)[0];
+    if (id === "imp3") return cur ? `今天說完了 ✓・連續 ${talkStreak()} 天` : talkStreak() ? `今天還沒說・已連續 ${talkStreak()} 天` : "今天還沒說";
+    if (id === "weekly") return cur ? `本週 ${cur.an && cur.an.total != null ? cur.an.total + " 分" : "已錄"} ✓` : last && last.an && last.an.total != null ? `本週還沒錄・上次 ${last.an.total} 分` : "本週還沒錄";
+    return cur ? `${TALK_SERIES[id].per === "month" ? "本月" : "本週"}已錄 ✓・共 ${n} 次` : `${TALK_SERIES[id].per === "month" ? "本月" : "本週"}還沒錄${n ? `・共 ${n} 次` : ""}`;
+  }
+  if (id === "goal") { const g = P.goal; if (!g) return "還沒設定目標"; const left = goalLeft(g); const wk = goalWeek(g); return left >= 0 ? `「${g.name}」還有 ${left} 天・第 ${wk + 1}/${g.weeks} 週` : `「${g.name}」到期了・完成 ${goalDone(g)}/${goalTotal(g)}`; }
+  if (id === "cando") return `${Object.keys(P.cando).length} / ${CANDO.length} 項`;
+  if (id === "push") return P.push ? `已練 ${P.push} 次` : "還沒練過";
+  if (id === "mine") return P.mine ? `做了 ${P.mine} 個專屬情境` : "還沒做過";
+  if (id === "detail") return state.advFb ? "已開啟" : "還沒開啟";
+  if (id === "teach") return P.teach ? `分享過 ${P.teach} 次` : "還沒分享過";
+  return "";
+}
+function renderPathCard() {
+  const el = $("pathCard"); if (!el) return;
+  const P = pathS(), r = PATHS.find(x => x.id === P.route), mine = Object.keys(CHAL).filter(chalOn);
+  el.innerHTML = `<div class="row"><span class="eyebrow">🧭 我的學習路線</span><div class="spacer"></div><button class="btn small" id="pcOpen">${r ? "打開" : "選一條路線"}</button></div>
+    ${r ? `<p style="margin:0"><b>${r.ic} ${esc(r.name)}</b>　<span class="muted" style="font-size:13px">${esc(r.who)}</span></p>` : `<p class="muted" style="margin:0;font-size:14px">陪寶寶、入門、中階、進階四條路線，挑適合你的，再自己選想做的挑戰。</p>`}
+    ${mine.length ? `<div class="pclist">${mine.slice(0, 5).map(id => `<button class="pcitem" data-pc="${id}"><span aria-hidden="true">${CHAL[id].ic}</span><span style="flex:1;min-width:0;text-align:left"><b>${esc(CHAL[id].name)}</b><br><span class="muted" style="font-size:12px">${esc(chalStatus(id))}</span></span><span aria-hidden="true">›</span></button>`).join("")}</div>` : ""}`;
+  $("pcOpen").onclick = () => openPath();
+  el.querySelectorAll("[data-pc]").forEach(b => b.onclick = () => chalOpen(b.dataset.pc));
+}
+
+/* ---------- 路線頁 ---------- */
+const PV = { tab: "" };
+function openPath(tab) { show("path"); PV.tab = tab || pathS().route || PV.tab || "mid"; renderPath(); }
+function renderPath() {
+  const P = pathS(), r = PATHS.find(x => x.id === PV.tab) || PATHS[2], mine = Object.keys(CHAL).filter(chalOn);
+  $("path").innerHTML = `
+    <header class="top"><button class="icon-btn" id="paBack" aria-label="回首頁">${ICON.x}</button><h2 style="font-size:22px;flex:1;min-width:0">🧭 學習路線</h2></header>
+    ${mine.length ? `<section class="card flat"><span class="eyebrow">我選的挑戰（${mine.length}）</span><div class="pclist">${mine.map(id => `<button class="pcitem" data-pc="${id}"><span aria-hidden="true">${CHAL[id].ic}</span><span style="flex:1;min-width:0;text-align:left"><b>${esc(CHAL[id].name)}</b><br><span class="muted" style="font-size:12px">${esc(chalStatus(id))}</span></span><span aria-hidden="true">›</span></button>`).join("")}</div></section>` : ""}
+    <nav class="bbviews" role="tablist" aria-label="路線">${PATHS.map(x => `<button class="vt${x.id === r.id ? " on" : ""}" data-pt="${x.id}" role="tab" aria-selected="${x.id === r.id}"><span aria-hidden="true">${x.ic}</span>${esc(x.name.split("・")[0])}</button>`).join("")}</nav>
+    <section class="card flat">
+      <h3 style="margin:0">${r.ic} ${esc(r.name)}</h3>
+      <p class="muted" style="margin:0;font-size:13px">適合：${esc(r.who)}</p>
+      <p style="margin:0">${esc(r.desc)}</p>
+      ${P.route === r.id ? `<span class="chip" style="align-self:flex-start">✓ 這是我的路線</span>` : `<button class="btn small" id="paSet" style="align-self:flex-start">設成我的路線</button>`}
+    </section>
+    ${PATH_LINKS[r.id] ? `<section class="card flat"><span class="eyebrow">這條路線常用的功能</span><div class="palinks">${PATH_LINKS[r.id].map(([ic, n], i) => `<button class="btn" data-pl="${i}"><span aria-hidden="true">${ic}</span>${esc(n)}</button>`).join("")}</div>
+      <p class="muted" style="margin:0;font-size:12px">這些都是原本就有的功能，首頁的位置也都沒變。想多一點挑戰，可以到「中階」「進階」挑幾個加進來。</p></section>` : ""}
+    ${Object.keys(CHAL).filter(id => CHAL[id].p === r.id).map(id => { const c = CHAL[id]; return `<section class="card flat chal"><div class="row" style="gap:10px;align-items:flex-start"><span style="font-size:28px" aria-hidden="true">${c.ic}</span><div style="flex:1;min-width:0"><b>${esc(c.name)}</b><p class="muted" style="margin:2px 0 0;font-size:13px">${esc(c.desc)}</p><p style="margin:4px 0 0;font-size:13px">${esc(chalStatus(id))}</p></div></div>
+      <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn primary small" data-co="${id}">開始</button><button class="btn small" data-ct="${id}" aria-pressed="${chalOn(id)}">${chalOn(id) ? "✓ 已加入我的挑戰" : "＋ 加入我的挑戰"}</button></div></section>`; }).join("")}`;
+  $("paBack").onclick = () => { show("home"); renderHome(); };
+  $("path").querySelectorAll("[data-pt]").forEach(b => b.onclick = () => { PV.tab = b.dataset.pt; renderPath(); });
+  if ($("paSet")) $("paSet").onclick = () => { P.route = r.id; if (!Object.keys(P.chal).length) Object.keys(CHAL).filter(id => CHAL[id].p === r.id).slice(0, 3).forEach(id => P.chal[id] = 1); Store.save(); toast(`好！你的路線是「${r.name}」`); renderPath(); };
+  $("path").querySelectorAll("[data-pl]").forEach(b => b.onclick = () => PATH_LINKS[r.id][Number(b.dataset.pl)][2]());
+  $("path").querySelectorAll("[data-co]").forEach(b => b.onclick = () => chalOpen(b.dataset.co));
+  $("path").querySelectorAll("[data-ct]").forEach(b => b.onclick = () => { const id = b.dataset.ct; if (P.chal[id]) delete P.chal[id]; else P.chal[id] = 1; Store.save(); renderPath(); });
+  $("path").querySelectorAll("[data-pc]").forEach(b => b.onclick = () => chalOpen(b.dataset.pc));
+}
+function chalOpen(id) {
+  if (TALK_SERIES[id]) return openTalk(id);
+  ({ goal: openGoal, cando: openCando, push: openPushChat, mine: openMine, detail: openDetail, teach: openTeach })[id]();
+}
+const pathHead = (title, back) => `<header class="top"><button class="icon-btn" id="phBack" aria-label="回學習路線">${ICON.x}</button><h2 style="font-size:20px;flex:1;min-width:0">${title}</h2></header>`;
+const pathBack = () => { $("phBack").onclick = () => openPath(); };
+
+/* ---------- 錄音挑戰：我的 1 分鐘、每週 1 分鐘、每天 3 分鐘即興、每週挑戰 ---------- */
+const TK = { s: "", a: null, busy: false };
+function openTalk(s) {
+  show("path"); TK.s = s; TK.a = null; TK.busy = false;
+  const S = TALK_SERIES[s], tp = talkTopic(s), cur = talkThis(s), list = talksOf(s);
+  $("path").innerHTML = `${pathHead(`${CHAL[s].ic} ${esc(S.name)}`)}
+    <section class="card flat">
+      <span class="eyebrow">${s === "imp3" ? "今天的問題" : s === "weekly" ? "本週挑戰" : "題目"}</span>
+      <p style="margin:0;font-size:18px;font-weight:700">${esc(tp.en)}</p>
+      <p class="muted" style="margin:0">${esc(tp.zh)}</p>
+      <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn small" id="tkSay">${ICON.spk}聽題目</button>${s === "m1" || s === "w1" ? `<select class="field" id="tkTopic" style="flex:1;min-width:150px" aria-label="換題目">${TALK_TOPICS.map((q, i) => `<option value="${i}"${(Number(pathS().topic[s]) || 0) === i ? " selected" : ""}>${esc(q[1])}</option>`).join("")}</select>` : ""}</div>
+      <p class="muted" style="margin:0;font-size:12px">${s === "imp3" ? `說滿 3 分鐘最好，卡住也沒關係，繼續說下去。${talkStreak() ? `已經連續 ${talkStreak()} 天！` : ""}` : s === "weekly" ? "說 60 秒左右。AI 會用 10 分制評分，跟你上週比。" : `${S.per === "month" ? "每月" : "每週"}錄一次就好。${s === "m1" || s === "w1" ? "題目不要常換，同一題才比得出進步。" : ""}`}${cur ? `　${S.per === "day" ? "今天" : S.per === "month" ? "本月" : "本週"}已經錄過了，再錄一次會換掉。` : ""}</p>
+    </section>
+    <section class="card flat" id="tkRec"></section>
+    <div id="tkOut"></div>
+    ${list.length ? `<section class="card flat"><span class="eyebrow">${S.cmp === "first" ? "進步對比" : "跟上次比"}</span><div id="tkCmp"></div></section>
+    <section class="card flat"><span class="eyebrow">全部紀錄（${list.length}）</span><div class="tklist">${list.slice().reverse().map(x => `<div class="row" style="gap:8px;align-items:center"><button class="btn small" data-tkp="${x.id}" aria-label="播放 ${esc(x.d)} 的錄音">▶</button><span style="flex:1;min-width:0;font-size:14px"><b>${esc(x.d)}</b>　${x.an ? `${x.an.words} 字・每分鐘 ${x.an.wpm} 字・卡住 ${x.an.stuck} 次${x.an.total != null ? `・${x.an.total} 分` : ""}` : `${x.secs} 秒（沒有 AI 分析）`}</span></div>`).join("")}</div></section>` : ""}`;
+  pathBack();
+  $("tkSay").onclick = () => speak(tp.en);
+  if ($("tkTopic")) $("tkTopic").onchange = e => { pathS().topic[s] = Number(e.target.value) || 0; Store.save(); openTalk(s); };
+  const box = $("tkRec");
+  box.innerHTML = `<span class="eyebrow">錄音</span>${AUDIO_AI() ? "" : `<p class="muted" style="margin:0;font-size:13px">AI 分析只有作者可以用；你還是可以錄下來，存在這台裝置自己聽、自己比。</p>`}`;
+  recorderUI(box, { maxSec: S.max, hint: `按麥克風開始說，最多 ${fmtSec(S.max)}，說完再按一次`, onAudio: a => { TK.a = a; $("tkSend").hidden = false; } });
+  const send = document.createElement("button"); send.className = "btn primary block"; send.id = "tkSend"; send.hidden = true; send.textContent = AUDIO_AI() ? "送出，AI 分析" : "存起來"; box.appendChild(send);
+  send.onclick = () => talkSubmit(s, tp);
+  $("path").querySelectorAll("[data-tkp]").forEach(b => b.onclick = async () => { const x = pathS().talks.find(y => y.id === b.dataset.tkp); const u = x ? await talkUrl(x) : ""; if (u) playUrl(u); else toast("這段錄音不在這台裝置上"); });
+  if ($("tkCmp")) talkCompare(s);
+}
+async function talkSubmit(s, tp) {
+  const a = TK.a, btn = $("tkSend"); if (!a || TK.busy) return; TK.busy = true; btn.disabled = true;
+  const S = TALK_SERIES[s], id = "t" + Date.now().toString(36), x = { id, s, p: periodKey(S.per), d: today(), t: Date.now(), topic: tp.en, secs: a.secs || 0 };
+  let payload = null;
+  try {
+    if (AUDIO_AI()) {
+      btn.textContent = "AI 聽你說的話，大約 10～20 秒…";
+      payload = await toAudioPayload(a);
+      const r = await AI.audio(talkPrompt(s, tp), payload);
+      x.an = talkNorm(r, x.secs);
+      if (!x.an.heard) { toast((r && r.tip_zh) || "AI 沒有聽到英文，請再錄一次"); TK.busy = false; btn.disabled = false; btn.textContent = "送出，AI 分析"; return; }
+      if (!x.secs && x.an.words) x.secs = Math.round(x.an.words / 2);
+      x.an.wpm = x.secs ? Math.round(x.an.words / x.secs * 60) : 0;
+    }
+  } catch (e) { toast(aiErrorText(e)); TK.busy = false; btn.disabled = false; btn.textContent = AUDIO_AI() ? "送出，AI 分析" : "存起來"; return; }
+  btn.textContent = "存起來…";
+  await talkPut(id, a.blob);
+  if (Store.backend === "sheet" && KEY_MODE()) { try { if (!payload) payload = await toAudioPayload(a); x.aid = await gs("talkAudioSave", id, payload.b64, payload.mime); } catch (e) { } }
+  const P = pathS(); P.talks = P.talks.filter(y => !(y.s === s && y.p === x.p)).concat(x).slice(-150);
+  addXp(s === "imp3" ? 15 : 10); state.days[today()] = (state.days[today()] || 0) + 1; Store.save(true);
+  logEvent("學習路線", { title: S.name, text: x.an ? x.an.heard : "", score: x.an && x.an.total });
+  toast("存好了！"); openTalk(s);
+  if (x.an) talkShow(x);
+}
+function talkPrompt(s, tp) {
+  const adv = state.advFb || s === "imp3" || s === "weekly";
+  return `A Taiwanese learner of English (level ${D().cefr}) recorded a spoken answer.\nTask: "${tp.en}"\n` +
+    "1) heard: write exactly what they said (do not correct it). 2) words: number of English words spoken. 3) fillers: number of fillers like uh, um, er, you know, and restarts. 4) stuck: number of places they clearly got stuck (long pause, gave up a sentence, switched to Chinese). " +
+    "5) phrases: useful multi-word English phrases or chunks they used correctly (max 8). 6) scores from 0 to 10: fluency, vocabulary, grammar, clarity" + (TALK_SERIES[s].judge ? ", task (how well they did the task, for example how persuasive)" : "") + ". " +
+    "7) better: rewrite their 2 or 3 most important sentences in natural spoken English. " + (adv ? "8) native: up to 4 places where their English is correct but a native speaker would usually say it differently: {yours, native, why_zh}. 9) stress: up to 3 words or phrases with wrong word stress or sentence stress: {word, tip_zh}. " : "") +
+    "Also praise_zh (one specific praise) and tip_zh (one concrete tip for next time). All explanations in Traditional Chinese (Taiwan). If the audio is silent or not English, set heard to \"\" and explain in tip_zh.\n" +
+    'Reply with only JSON: {"heard":"...","words":0,"fillers":0,"stuck":0,"phrases":["..."],"scores":{"fluency":0,"vocabulary":0,"grammar":0,"clarity":0' + (TALK_SERIES[s].judge ? ',"task":0' : "") + '},"better":[{"yours":"...","better":"..."}],"native":[{"yours":"...","native":"...","why_zh":"..."}],"stress":[{"word":"...","tip_zh":"..."}],"praise_zh":"...","tip_zh":"..."}';
+}
+function talkNorm(r, secs) {
+  r = r || {}; const n = (v, m) => Math.max(0, Math.min(m, Math.round(Number(v) || 0)));
+  const heard = cleanSent(r.heard).slice(0, 4000), sc = r.scores && typeof r.scores === "object" ? r.scores : {};
+  const keys = ["fluency", "vocabulary", "grammar", "clarity", "task"].filter(k => sc[k] != null), scores = {}; keys.forEach(k => scores[k] = n(sc[k], 10));
+  const total = keys.length ? Math.round(keys.reduce((a, k) => a + scores[k], 0) / keys.length * 10) / 10 : null;
+  const arr = (v, m) => (Array.isArray(v) ? v : []).slice(0, m);
+  return {
+    heard, words: n(r.words, 2000) || (heard.match(/[A-Za-z']+/g) || []).length, fillers: n(r.fillers, 300), stuck: n(r.stuck, 300) + 0,
+    phrases: arr(r.phrases, 8).map(p => cleanSent(p).slice(0, 60)).filter(Boolean), scores, total,
+    better: arr(r.better, 3).filter(b => b && b.better).map(b => ({ yours: cleanSent(b.yours).slice(0, 200), better: cleanSent(b.better).slice(0, 220) })),
+    native: arr(r.native, 4).filter(b => b && b.native).map(b => ({ yours: cleanSent(b.yours).slice(0, 160), native: cleanSent(b.native).slice(0, 160), why: String(b.why_zh || "").slice(0, 120) })),
+    stress: arr(r.stress, 3).filter(b => b && b.word).map(b => ({ word: String(b.word).slice(0, 40), tip: String(b.tip_zh || "").slice(0, 120) })),
+    praise: String(r.praise_zh || "").slice(0, 200), tip: String(r.tip_zh || "").slice(0, 200),
+  };
+}
+const SCORE_ZH = { fluency: "流暢", vocabulary: "用字", grammar: "文法", clarity: "清楚", task: "任務" };
+function talkShow(x) {
+  const an = x.an, o = $("tkOut"); if (!o || !an) return;
+  o.innerHTML = `<section class="card">
+    <div class="row" style="align-items:flex-end;gap:8px">${an.total != null ? `<div class="big-num">${an.total}</div><span class="muted">/ 10</span>` : ""}<div class="spacer"></div><span class="chip">${an.words} 字</span><span class="chip">每分鐘 ${an.wpm} 字</span><span class="chip">卡住 ${an.stuck} 次</span></div>
+    ${Object.keys(an.scores).length ? `<div class="row" style="gap:6px;flex-wrap:wrap">${Object.entries(an.scores).map(([k, v]) => `<span class="chip">${SCORE_ZH[k] || k} ${v}</span>`).join("")}</div>` : ""}
+    ${an.praise ? `<p style="margin:0">👍 ${esc(an.praise)}</p>` : ""}
+    <span class="eyebrow">AI 聽到的</span><p class="prose" style="margin:0">${esc(an.heard)}</p>
+    ${an.phrases.length ? `<span class="eyebrow">你用到的片語（${an.phrases.length}）</span><div class="row" style="gap:6px;flex-wrap:wrap">${an.phrases.map(p => `<span class="chip" data-say="${esc(p)}">${esc(p)}</span>`).join("")}</div>` : ""}
+    ${an.better.length ? `<span class="eyebrow">可以這樣說更自然</span>${an.better.map(b => `<div class="issue"><div><del>${esc(b.yours)}</del></div><div><ins data-say="${esc(b.better)}">${esc(b.better)}</ins></div></div>`).join("")}` : ""}
+    ${an.native.length ? `<span class="eyebrow">🔬 文法沒錯，但母語者比較常說</span>${an.native.map(b => `<div class="issue"><div>${esc(b.yours)} → <ins data-say="${esc(b.native)}">${esc(b.native)}</ins></div><span>${esc(b.why)}</span></div>`).join("")}` : ""}
+    ${an.stress.length ? `<span class="eyebrow">🔬 重音要注意</span>${an.stress.map(b => `<div class="issue"><div><b>${esc(b.word)}</b></div><span>${esc(b.tip)}</span></div>`).join("")}` : ""}
+    ${an.tip ? `<p class="muted" style="margin:0">下次試試：${esc(an.tip)}</p>` : ""}
+  </section>`;
+  o.querySelectorAll("[data-say]").forEach(b => b.onclick = () => speak(b.dataset.say));
+  o.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function talkCompare(s) {
+  const list = talksOf(s).filter(x => x.an), box = $("tkCmp");
+  if (list.length < 2) { box.innerHTML = `<p class="muted" style="margin:0;font-size:13px">${list.length ? "再錄一次，就能看到前後對比。" : "錄好第一次之後，這裡會出現對比。"}</p>`; return; }
+  const last = list[list.length - 1], base = TALK_SERIES[s].cmp === "first" ? list[0] : list[list.length - 2];
+  const row = (k, f, better) => { const a = f(base), b = f(last), up = better === "up" ? b > a : b < a; return `<tr><th>${k}</th><td>${a}</td><td>${b}${a !== b ? ` <span class="${up ? "good" : "bad"}">${b > a ? "▲" : "▼"}${up ? " 進步" : ""}</span>` : ""}</td></tr>`; };
+  const newP = last.an.phrases.filter(p => !base.an.phrases.some(q => q.toLowerCase() === p.toLowerCase()));
+  box.innerHTML = `<table class="tkcmp"><thead><tr><th></th><th>${esc(base.d)}${TALK_SERIES[s].cmp === "first" ? "<br><small>第 1 次</small>" : "<br><small>上一次</small>"}</th><th>${esc(last.d)}<br><small>最新</small></th></tr></thead><tbody>
+    ${row("說了幾個字", x => x.an.words, "up")}${row("每分鐘字數", x => x.an.wpm, "up")}${row("卡住次數", x => x.an.stuck, "down")}${row("填充詞（uh、um）", x => x.an.fillers, "down")}${row("用到的片語", x => x.an.phrases.length, "up")}${base.an.total != null && last.an.total != null ? row("總分", x => x.an.total, "up") : ""}
+  </tbody></table>
+  <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn small" data-tkp="${base.id}">▶ 聽 ${esc(base.d)}</button><button class="btn small" data-tkp="${last.id}">▶ 聽 ${esc(last.d)}</button></div>
+  ${newP.length ? `<p style="margin:0;font-size:14px">🆕 這次新用到的片語：${newP.map(esc).join("、")}</p>` : ""}`;
+  box.querySelectorAll("[data-tkp]").forEach(b => b.onclick = async () => { const x = pathS().talks.find(y => y.id === b.dataset.tkp); const u = x ? await talkUrl(x) : ""; if (u) playUrl(u); else toast("這段錄音不在這台裝置上"); });
+}
+
+/* ---------- 目標倒數 ---------- */
+const GOAL_ITEMS = {
+  trip: [["tr", "airport", "🛫 機場"], ["tr", "transport", "🚇 交通"], ["tr", "hotel", "🏨 飯店"], ["chat", "hotel", "💬 飯店入住對話"], ["tr", "restaurant", "🍽 餐廳"], ["chat", "restaurant", "💬 餐廳點餐對話"], ["tr", "directions", "🗺 問路"], ["chat", "directions", "💬 問路對話"], ["tr", "shopping", "🛍 購物"], ["tr", "doctor", "🏥 看醫生"], ["spk", "intro_social", "🎤 跟新朋友自我介紹"], ["chat", "service_hard", "🔥 跟客服理論"]],
+  interview: [["spk", "intro_work", "🎤 工作自我介紹"], ["talk", "w1", "📼 錄 1 分鐘自我介紹"], ["chat", "interview", "💬 面試對話"], ["spk", "present", "🎤 簡報開場"], ["chat", "interview_hard", "🔥 追問式面試"], ["mine", "", "📄 用職缺內容做專屬情境"], ["chat", "interview_hard", "🔥 追問式面試（再一次）"], ["talk", "weekly", "🏆 每週挑戰"]],
+  work: [["spk", "intro_work", "🎤 工作自我介紹"], ["spk", "meeting", "🎤 會議開場"], ["chat", "meeting_hard", "🔥 會議中被追問"], ["spk", "present", "🎤 簡報開場"], ["spk", "client", "🎤 接待外國客戶"], ["mine", "", "📄 用自己的會議資料練"], ["spk", "yearend", "🎤 尾牙・慶功致詞"], ["talk", "weekly", "🏆 每週挑戰"]],
+  life: [["chat", "doctor_hard", "🔥 看醫生（醫生會追問）"], ["tr", "doctor", "🏥 看醫生用語"], ["chat", "service_hard", "🔥 跟客服理論"], ["chat", "landlord_hard", "🔥 跟房東溝通修繕"], ["tr", "shopping", "🛍 購物、退換貨"], ["chat", "friend", "💬 認識新朋友"], ["spk", "intro_social", "🎤 聚會自我介紹"], ["talk", "imp3", "⏱ 3 分鐘即興"]],
+};
+const GOAL_TYPES = [["trip", "✈️ 出國旅行"], ["interview", "💼 面試"], ["work", "🏢 工作、會議"], ["life", "🏠 生活大小事"]];
+function goalPlan(type, weeks) {
+  const items = GOAL_ITEMS[type] || GOAL_ITEMS.trip, plan = Array.from({ length: weeks }, () => []);
+  items.forEach((it, i) => plan[Math.min(weeks - 1, Math.floor(i * weeks / items.length))].push(it));
+  return plan;
+}
+const goalWeek = g => Math.max(0, Math.min(g.weeks - 1, Math.floor((new Date(today() + "T12:00:00") - new Date(g.start + "T12:00:00")) / (7 * 864e5))));
+const goalLeft = g => Math.round((new Date(g.end + "T12:00:00") - new Date(today() + "T12:00:00")) / 864e5);
+const goalTotal = g => g.plan.reduce((a, w) => a + w.length, 0), goalDone = g => Object.keys(g.done || {}).length;
+function goalGo(it) {
+  const [k, id] = it;
+  if (k === "tr") return openTravel(id);
+  if (k === "spk") return openSpeak(id);
+  if (k === "chat") { const i = SCENES.findIndex(x => x.id === id); return i >= 0 ? (AI.kind ? startChat(i) : needAI()) : openChat(); }
+  if (k === "talk") return openTalk(id);
+  if (k === "mine") return openMine();
+}
+function openGoal(edit) {
+  show("path"); const P = pathS(), g = P.goal;
+  if (!g || edit) {
+    $("path").innerHTML = `${pathHead("🎯 目標倒數")}
+      <section class="card flat"><p style="margin:0">設一個近在眼前的目標，App 幫你排好每週要練什麼。</p>
+        <label style="display:flex;flex-direction:column;gap:4px"><span style="font-size:14px">你的目標</span><input class="field" id="glName" maxlength="30" placeholder="例如：去日本自助旅行、外商面試、年底英文簡報" value="${esc(g ? g.name : "")}"></label>
+        <div><span style="font-size:14px">哪一類</span><div class="seg" id="glType" style="flex-wrap:wrap;margin-top:4px">${GOAL_TYPES.map(([k, n]) => `<button data-gt="${k}" aria-pressed="${(g ? g.type : "trip") === k}">${n}</button>`).join("")}</div></div>
+        <label class="row" style="gap:8px;align-items:center"><span style="font-size:14px">還有幾週</span><select class="field" id="glWeeks" style="width:auto">${[2, 3, 4, 5, 6, 8, 10, 12].map(n => `<option value="${n}"${(g ? g.weeks : 6) === n ? " selected" : ""}>${n} 週</option>`).join("")}</select></label>
+        <button class="btn primary block" id="glGo">排好我的計畫</button></section>`;
+    pathBack(); let type = g ? g.type : "trip";
+    $("path").querySelectorAll("[data-gt]").forEach(b => b.onclick = () => { type = b.dataset.gt; $("path").querySelectorAll("[data-gt]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
+    $("glGo").onclick = () => {
+      const name = $("glName").value.replace(/[<>]/g, "").trim(); if (!name) { $("glName").focus(); return; }
+      const weeks = Number($("glWeeks").value) || 6, start = today(), end = ymd(new Date(Date.now() + weeks * 7 * 864e5));
+      P.goal = { name, type, weeks, start, end, plan: goalPlan(type, weeks), done: {} }; P.chal.goal = 1; Store.save(); toast("計畫排好了，加油！"); openGoal();
+    };
+    return;
+  }
+  const left = goalLeft(g), wk = goalWeek(g), tot = goalTotal(g), dn = goalDone(g);
+  $("path").innerHTML = `${pathHead("🎯 目標倒數")}
+    <section class="card daily" style="text-align:center"><span class="eyebrow">${esc(g.name)}</span><div class="big-num">${Math.max(0, left)}</div><div class="muted">${left >= 0 ? `天後（${esc(g.end)}）` : "已經到了！"}</div>
+      <div class="gbar" style="margin-top:8px" role="img" aria-label="完成 ${dn} / ${tot}"><i style="width:${tot ? Math.round(dn / tot * 100) : 0}%"></i></div><div class="muted" style="font-size:13px">完成 ${dn} / ${tot} 項</div></section>
+    ${g.plan.map((items, w) => `<section class="card flat${w === wk ? " goalnow" : ""}"><span class="eyebrow">第 ${w + 1} 週${w === wk ? "・這週" : w < wk ? "・已過" : ""}</span>
+      ${items.map((it, i) => { const key = w + "-" + i, ok = g.done[key]; return `<div class="row" style="gap:8px;align-items:center"><button class="btn small${ok ? " primary" : ""}" data-gd="${key}" aria-pressed="${!!ok}" aria-label="完成 ${esc(it[2])}">${ok ? "✓" : "○"}</button><span style="flex:1;min-width:0">${esc(it[2])}${ok ? `<span class="muted" style="font-size:12px">　${mdDate(ok)}</span>` : ""}</span><button class="btn small" data-gg="${w}:${i}">去練習</button></div>`; }).join("")}</section>`).join("")}
+    <button class="btn small" id="glEdit" style="align-self:flex-start">重新設定目標</button>`;
+  pathBack();
+  $("path").querySelectorAll("[data-gd]").forEach(b => b.onclick = () => { const k = b.dataset.gd; if (g.done[k]) delete g.done[k]; else { g.done[k] = today(); addXp(5); } Store.save(); openGoal(); if (!g.done[k]) return; if (goalDone(g) === goalTotal(g)) toast("全部完成了！🎉 你準備好了"); });
+  $("path").querySelectorAll("[data-gg]").forEach(b => b.onclick = () => { const [w, i] = b.dataset.gg.split(":").map(Number); goalGo(g.plan[w][i]); });
+  $("glEdit").onclick = () => openGoal(true);
+}
+
+/* ---------- 「我會了」清單 ---------- */
+const CANDO = [
+  ["生活", "我能自我介紹 30 秒，說出工作和興趣", ["spk", "intro_social"]], ["生活", "我能跟新朋友聊彼此的興趣，最後約下次見面", ["chat", "friend"]], ["生活", "我能說明哪裡不舒服、多久了，並問藥怎麼吃", ["chat", "doctor"]], ["生活", "我能客氣地抱怨，並要求退款或換貨", ["chat", "service_hard"]], ["生活", "我能跟房東說明東西壞了、約時間修理", ["chat", "landlord_hard"]], ["生活", "我能說 1 分鐘我的週末，不太卡", ["talk", "w1"]],
+  ["旅行", "我能在機場辦登機、問登機門和行李", ["tr", "airport"]], ["旅行", "我能辦理入住，問早餐時間和 Wi-Fi", ["chat", "hotel"]], ["旅行", "我能點餐，並提出特別要求（不要辣、少冰）", ["chat", "restaurant"]], ["旅行", "我能問路，並確認要走多久", ["chat", "directions"]], ["旅行", "我能買東西、問尺寸、問能不能退換", ["chat", "shopping"]], ["旅行", "我能搭車、買票、問在哪一站下車", ["tr", "transport"]],
+  ["工作", "我能在電話或會議裡約時間、改時間", ["spk", "meeting"]], ["工作", "我能用英文做 1 分鐘的工作自我介紹", ["spk", "intro_work"]], ["工作", "我能做簡報開場，說明今天要講什麼", ["spk", "present"]], ["工作", "我能在面試時回答追問，舉具體的例子", ["chat", "interview_hard"]], ["工作", "我能在會議中被追問時，清楚說明我的想法", ["chat", "meeting_hard"]], ["工作", "我能接待外國客戶，寒暄並介紹行程", ["spk", "client"]],
+  ["表達", "我能說出一個觀點，並給兩個理由", ["talk", "imp3"]], ["表達", "我能用 60 秒說服別人試一樣東西", ["talk", "weekly"]],
+];
+function openCando() {
+  show("path"); const P = pathS(), n = Object.keys(P.cando).length;
+  const groups = [...new Set(CANDO.map(x => x[0]))];
+  $("path").innerHTML = `${pathHead("✅「我會了」清單")}
+    <section class="card daily"><div class="row" style="align-items:flex-end"><div class="big-num">${n}</div><span class="muted">/ ${CANDO.length} 項</span></div><div class="gbar" role="img" aria-label="完成 ${n} / ${CANDO.length}"><i style="width:${Math.round(n / CANDO.length * 100)}%"></i></div>
+      <p class="muted" style="margin:0;font-size:13px">按「去練習」做對應的練習，覺得自己真的會了，再按「我會了」打勾。誠實打勾，清單才有意義。</p></section>
+    ${groups.map(gp => `<section class="card flat"><span class="eyebrow">${esc(gp)}</span>${CANDO.map((x, i) => [x, i]).filter(([x]) => x[0] === gp).map(([x, i]) => { const ok = P.cando[i]; return `<div class="cdrow"><button class="btn small${ok ? " primary" : ""}" data-cd="${i}" aria-pressed="${!!ok}">${ok ? "✓ 我會了" : "我會了"}</button><span style="flex:1;min-width:0">${esc(x[1])}${ok ? `<br><span class="muted" style="font-size:12px">${esc(ok)} 打勾</span>` : ""}</span><button class="btn small" data-cg="${i}">去練習</button></div>`; }).join("")}</section>`).join("")}`;
+  pathBack();
+  $("path").querySelectorAll("[data-cd]").forEach(b => b.onclick = () => { const i = b.dataset.cd; if (P.cando[i]) delete P.cando[i]; else { P.cando[i] = today(); addXp(5); toast("又多會一件事了！✅"); } Store.save(); openCando(); });
+  $("path").querySelectorAll("[data-cg]").forEach(b => b.onclick = () => goalGo(CANDO[Number(b.dataset.cg)][2]));
+}
+
+/* ---------- 會追問的對話 ---------- */
+function openPushChat() {
+  if (!AI.kind) return needAI();
+  const list = SCENES.map((s, i) => [s, i]).filter(([s]) => s.push);
+  openModal(`<div class="row"><h2 style="font-size:20px;flex:1;min-width:0">🔥 會追問的對話</h2><button class="icon-btn" id="ppClose" aria-label="關閉">${ICON.x}</button></div>
+    <p class="muted" style="margin:0;font-size:14px">對方不會輕易放過你：會追問細節，你說得太模糊時會打斷你、請你說清楚。大約 6～8 來回，最後看回饋。</p>
+    <div style="display:flex;flex-direction:column;gap:8px">${list.map(([s, i]) => `<button class="btn block" data-pp="${i}" style="justify-content:flex-start;text-align:left"><b>${esc(s.name)}</b><span class="muted" style="font-size:13px">　${esc(s.goal)}</span></button>`).join("")}</div>`);
+  $("ppClose").onclick = closeModal;
+  $("gPanel").querySelectorAll("[data-pp]").forEach(b => b.onclick = () => { closeModal(); pathS().push = (pathS().push || 0) + 1; Store.save(); startChat(Number(b.dataset.pp)); });
+}
+
+/* ---------- 用自己的材料練 ---------- */
+function openMine() {
+  if (!AI.kind) return needAI();
+  openModal(`<div class="row"><h2 style="font-size:20px;flex:1;min-width:0">📄 用自己的材料練</h2><button class="icon-btn" id="mnClose" aria-label="關閉">${ICON.x}</button></div>
+    <p class="muted" style="margin:0;font-size:14px">貼上明天會議的議程、要回的 Email、簡報大綱或喜歡的影集台詞（中文或英文都可以）。AI 會做成一套「五塊積木」的情境口說，練的就是你明天要說的話。</p>
+    <div class="seg" id="mnKind" style="flex-wrap:wrap">${[["meeting", "會議"], ["email", "Email 回覆"], ["present", "簡報"], ["show", "影集台詞"], ["other", "其他"]].map(([k, n], i) => `<button data-mk="${k}" aria-pressed="${i === 0}">${n}</button>`).join("")}</div>
+    <textarea class="field" id="mnText" maxlength="3000" style="min-height:140px" placeholder="把內容貼在這裡（最多 3000 字）。請不要貼密碼、身分證號碼這類個人資料。"></textarea>
+    <button class="btn primary block" id="mnGo">做成我的情境口說</button>`);
+  let kind = "meeting";
+  $("mnClose").onclick = closeModal;
+  $("gPanel").querySelectorAll("[data-mk]").forEach(b => b.onclick = () => { kind = b.dataset.mk; $("gPanel").querySelectorAll("[data-mk]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
+  $("mnGo").onclick = async () => {
+    const text = $("mnText").value.replace(/[<>]/g, " ").trim(); if (text.length < 10) { $("mnText").focus(); toast("請先貼上內容"); return; }
+    $("mnGo").disabled = true; $("mnGo").textContent = "AI 製作中，大約 10～20 秒…";
+    const kz = { meeting: "a meeting", email: "replying to this email in a call or meeting", present: "a presentation", show: "lines from a TV show the learner likes", other: "a real situation" }[kind];
+    const prompt = `Create a speaking template for a Taiwanese adult who must use English for ${kz}. Base it closely on the material below, using its real names, topics and details.\nLearner level: ${D().ai}${state.advFb ? " (advanced: use natural, native-like phrasing)" : ""}.\nMaterial:\n"""\n${text.slice(0, 3000)}\n"""\n` +
+      "Exactly 5 parts in a natural speaking order. For each part give: k (English label, 1 to 3 words), kz (short Traditional Chinese label), q (what the other person might say to prompt this part: [English, Traditional Chinese]), v (3 alternative lines the learner could actually say, each [English, Traditional Chinese], at most 18 words).\n" +
+      "Also give t (short Traditional Chinese title, at most 10 characters), en (English title), ic (one emoji), desc (one short Traditional Chinese sentence).\n" +
+      'Reply with only JSON: {"t":"...","en":"...","ic":"📄","desc":"...","b":[{"k":"Opening","kz":"開場","q":["...","..."],"v":[["...","..."],["...","..."],["...","..."]]}]}';
+    try {
+      const r = await AI.json(prompt), t = spkParseTpl(r, "我的材料");
+      if (!t) throw { code: "empty" };
+      t.mine = 1; const s = spkS(); s.custom = s.custom.concat(t).slice(-20); pathS().mine = (pathS().mine || 0) + 1; Store.save();
+      closeModal(); toast("做好了！先從「聽範例」開始"); openSpeak(t.id);
+    } catch (e) { $("mnGo").disabled = false; $("mnGo").textContent = "做成我的情境口說"; toast(e && e.code === "empty" ? "AI 這次做得不完整，再按一次試試" : aiErrorText(e)); }
+  };
+}
+function spkParseTpl(r, fallback) {
+  const ok = s => typeof s === "string" && s.trim() && s.length < 160;
+  const b = (Array.isArray(r && r.b) ? r.b : []).filter(x => x && ok(x.k) && ok(x.kz) && Array.isArray(x.q) && ok(x.q[0]) && Array.isArray(x.v)).map(x => ({
+    k: x.k.slice(0, 30), kz: x.kz.slice(0, 12), q: [cleanSent(x.q[0]).slice(0, 140), String(x.q[1] || "").replace(/[<>]/g, "").slice(0, 70)],
+    v: x.v.filter(v => Array.isArray(v) && ok(v[0]) && /^[A-Za-z0-9 ,.'’!?;:"()&%$\/-]+$/.test(v[0])).slice(0, 4).map(v => [cleanSent(v[0]).slice(0, 130), String(v[1] || "").replace(/[<>]/g, "").slice(0, 70)]) })).filter(x => x.v.length);
+  if (b.length < 4) return null;
+  return { id: "c" + Date.now().toString(36), ic: ok(r.ic) ? r.ic.slice(0, 4) : "🗣️", t: ok(r.t) ? r.t.slice(0, 12) : fallback, en: ok(r.en) ? r.en.slice(0, 60) : "My Situation", desc: ok(r.desc) ? r.desc.slice(0, 60) : fallback, b: b.slice(0, 5) };
+}
+
+/* ---------- 更細的回饋 ---------- */
+function openDetail() {
+  openModal(`<div class="row"><h2 style="font-size:20px;flex:1;min-width:0">🔬 更細的回饋</h2><button class="icon-btn" id="dtClose" aria-label="關閉">${ICON.x}</button></div>
+    <p style="margin:0">打開後，這些地方的 AI 批改會多給進階的細節：</p>
+    <ul style="margin:0;padding-left:20px;line-height:1.8"><li>寫作批改：「文法沒錯，但母語者比較常說…」</li><li>口說教練：重音、句子重音、連音的細節</li><li>錄音挑戰（1 分鐘、即興、每週挑戰）：道地說法和重音提醒</li></ul>
+    <label class="row" style="gap:8px;align-items:center;font-size:16px"><input type="checkbox" id="dtOn" ${state.advFb ? "checked" : ""}> 開啟更細的回饋</label>
+    <p class="muted" style="margin:0;font-size:12px">只會多花一點點 AI 用量。關掉就回到原本的批改方式。</p>`);
+  $("dtClose").onclick = closeModal;
+  $("dtOn").onchange = e => { state.advFb = e.target.checked; if (state.advFb) pathS().chal.detail = 1; Store.save(); toast(state.advFb ? "已開啟更細的回饋" : "已關閉"); if (!$("path").hidden) renderPath(); };
+}
+
+/* ---------- 當老師：把自己做的內容分享出去 ---------- */
+function shareUrl(payload) { const j = JSON.stringify(payload); const b = btoa(unescape(encodeURIComponent(j))).replace(/\+/g, "-").split("/").join("_").replace(/=+$/, ""); return GH_URL + "?openExternalBrowser=1#eqshare=" + b; }
+async function shareSend(title, url) {
+  const text = `我做了一份英文練習「${title}」分享給你，點連結就能加到你的 English Quest 👇`;
+  pathS().teach = (pathS().teach || 0) + 1; Store.save();
+  try { if (navigator.share && isMobile()) { await navigator.share({ title: "English Quest", text, url }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+  const all = text + "\n" + url;
+  (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(all) : Promise.reject()).then(() => toast("分享連結複製好了，貼到 LINE 就可以")).catch(() => prompt("請複製下面的文字", all));
+}
+function openTeach() {
+  show("path");
+  const tpls = spkS().custom || [], lists = typeof babyLists === "function" ? babyLists() : [];
+  $("path").innerHTML = `${pathHead("🧑‍🏫 當老師")}
+    <section class="card flat"><p style="margin:0">把你做好的內容做成一個連結，傳給家人、朋友或孩子。他們點開就能加到自己的 App 裡練習。教別人，是自己進步最快的方式。</p>
+      <p class="muted" style="margin:0;font-size:13px">你已經分享過 ${pathS().teach || 0} 次。</p></section>
+    <section class="card flat"><span class="eyebrow">我的情境口說（${tpls.length}）</span>
+      ${tpls.length ? tpls.map((t, i) => `<div class="row" style="gap:8px;align-items:center"><span style="flex:1;min-width:0">${esc(t.ic)} <b>${esc(t.t)}</b><br><span class="muted" style="font-size:12px">${esc(t.desc || "")}</span></span><button class="btn small" data-tsp="${i}">📤 分享</button></div>`).join("") : `<p class="muted" style="margin:0;font-size:13px">還沒有自己做的情境。可以用「🤖 自訂情境」或「📄 用自己的材料練」做一個。</p>`}
+      <button class="btn small" id="thNew" style="align-self:flex-start">📄 用自己的材料做一個</button></section>
+    <section class="card flat"><span class="eyebrow">寶寶聽力的自選清單（${lists.length}）</span>
+      ${lists.length ? lists.map((l, i) => `<div class="row" style="gap:8px;align-items:center"><span style="flex:1;min-width:0">📋 <b>${esc(l.name)}</b>　<span class="muted" style="font-size:12px">${l.words.length} 個字</span></span><button class="btn small" data-tbl="${i}">📤 分享</button></div>`).join("") : `<p class="muted" style="margin:0;font-size:13px">還沒有自選清單，可以在寶寶聽力按「＋ 自選清單」做一份。</p>`}</section>`;
+  pathBack();
+  $("thNew").onclick = openMine;
+  $("path").querySelectorAll("[data-tsp]").forEach(b => b.onclick = () => { const t = tpls[Number(b.dataset.tsp)]; shareSend(t.t, shareUrl({ v: 1, k: "spk", d: { ic: t.ic, t: t.t, en: t.en, desc: t.desc, b: t.b } })); });
+  $("path").querySelectorAll("[data-tbl]").forEach(b => b.onclick = () => {
+    const l = lists[Number(b.dataset.tbl)], m = babyWordMap(), extra = l.words.filter(w => !BABY.some(t => t[2].some(x => x[0] === w))).map(w => m[w]).filter(Boolean).slice(0, 30);
+    shareSend(l.name, shareUrl({ v: 1, k: "blist", d: { name: l.name, words: l.words.slice(0, 60), loops: l.loops || 0, custom: extra } }));
+  });
+}
+/* 別人分享給我的：打開連結時接收 */
+const SHARE_IN = { d: null };
+(function shareRead() {
+  try {
+    const m = /#eqshare=([A-Za-z0-9_-]+)/.exec(location.hash || ""); if (!m) return;
+    let b = m[1].replace(/-/g, "+").replace(/_/g, "/"); while (b.length % 4) b += "=";
+    const d = JSON.parse(decodeURIComponent(escape(atob(b))));
+    if (d && d.v === 1 && (d.k === "spk" || d.k === "blist") && d.d) SHARE_IN.d = d;
+    history.replaceState(history.state, "", location.pathname + location.search);
+  } catch (e) { }
+})();
+function shareCheck() {
+  const x = SHARE_IN.d; if (!x || !$("gModal").hidden) return; SHARE_IN.d = null;
+  const ok = s => typeof s === "string" && s.trim();
+  if (x.k === "spk") {
+    const t = spkParseTpl(Object.assign({}, x.d), "分享的情境"); if (!t) return toast("這個分享連結的內容不完整");
+    openModal(`<div class="row"><h2 style="font-size:20px;flex:1;min-width:0">🎁 有人分享情境給你</h2><button class="icon-btn" id="shClose" aria-label="關閉">${ICON.x}</button></div>
+      <p style="margin:0;font-size:18px">${esc(t.ic)} <b>${esc(t.t)}</b></p><p class="muted" style="margin:0">${esc(t.desc)}</p>
+      <div style="display:flex;flex-direction:column;gap:4px">${t.b.map(b => `<span style="font-size:14px">・${esc(b.kz)}：${esc(b.v[0][0])}</span>`).join("")}</div>
+      <button class="btn primary block" id="shAdd">加到我的情境口說</button>`);
+    $("shClose").onclick = closeModal;
+    $("shAdd").onclick = () => { t.shared = 1; const s = spkS(); s.custom = s.custom.concat(t).slice(-20); Store.save(); closeModal(); toast("加好了！"); openSpeak(t.id); };
+  } else {
+    const d = x.d, words = (Array.isArray(d.words) ? d.words : []).filter(w => typeof w === "string" && /^[a-z][a-z -]{0,19}$/.test(w)).slice(0, 60);
+    if (!ok(d.name) || !words.length) return toast("這個分享連結的內容不完整");
+    openModal(`<div class="row"><h2 style="font-size:20px;flex:1;min-width:0">🎁 有人分享寶寶單字清單給你</h2><button class="icon-btn" id="shClose" aria-label="關閉">${ICON.x}</button></div>
+      <p style="margin:0;font-size:18px">📋 <b>${esc(String(d.name).slice(0, 20))}</b>　<span class="muted">${words.length} 個字</span></p><p class="muted" style="margin:0">${esc(words.join(", "))}</p>
+      <button class="btn primary block" id="shAdd">加到寶寶聽力的自選清單</button>`);
+    $("shClose").onclick = closeModal;
+    $("shAdd").onclick = () => {
+      const cus = babyCustom(), have = new Set(Object.keys(babyWordMap()));
+      (Array.isArray(d.custom) ? d.custom : []).forEach(c => { if (Array.isArray(c) && typeof c[0] === "string" && /^[a-z][a-z -]{0,19}$/.test(c[0]) && !have.has(c[0])) cus.push(c.slice(0, 7).map(v => typeof v === "string" ? v.replace(/[<>]/g, "").slice(0, 200) : v)); });
+      state.babyCustom = cus.slice(-200); babyWordMap.m = null; if (typeof babyCustomApply === "function") babyCustomApply();
+      const m = babyWordMap(), ws = words.filter(w => m[w]);
+      const L = babyLists(); L.push({ id: "l" + Date.now().toString(36), name: String(d.name).replace(/[<>]/g, "").slice(0, 20), words: ws, loops: Number(d.loops) || 0 });
+      Store.save(); closeModal(); toast(`加好了！共 ${ws.length} 個字`);
+    };
+  }
+}
+
 /* ===== 加到手機桌面（像 App 一樣有圖示，點了直接進來） ===== */
 let INSTALL_EVT = null;
 window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); INSTALL_EVT = e; try { renderWishBar(); } catch (x) { } });
@@ -7092,6 +7540,7 @@ async function boot() {
   $("assessSkip").onclick = () => { state.assessSkipped = true; Store.save(); renderHome(); };
   renderHome();
   state = await Store.load(); Store.ready = true;
+  setTimeout(() => { try { shareCheck(); } catch (e) { } }, 1800);
   renderHome();
   mergeMyWords();
   $("dueBtn").onclick = () => startPractice("due");
