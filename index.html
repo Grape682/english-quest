@@ -529,6 +529,7 @@ a.btn{text-decoration:none}
     <button class="tchip" id="tbSup" hidden><span aria-hidden="true">💛</span>贊助與感謝</button>
     <button class="tchip" id="tbPic" hidden><span aria-hidden="true">📬</span>朋友的照片<b id="tbPicN"></b></button>
     <button class="tchip" id="tbFam" hidden><span aria-hidden="true">👪</span>家人申請<b id="tbFamN"></b></button>
+    <button class="tchip" id="tbAif" hidden><span aria-hidden="true">🤝</span>AI 好友申請<b id="tbAifN"></b></button>
     <button class="tchip" id="tbInstall" hidden><span aria-hidden="true">📲</span>加到手機桌面</button>
     <button class="tchip" id="tbShare"><span aria-hidden="true">📤</span>分享給朋友</button>
   </nav>
@@ -549,7 +550,7 @@ a.btn{text-decoration:none}
 
   <section class="card flat" id="guestNote" hidden>
     <span class="eyebrow">分享版</span>
-    <p style="margin:0">你可以用這裡已經準備好的題庫練習：課程單字、AI 例句、閱讀短文、對話聽力都能用。產生新內容、AI 批改和錄音評分只有分享者可以使用。你的進度會自己存一份，不會跟別人混在一起。</p>
+    <p style="margin:0">你可以用這裡已經準備好的題庫練習：課程單字、AI 例句、閱讀短文、對話聽力都能用。想用 AI 批改、角色對話和錄音分析，可以到「我的成就」→「🔑 開通 AI 功能」：貼上你自己的免費 Gemini 金鑰，或申請「AI 好友」。你的進度會自己存一份，不會跟別人混在一起。</p>
   </section>
 
   <section class="card daily" aria-labelledby="dailyTitle">
@@ -707,7 +708,7 @@ function setOwnerToken(t) { try { if (t) localStorage.setItem("eq-owner-token", 
 /* 呼叫後台：同時最多 6 個（Google 對同時執行的次數有限制，太多會被擋、看起來像 CORS 錯誤）；
    讀資料的請求遇到 Google 暫時出錯會自動再試 2 次，寫入的不重試，避免重複存 */
 const GSQ = { n: 0, q: [] };
-const GS_RETRY = new Set(["aiStatus", "capList", "voiceListGet", "loadLibrary", "loadProgress", "ttsGet", "ttsStatus", "babyPicGet", "famStatus", "famAdmin", "famVoiceList", "famVoiceGet", "growGet", "growSet", "newsHeadlines", "newsGet", "findVoice", "findWords", "listWishes", "listSaves", "unsplashFind", "saveProgress"]);
+const GS_RETRY = new Set(["aiStatus", "aiFriendStatus", "aiFriendAdmin", "capList", "voiceListGet", "loadLibrary", "loadProgress", "ttsGet", "ttsStatus", "babyPicGet", "famStatus", "famAdmin", "famVoiceList", "famVoiceGet", "growGet", "growSet", "newsHeadlines", "newsGet", "findVoice", "findWords", "listWishes", "listSaves", "unsplashFind", "saveProgress"]);
 function gsSlot() { return new Promise(res => { if (GSQ.n < 6) { GSQ.n++; res(); } else GSQ.q.push(res); }); }
 function gsDone() { const nx = GSQ.q.shift(); if (nx) nx(); else GSQ.n = Math.max(0, GSQ.n - 1); }
 async function apiCall(fn, args) {
@@ -735,8 +736,8 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
-const EQ_BUILD = "9f4945";
-const EQ_WEB = "f7cd";
+const EQ_BUILD = "c601a3";
+const EQ_WEB = "bb16";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -1669,6 +1670,8 @@ const AI = {
   kind: null, localKey: false,
   model: "",
   async audio(prompt, payload) {
+    if (this.kind === "byok") return byokCall([{ text: String(prompt || "").slice(0, 6000) }, { inlineData: { mimeType: payload.mime, data: payload.b64 } }], 0.3);
+    if (this.kind === "friend") { try { const r = await gs("aiAudio", prompt, payload.b64, payload.mime, aiTok()); aifUsed(); return r; } catch (e) { const m = String((e && e.message) || e); aifErr(m); throw { code: aiCode(m), message: m }; } }
     if (this.kind === "server") {
       let r; try { r = await apiFetch("api/ai-audio", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt, b64: payload.b64, mime: payload.mime }) }); } catch (e) { throw { code: "offline" }; }
       const j = await r.json().catch(() => ({}));
@@ -1681,6 +1684,8 @@ const AI = {
   },
   async json(prompt) {
     if (this.kind === "claude") return SAMPLE.json(prompt, { modelTier: "quick" });
+    if (this.kind === "byok") return byokCall([{ text: String(prompt || "").slice(0, 12000) }], 0.9);
+    if (this.kind === "friend") { try { const r = await gs("aiJson", prompt, aiTok()); aifUsed(); return r; } catch (e) { const m = String((e && e.message) || e); aifErr(m); throw { code: aiCode(m), message: m }; } }
     if (this.kind === "gas") {
       try { return await gs("aiJson", prompt); }
       catch (e) { const m = String((e && e.message) || e); throw { code: aiCode(m), message: m }; }
@@ -1745,7 +1750,7 @@ async function generateAI() {
   renderHome();
 }
 function aiCode(m) {
-  const map = [["NOT_OWNER", "not_owner"], ["NO_KEY", "no_key"], ["BAD_KEY", "bad_key"], ["RATE_LIMITED", "rate_limited"], ["MODEL_NOT_FOUND", "model"], ["AUDIO_UNSUPPORTED", "audio_model"], ["TOO_BIG", "too_big"], ["BAD_AUDIO", "audio_format"], ["OVERLOADED", "overloaded"], ["BAD_JSON", "invalid_json"], ["EMPTY", "invalid_json"], ["BLOCKED", "blocked"], ["TIMEOUT", "timeout"], ["OFFLINE", "offline"], ["BAD_RESPONSE", "offline"]];
+  const map = [["AI_DAILY_LIMIT", "friend_limit"], ["NOT_OWNER", "not_owner"], ["NO_KEY", "no_key"], ["BAD_KEY", "bad_key"], ["RATE_LIMITED", "rate_limited"], ["MODEL_NOT_FOUND", "model"], ["AUDIO_UNSUPPORTED", "audio_model"], ["TOO_BIG", "too_big"], ["BAD_AUDIO", "audio_format"], ["OVERLOADED", "overloaded"], ["BAD_JSON", "invalid_json"], ["EMPTY", "invalid_json"], ["BLOCKED", "blocked"], ["TIMEOUT", "timeout"], ["OFFLINE", "offline"], ["BAD_RESPONSE", "offline"]];
   const hit = map.find(([k]) => m.includes(k));
   return hit ? hit[1] : "error";
 }
@@ -1753,8 +1758,9 @@ function aiErrorText(e) {
   const c = e && e.code;
   return ({
     not_granted: "這次沒有允許使用 Claude。可以按「權限設定」改成允許",
-    rate_limited: "AI 正忙或超過免費次數，過幾分鐘再試一次",
-    bad_key: "API 金鑰無效，請到「我的成就」頁重新設定",
+    rate_limited: AI.kind === "byok" ? "你的 Gemini 金鑰今天的免費次數用完了，或太快了，過一陣子再試" : "AI 正忙或超過免費次數，過幾分鐘再試一次",
+    friend_limit: "今天的 AI 次數用完了，明天會重新計算。也可以改用自己的金鑰，次數就不受限制",
+    bad_key: AI.kind === "byok" ? "你的 Gemini 金鑰無效，請到「我的成就」→「開通 AI 功能」重新貼一次" : "API 金鑰無效，請到「我的成就」頁重新設定",
     no_key: "還沒有設定 AI 金鑰，請到「我的成就」頁設定",
     no_credit: "API 帳戶的額度不足",
     offline: "連不上網路或後台，請檢查網路再試一次",
@@ -1781,7 +1787,7 @@ async function sendFeedback(text) {
 }
 const KEY_MODE = () => (Store.backend === "computer" || Store.backend === "sheet") && !GUEST;
 function needAI() {
-  if (GUEST) { toast("這是分享版：AI 功能只有分享者可以使用，可以先用題庫裡的內容練習"); return; }
+  if (!KEY_MODE() && AI.kind !== "claude") { toast("這個功能需要 AI：可以用自己的免費金鑰，或申請「AI 好友」"); renderStats("myAi"); return; }
   toast("這個功能需要 AI，請先設定金鑰");
   if (KEY_MODE()) renderStats("aiKey");
 }
@@ -1975,7 +1981,7 @@ async function reviewWriting(task, text) {
 }
 
 /* ================= recording & pronunciation (Gemini listens) ================= */
-const AUDIO_AI = () => AI.kind === "gas" || AI.kind === "server";
+const AUDIO_AI = () => AI.kind === "gas" || AI.kind === "server" || AI.kind === "byok" || AI.kind === "friend";
 let MIC_BLOCKED = false, DA = null;
 function pickRecMime() {
   if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return "";
@@ -4552,28 +4558,88 @@ function mbBass(ctx, out, t, midi, dur) {
   g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
   o.connect(g); g.connect(out); o.start(t); o.stop(t + len + 0.05);
 }
+/* ---------- 伴奏：依旋律每兩拍挑一個和弦，再照風格彈 ---------- */
+const SG_STYLES = [["off", "不要"], ["box", "🎵 音樂盒"], ["pop", "🥁 輕快"], ["lull", "🌙 搖籃曲"]];
+const SG_MELS = [["on", "正常"], ["soft", "小聲"], ["off", "關掉（卡拉OK）"]];
+const SG_LANGS = [["both", "中英"], ["en", "只有英文"], ["zh", "只有中文"]];
+const sgStyle = () => SG_STYLES.some(x => x[0] === state.sgStyle) ? state.sgStyle : (state.sgBass === false ? "off" : "pop");
+const sgMel = () => SG_MELS.some(x => x[0] === state.sgMel) ? state.sgMel : "on";
+const sgLang = () => SG_LANGS.some(x => x[0] === state.sgLang) ? state.sgLang : (state.sgZh === false && state.sgZhV === false ? "en" : "both");
+/* 和弦：根音、組成音、偏好（C 大調常用的 C、F、G、Am、Dm） */
+const SG_CHORDS = [[0, [0, 4, 7], 1.25], [5, [5, 9, 0], 1.1], [7, [7, 11, 2], 1.15], [9, [9, 0, 4], 0.85], [2, [2, 5, 9], 0.75]];
+function sgChord(ns, prev) {
+  if (!ns.length) return prev || SG_CHORDS[0];
+  let best = SG_CHORDS[0], bs = -1e9;
+  SG_CHORDS.forEach(c => { let sc = 0; ns.forEach((n, i) => { const pc = ((n[1] % 12) + 12) % 12; sc += (c[1].includes(pc) ? 1 : -0.6) * n[2] * (i === 0 ? 1.6 : 1); }); sc = sc * c[2] + (prev === c ? 0.15 : 0); if (sc > bs) { bs = sc; best = c; } });
+  return best;
+}
+const mfreq = m => 440 * Math.pow(2, (m - 69) / 12);
+function mbOsc(ctx, out, t, f, type, vol, att, len) {
+  const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + att); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+  o.connect(g); g.connect(out); o.start(t); o.stop(t + len + 0.05);
+}
+function mbNoiseBuf(ctx) { if (MB.nb && MB.nb.sampleRate === ctx.sampleRate) return MB.nb; const b = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.5), ctx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return (MB.nb = b); }
+function mbHit(ctx, out, t, type, freq, vol, len) {
+  const src = ctx.createBufferSource(); src.buffer = mbNoiseBuf(ctx); const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq;
+  const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+  src.connect(f); f.connect(g); g.connect(out); src.start(t); src.stop(t + len + 0.02);
+}
+function mbKick(ctx, out, t) {
+  const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(48, t + 0.12);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.42, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+  o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.22);
+}
+const chordMidi = (c, base) => c[1].map(x => { let m = base + x; if (m > base + 7) m -= 12; return m; }).sort((a, b) => a - b);
+function mbBacking(ctx, out, t0, beat, notes, total, style) {
+  const segs = Math.max(1, Math.ceil(total / 2 - 1e-6)); let prev = null;
+  for (let sI = 0; sI < segs; sI++) {
+    const a = sI * 2, e = Math.min(total, a + 2), ns = notes.filter(n => n[0] >= a - 1e-6 && n[0] < e - 1e-6);
+    const c = sI === segs - 1 ? SG_CHORDS[0] : sgChord(ns, prev); prev = c;
+    const ts = t0 + a * beat, len = (e - a) * beat, tones = chordMidi(c, 60), root = 48 + c[0];
+    if (style === "box") { mbOsc(ctx, out, ts, mfreq(root), "sine", 0.16, 0.02, Math.min(2.5, Math.max(0.6, len))); continue; }
+    if (style === "pop") {
+      mbOsc(ctx, out, ts, mfreq(root), "triangle", 0.2, 0.01, beat * 0.9);
+      if (e - a > 1) mbOsc(ctx, out, ts + beat, mfreq(root + 7 - (root + 7 > 55 ? 12 : 0)), "triangle", 0.17, 0.01, beat * 0.9);
+      [0.5, 1.5].filter(x => x < e - a).forEach(x => tones.forEach(m => mbOsc(ctx, out, ts + x * beat, mfreq(m), "triangle", 0.05, 0.005, 0.32)));
+      mbKick(ctx, out, ts); if (e - a > 1) mbHit(ctx, out, ts + beat, "bandpass", 1800, 0.22, 0.13);
+      for (let h = 0; h < (e - a) * 2; h++) mbHit(ctx, out, ts + h * beat / 2, "highpass", 7000, h % 2 ? 0.035 : 0.06, 0.05);
+      continue;
+    }
+    if (style === "lull") {
+      tones.forEach(m => { mbOsc(ctx, out, ts, mfreq(m), "sine", 0.03, 0.25, len + 0.25); mbOsc(ctx, out, ts, mfreq(m) * 1.003, "sine", 0.02, 0.3, len + 0.25); });
+      mbOsc(ctx, out, ts, mfreq(root), "sine", 0.13, 0.05, len + 0.3);
+      const arp = tones.concat([tones[0] + 12]);
+      for (let k = 0; k < (e - a) * 2; k++) mbOsc(ctx, out, ts + k * beat / 2, mfreq(arp[k % arp.length] + 12), "sine", 0.045, 0.01, 0.5);
+    }
+  }
+}
 function mbPlay(song, onLine, opts) {
   opts = opts || {};
   mbStop(); stopHuman(); if (TTS) speechSynthesis.cancel();
   const AC = window.AudioContext || window.webkitAudioContext; if (!AC) { toast("這個瀏覽器不能播放音樂盒"); return Promise.resolve(false); }
   const ctx = MB.ctx = MB.ctx || new AC(); try { ctx.resume(); } catch (e) { }
   const tok = MB.tok, out = MB.out = ctx.createGain(); out.gain.value = 0.9 * (opts.vol || 1); out.connect(ctx.destination);
+  const melV = opts.melVol != null ? opts.melVol : ({ on: 1, soft: 0.35, off: 0 })[sgMel()], mel = ctx.createGain(); mel.gain.value = melV || 0.0001; mel.connect(out);
+  const style = opts.bass ? (opts.style || sgStyle()) : "off";
   const beat = (song.beat || 0.5) * sgTempo(), at = x => Math.max(0, (x - ctx.currentTime) * 1000);
   let t = ctx.currentTime + 0.25, pos = 0;
   const later = (x, fn) => MB.timers.push(setTimeout(() => { if (tok === MB.tok) fn(); }, at(x)));
   if (opts.countIn) { for (let k = 3; k >= 1; k--) { mbTick(ctx, out, t, k === 3); const n = k; later(t, () => opts.onCount && opts.onCount(n)); t += beat; } later(t, () => opts.onCount && opts.onCount(0)); }
+  const t0 = t, notes = [];
   (opts.lines || song.lines.map((_, i) => i)).forEach(i => {
     const L = song.lines[i]; let ni = 0;
     later(t, () => onLine && onLine(i));
     parseNotes(L[2]).forEach(([m, d]) => {
       if (m) {
-        mbTone(ctx, out, t, m + 12, d * beat);
-        if (opts.bass && Math.abs(pos - Math.round(pos / 2) * 2) < 1e-6) mbBass(ctx, out, t, m, 2 * beat);
+        if (melV > 0) mbTone(ctx, mel, t, m + 12, d * beat);
+        notes.push([pos, m, d]);
         const k = ni++; if (opts.onNote) later(t, () => opts.onNote(i, k));
       }
       t += d * beat; pos += d;
     });
   });
+  if (style !== "off") mbBacking(ctx, out, t0, beat, notes, pos, style);
   return new Promise(res => MB.timers.push(setTimeout(() => res(tok === MB.tok), at(t) + 500)));
 }
 /* 歌詞拆成音節（/ 分音節，+ 代表這個音節多唱一個音），每個音符亮一個音節 */
@@ -4600,8 +4666,9 @@ function sgStage(song, i, extra) {
   const st = $("sgStage"); if (!st) return;
   if (i < 0) { st.innerHTML = `<div class="sgbig" style="font-size:22px">${extra || "按「🎤 一起唱」開始"}</div>`; return; }
   const L = song.lines[i], nx = song.lines[i + 1];
-  st.innerHTML = `${extra ? `<div class="sgyou">${extra}</div>` : ""}<div class="sgbig">${sgSyls(L).map((x, k) => `<span class="sy" data-sy="${k}">${esc(x.t)}</span>${x.sp ? " " : ""}`).join("")}</div>
-    ${state.sgZh !== false ? `<div class="sgzh">${esc(L[1])}</div>` : ""}${nx ? `<div class="sgnext">下一句：${esc(nx[0])}</div>` : ""}`;
+  const lg = sgLang();
+  st.innerHTML = `${extra ? `<div class="sgyou">${extra}</div>` : ""}${lg === "zh" ? `<div class="sgbig">${esc(L[1])}</div>` : `<div class="sgbig">${sgSyls(L).map((x, k) => `<span class="sy" data-sy="${k}">${esc(x.t)}</span>${x.sp ? " " : ""}`).join("")}</div>`}
+    ${lg === "both" ? `<div class="sgzh">${esc(L[1])}</div>` : ""}${nx ? `<div class="sgnext">下一句：${esc(lg === "zh" ? nx[1] : nx[0])}</div>` : ""}`;
 }
 function sgNote(song, i, k, echo) {
   const st = $("sgStage"); if (!st) return;
@@ -4610,14 +4677,14 @@ function sgNote(song, i, k, echo) {
 }
 function sgCount(n) { const st = $("sgStage"); if (st) st.innerHTML = `<div class="sgcount">${n ? n : "唱！"}</div>`; }
 async function sgSing(song) {
-  bbStopAll(); sgSetMode("sing"); const tok = SG.tok, reps = [1, 2, 3].includes(state.sgRep) ? state.sgRep : 1, useZh = state.sgZhV !== false;
+  bbStopAll(); sgSetMode("sing"); const tok = SG.tok, reps = [1, 2, 3].includes(state.sgRep) ? state.sgRep : 1, useZh = sgLang() !== "en";
   if (useZh && song.intro) { sgStage(song, -1, "🎧 " + esc(song.intro)); await sayZhLine(song.intro); if (tok !== SG.tok) return; await waitMs(300); }
   for (let r = 0; r < reps; r++) {
     const ok = await mbPlay(song, i => { sgLine(i); sgStage(song, i, reps > 1 ? `第 ${r + 1} / ${reps} 遍` : ""); }, { countIn: r === 0, onCount: sgCount, onNote: (i, k) => sgNote(song, i, k), bass: state.sgBass !== false });
     if (!ok || tok !== SG.tok) return;
   }
   sgLine(-1); sgStage(song, -1, "唱完了！👏"); sgSetMode("");
-  await sayLine("Yay! Great singing!", false); if (tok !== SG.tok) return; if (useZh) sayZhLine("唱得好棒！");
+  if (sgLang() !== "zh") { await sayLine("Yay! Great singing!", false); if (tok !== SG.tok) return; } if (useZh) sayZhLine("唱得好棒！");
 }
 async function sgEcho(song) {
   bbStopAll(); sgSetMode("echo"); const tok = SG.tok;
@@ -4626,16 +4693,18 @@ async function sgEcho(song) {
     sgLine(i);
     let ok = await mbPlay(song, () => sgStage(song, i, "🎵 先聽"), { lines: [i], countIn: i === 0, onCount: sgCount, onNote: (a, k) => sgNote(song, a, k), bass: state.sgBass !== false });
     if (!ok || tok !== SG.tok) return;
-    ok = await mbPlay(song, () => sgStage(song, i, "🎤 換你唱！"), { lines: [i], vol: 0.35, onNote: (a, k) => sgNote(song, a, k, true) });
+    ok = await mbPlay(song, () => sgStage(song, i, "🎤 換你唱！"), { lines: [i], melVol: 0.2, bass: sgStyle() !== "off", onNote: (a, k) => sgNote(song, a, k, true) });
     if (!ok || tok !== SG.tok) return;
   }
   sgLine(-1); sgStage(song, -1, "你一句、我一句，唱完了！👏"); sgSetMode("");
 }
 async function sgRead(song) {
-  bbStopAll(); sgSetMode("read"); const tok = SG.tok, useZh = state.sgZhV !== false;
+  bbStopAll(); sgSetMode("read"); const tok = SG.tok, lg = sgLang();
   for (let i = 0; i < song.lines.length; i++) {
     if (tok !== SG.tok) return; sgLine(i); sgStage(song, i, "🗣 唸歌詞");
-    await sayBoth(song.lines[i][0], song.lines[i][1], useZh, !!state.babySlow, () => tok === SG.tok); if (tok !== SG.tok) return; await waitMs(500);
+    if (lg === "zh") await sayZhLine(song.lines[i][1], !!state.babySlow);
+    else await sayBoth(song.lines[i][0], song.lines[i][1], lg === "both", !!state.babySlow, () => tok === SG.tok);
+    if (tok !== SG.tok) return; await waitMs(500);
   }
   sgLine(-1); sgStage(song, -1); sgSetMode("");
 }
@@ -4656,9 +4725,11 @@ function renderSongs() {
     <div class="sgstage" id="sgStage"></div>
     <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><button class="btn primary" id="sgSing">🎤 一起唱</button><button class="btn" id="sgEcho">🔁 跟唱</button><button class="btn" id="sgRead">🗣 唸歌詞</button></div>
     <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><span class="muted" style="font-size:13px">速度</span><div class="seg">${[["slow", "慢"], ["mid", "中"], ["fast", "快"]].map(([k, n]) => `<button data-sgt="${k}" aria-pressed="${tempo === k}">${n}</button>`).join("")}</div><span class="muted" style="font-size:13px">唱</span><div class="seg">${[1, 2, 3].map(n => `<button data-sgr="${n}" aria-pressed="${reps === n}">${n} 遍</button>`).join("")}</div></div>
-    <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><button class="btn small${state.sgBass !== false ? " primary" : ""}" id="sgBass" aria-pressed="${state.sgBass !== false}">🎹 伴奏</button><button class="btn small${state.sgZhV !== false ? " primary" : ""}" id="sgZhV" aria-pressed="${state.sgZhV !== false}">中文語音</button><button class="btn small${state.sgZh !== false ? " primary" : ""}" id="sgZh" aria-pressed="${state.sgZh !== false}">中文字幕</button></div>
-    <p class="muted" style="margin:0;font-size:12px;text-align:center">🎤 一起唱：數 3、2、1 後開始，字會跟著音符一個一個亮。🔁 跟唱：音樂盒先唱一句，再輕輕彈一次換你唱。${state.sgZhV !== false ? "中文語音會先說這首歌在唱什麼。" : ""}</p>
-    <div class="sglines">${song.lines.map((l, i) => `<div class="sgl" data-sgl="${i}"><div class="en">${esc(l[0])}</div>${state.sgZh !== false ? `<div class="zh">${esc(l[1])}</div>` : ""}</div>`).join("")}</div>
+    <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><span class="muted" style="font-size:13px">語言</span><div class="seg">${SG_LANGS.map(([k, n]) => `<button data-sgla="${k}" aria-pressed="${sgLang() === k}">${n}</button>`).join("")}</div></div>
+    <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><span class="muted" style="font-size:13px">伴奏</span><div class="seg" style="flex-wrap:wrap">${SG_STYLES.map(([k, n]) => `<button data-sgst="${k}" aria-pressed="${sgStyle() === k}">${n}</button>`).join("")}</div><button class="btn small" id="sgTry" title="先聽 4 小節伴奏">▶ 試聽</button></div>
+    <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><span class="muted" style="font-size:13px">旋律</span><div class="seg">${SG_MELS.map(([k, n]) => `<button data-sgme="${k}" aria-pressed="${sgMel() === k}">${n}</button>`).join("")}</div></div>
+    <p class="muted" style="margin:0;font-size:12px;text-align:center">🎤 一起唱：數 3、2、1 後開始，字會跟著音符一個一個亮。🔁 跟唱：音樂盒先唱一句，換你唱的時候只留伴奏。${sgLang() !== "en" ? "會先用中文說這首歌在唱什麼。" : ""}想自己唱、只要伴奏，就把「旋律」選「關掉（卡拉OK）」。</p>
+    <div class="sglines">${song.lines.map((l, i) => `<div class="sgl" data-sgl="${i}">${sgLang() !== "zh" ? `<div class="en">${esc(l[0])}</div>` : ""}${sgLang() !== "en" ? `<div class="zh"${sgLang() === "zh" ? ' style="font-size:17px"' : ""}>${esc(l[1])}</div>` : ""}</div>`).join("")}</div>
     <div class="reply" style="display:flex;flex-direction:column;gap:8px;border-radius:14px;padding:12px 14px"><b>🎙 爸媽唱給寶寶聽</b>
       <span class="muted" style="font-size:13px">寶寶最喜歡聽家人的聲音。AI 聲音只能唸、不能真的唱，最好聽的歌聲還是爸媽的。錄一次，以後隨時可以播。</span>
       <div class="row" style="flex-wrap:wrap;gap:8px">${recs.map(r => `<button class="btn small" data-sgp="${r.who}">▶ ${esc(r.name)}唱的</button>`).join("")}<button class="btn small" id="sgRec">🎙 ${recs.length ? "再錄一段／管理錄音" : "錄爸媽唱"}</button></div></div>
@@ -4666,7 +4737,9 @@ function renderSongs() {
   sgStage(song, -1);
   $("sgBack").onclick = () => { bbStopAll(); SG.cur = ""; renderSongs(); };
   const toggle = (id, k) => { $(id).onclick = () => { state[k] = state[k] === false; Store.save(); bbStopAll(); renderSongs(); }; };
-  toggle("sgBass", "sgBass"); toggle("sgZhV", "sgZhV"); toggle("sgZh", "sgZh");
+  const seg = (attr, k) => $("bbView").querySelectorAll(`[data-${attr}]`).forEach(b => b.onclick = () => { state[k] = b.getAttribute("data-" + attr); Store.save(); bbStopAll(); renderSongs(); });
+  seg("sgla", "sgLang"); seg("sgst", "sgStyle"); seg("sgme", "sgMel");
+  $("sgTry").onclick = () => { bbStopAll(); sgSetMode(""); if (sgStyle() === "off") { toast("現在選的是「不要伴奏」"); return; } const n = Math.min(song.lines.length, 2); mbPlay(song, i => { sgLine(i); sgStage(song, i, "🎧 試聽伴奏"); }, { lines: [...Array(n).keys()], bass: true, melVol: 0 }).then(() => { sgLine(-1); sgStage(song, -1); }); };
   $("bbView").querySelectorAll("[data-sgt]").forEach(b => b.onclick = () => { state.sgTempo = b.dataset.sgt; Store.save(); bbStopAll(); renderSongs(); });
   $("bbView").querySelectorAll("[data-sgr]").forEach(b => b.onclick = () => { state.sgRep = Number(b.dataset.sgr); Store.save(); bbStopAll(); renderSongs(); });
   const modeBtn = (id, k, fn) => { $(id).onclick = () => { if (SG.mode === k) { bbStopAll(); sgSetMode(""); sgLine(-1); sgStage(song, -1); return; } fn(song); }; };
@@ -6636,6 +6709,7 @@ function renderWishBar() {
   bar.hidden = false; $("tbShare").onclick = shareApp;
   $("tbInstall").hidden = !ins; $("tbInstall").onclick = openInstall;
   $("tbFam").hidden = !fc; $("tbFamN").textContent = fc ? String(fc) : ""; $("tbFam").onclick = openFamAdmin;
+  const ac = typeof AIF !== "undefined" && KEY_MODE() ? AIF.pending : 0; $("tbAif").hidden = !ac; $("tbAifN").textContent = ac ? String(ac) : ""; $("tbAif").onclick = openAiFriendAdmin;
   $("tbPic").hidden = !pc; $("tbPicN").textContent = pc ? String(pc) : ""; $("tbPic").onclick = () => openPicReview(0);
   $("tbWish").hidden = !w; $("tbWishN").textContent = WISH_COUNT ? String(WISH_COUNT) : "";
   $("tbSup").hidden = !sp;
@@ -6775,7 +6849,8 @@ function renderStats(focus) {
       <form onsubmit="return false" style="display:contents"><label class="lbl" for="aiKeyIn">API 金鑰</label>
       <input class="field" id="aiKeyIn" type="password" autocomplete="off" placeholder="AIza…"></form>
       <div class="row"><button class="btn primary small" id="aiKeySave">儲存</button>${AI.localKey ? '<button class="btn small" id="aiKeyDel">移除金鑰</button>' : ""}</div>
-    </section>` : ""}
+      ${Store.backend === "sheet" ? `<div class="row" style="gap:8px;align-items:center"><button class="btn small" id="aifAdminBtn">🤝 AI 好友名單${AIF.pending ? `（${AIF.pending} 個申請）` : ""}</button><span class="muted" style="font-size:12px">讓朋友用你的額度，每人每天有上限</span></div>` : ""}
+    </section>` : myAiCard()}
     ${SHOW_SUPPORT() || CAN_FEEDBACK() ? `<section class="card flat" id="thanksCard"><h3>如果它剛好幫上了忙</h3>
       <p style="margin:0">謝謝你願意讓這份心意繼續走下去。若能幫得上忙，表示彼此有份機緣，送給您，一起變得更好。請多多支持，是小葡的動力！</p>
       <p style="margin:0">願意使用、分享給需要的人，或到許願池留一句建議，都是很珍貴的鼓勵。工具會持續整理與調整，遇到不順手的地方，也歡迎告訴我。</p>
@@ -6947,6 +7022,7 @@ function renderStats(focus) {
   $("stats").querySelectorAll("[data-acc]").forEach(b => b.onclick = () => { state.aiAccent = b.dataset.acc; Store.save(); HUMAN.mem = {}; renderStats(); toast(UK() ? "改成英式口音：單字用英式真人錄音，句子用英式 AI 語音（要另外產生）" : "改回美式口音"); });
   $("stats").querySelectorAll("[data-aiv]").forEach(b => b.onclick = () => { state.aiVoiceId = b.dataset.aiv; Store.save(); $("stats").querySelectorAll("[data-aiv]").forEach(x => x.setAttribute("aria-pressed", x === b)); });
   if ($("aivAll")) $("aivAll").onclick = () => aivGenAll(false);
+  bindMyAi(focus); if ($("aifAdminBtn")) $("aifAdminBtn").onclick = openAiFriendAdmin;
   if ($("aivRef")) $("aivRef").onclick = () => aivRefresh();
   $("stats").querySelectorAll("[data-aivturbo]").forEach(b => b.onclick = aivTurbo); turboUi();
   if ($("aivcClr")) $("aivcClr").onclick = async () => { if (!confirm("要清除這台手機存的 AI 語音嗎？雲端的不會刪，之後播放時會再下載。")) return; await aivCacheClear(); $("aivcSize").textContent = "0.0"; toast("清除好了"); };
@@ -7426,6 +7502,116 @@ function shareCheck() {
   }
 }
 
+/* ================= 訪客開通 AI：用自己的 Gemini 金鑰，或申請「AI 好友」用作者送的額度 ================= */
+const MYAI = { st: null };
+const myKey = () => { try { return localStorage.getItem("eq-mykey") || ""; } catch (e) { return ""; } };
+const aiTok = () => { try { return localStorage.getItem("eq-aitok") || ""; } catch (e) { return ""; } };
+function aifSt() { try { return JSON.parse(localStorage.getItem("eq-aist") || "null") || { st: "none" }; } catch (e) { return { st: "none" }; } }
+function aifSetSt(x) { try { localStorage.setItem("eq-aist", JSON.stringify(x || { st: "none" })); } catch (e) { } }
+/* 作者用自己的設定；其他人：有自己的金鑰就用金鑰，沒有就看 AI 好友有沒有開通 */
+function aiPersonalApply() {
+  if (KEY_MODE() || AI.kind === "claude" || AI.kind === "gas" || AI.kind === "server") return;
+  AI.kind = myKey() ? "byok" : (Store.backend === "sheet" && aiTok() && aifSt().st === "ok") ? "friend" : null;
+}
+function aifUsed() { const x = aifSt(); x.used = (Number(x.used) || 0) + 1; aifSetSt(x); }
+function aifErr(m) { if (/NOT_OWNER/.test(m) && AI.kind === "friend") { aifSetSt({ st: "none" }); aiPersonalApply(); } }
+async function aifRefresh() {
+  if (!aiTok() || Store.backend !== "sheet") return;
+  try { const r = await gs("aiFriendStatus", aiTok()); if (r && r.st) { const was = aifSt().st; aifSetSt(r); if (r.st === "ok" && was !== "ok") toast("分享者已經幫你開通 AI 功能了！🎉"); aiPersonalApply(); } } catch (e) { }
+}
+const aifLeft = () => { const x = aifSt(); return Math.max(0, (Number(x.limit) || 0) - (Number(x.used) || 0)); };
+function parseAiJson(t) { t = String(t || "").trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, ""); return JSON.parse(t); }
+async function byokCall(parts, temp) {
+  const key = myKey(); if (!key) throw { code: "no_key" };
+  const model = AI.model || "gemini-flash-lite-latest"; let last = null;
+  for (let k = 0; k < 3; k++) {
+    let r; try { r = await fetch("https:\/\/generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ role: "user", parts }], generationConfig: { responseMimeType: "application/json", temperature: temp } }) }); }
+    catch (e) { last = { code: "offline" }; await waitMs(1200); continue; }
+    const body = await r.text();
+    if (r.status === 429) throw { code: "rate_limited", message: body.slice(0, 200) };
+    if (r.status === 401 || r.status === 403 || (r.status === 400 && /api key/i.test(body))) throw { code: "bad_key" };
+    if (r.status === 404) throw { code: "model", message: model };
+    if (r.status >= 500) { last = { code: "overloaded" }; await waitMs(1500 * (k + 1)); continue; }
+    if (!r.ok) throw { code: "error", message: body.slice(0, 200) };
+    let j; try { j = JSON.parse(body); } catch (e) { last = { code: "invalid_json" }; continue; }
+    const cand = (j.candidates || [])[0] || {}, text = ((cand.content || {}).parts || []).map(p => p.text || "").join("");
+    if (!text) throw { code: (cand.finishReason === "SAFETY" || (j.promptFeedback || {}).blockReason) ? "blocked" : "invalid_json" };
+    try { return parseAiJson(text); } catch (e) { last = { code: "invalid_json" }; }
+  }
+  throw last || { code: "error" };
+}
+function myAiCard() {
+  if (KEY_MODE() || AI.kind === "claude") return "";
+  const st = aifSt(), k = myKey(), sheet = Store.backend === "sheet";
+  const now = AI.kind === "byok" ? "用你自己的 Gemini 金鑰" : AI.kind === "friend" ? `AI 好友額度（今天還剩 ${aifLeft()} / ${st.limit || 0} 次）` : "還沒開通（AI 例句、寫作批改、角色對話、錄音分析都需要 AI）";
+  return `<section class="card flat" id="myAiCard"><h3>🔑 開通 AI 功能</h3>
+    <p style="margin:0">目前：<b>${now}</b></p>
+    <details ${!k && st.st !== "ok" ? "open" : ""}><summary style="cursor:pointer"><b>方法一：用你自己的免費 Gemini 金鑰</b>（推薦）</summary>
+      <ol style="margin:8px 0;padding-left:20px;line-height:1.8;font-size:14px">
+        <li>用<b>你自己的</b> Google 帳號打開 <a href="https:\/\/aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a></li>
+        <li>第一次會請你同意使用條款，按同意</li>
+        <li>按「<b>Create API key</b>（建立 API 金鑰）」</li>
+        <li>按複製，金鑰是一串 <b>AIza</b> 開頭的英文數字</li>
+        <li>回到這裡貼上，按「儲存並測試」</li></ol>
+      <form onsubmit="return false" style="display:contents"><input class="field" id="myKeyIn" type="password" autocomplete="off" placeholder="AIza…" aria-label="你的 Gemini 金鑰"></form>
+      <div class="row" style="gap:8px;margin-top:6px"><button class="btn primary small" id="myKeySave">儲存並測試</button>${k ? `<button class="btn small" id="myKeyDel">移除我的金鑰</button>` : ""}</div>
+      <p class="muted" style="margin:6px 0 0;font-size:12px">金鑰只存在這台手機的瀏覽器裡，不會傳到分享者的試算表，分享者也看不到。用的是你自己帳號的免費額度（每天有 Google 的上限）。換手機要重新貼一次；不要把金鑰給別人。</p>
+    </details>
+    ${sheet ? `<details ${st.st === "pending" || st.st === "ok" ? "open" : ""}><summary style="cursor:pointer"><b>方法二：申請「AI 好友」，用分享者送的額度</b></summary>
+      ${st.st === "ok" ? `<p style="margin:8px 0 0">✅ 你是 AI 好友（${esc(st.name || "")}）：每天 ${st.limit || 0} 次，今天還剩 <b>${aifLeft()}</b> 次。${k ? "（目前優先用你自己的金鑰）" : ""}</p>`
+      : st.st === "pending" ? `<p style="margin:8px 0 0">已經送出申請，等分享者確認。<button class="btn small" id="aifCheck">重新檢查</button></p>`
+      : `<p class="muted" style="margin:8px 0;font-size:14px">分享者同意後，你每天可以用固定的次數（用分享者的額度，請珍惜使用）。</p>
+        <input class="field" id="aifName" maxlength="16" placeholder="你的名字或稱呼" value="${esc(st.name || "")}">
+        <input class="field" id="aifNote" maxlength="80" placeholder="想用來做什麼？例如：準備面試、練口說" style="margin-top:6px">
+        <button class="btn small" id="aifGo" style="margin-top:6px">送出申請</button>${st.st === "no" || st.st === "removed" ? `<p class="muted" style="margin:6px 0 0;font-size:12px">之前的申請沒有通過或已經結束，可以再申請一次。</p>` : ""}`}
+    </details>` : ""}
+  </section>`;
+}
+function bindMyAi(focus) {
+  if (!$("myAiCard")) return;
+  $("myKeySave").onclick = async () => {
+    const v = $("myKeyIn").value.trim(); if (!/^[A-Za-z0-9_-]{20,80}$/.test(v)) { toast("金鑰格式不對，應該是 AIza 開頭的一串英文數字"); return; }
+    const old = myKey(); try { localStorage.setItem("eq-mykey", v); } catch (e) { }
+    $("myKeySave").disabled = true; $("myKeySave").textContent = "測試中…";
+    try { const r = await byokCall([{ text: 'Reply with only JSON: {"ok":true}' }], 0); if (!r) throw { code: "error" }; aiPersonalApply(); toast("金鑰可以用！AI 功能都開通了 🎉"); renderStats(); }
+    catch (e) { try { if (old) localStorage.setItem("eq-mykey", old); else localStorage.removeItem("eq-mykey"); } catch (x) { } aiPersonalApply(); toast(e && e.code === "bad_key" ? "這把金鑰不能用，請確認有沒有複製完整" : aiErrorText(e)); $("myKeySave").disabled = false; $("myKeySave").textContent = "儲存並測試"; }
+  };
+  if ($("myKeyDel")) $("myKeyDel").onclick = () => { if (!confirm("要從這台手機移除你的金鑰嗎？")) return; try { localStorage.removeItem("eq-mykey"); } catch (e) { } AI.kind = null; aiPersonalApply(); toast("已移除"); renderStats(); };
+  if ($("aifGo")) $("aifGo").onclick = async () => {
+    const name = $("aifName").value.trim(); if (!name) { $("aifName").focus(); return; }
+    $("aifGo").disabled = true;
+    try { const r = await gs("aiFriendJoin", name, $("aifNote").value.trim(), aiTok()); try { localStorage.setItem("eq-aitok", r.tok); } catch (e) { } aifSetSt({ st: r.st, name }); toast("申請送出了！分享者同意後就能用"); renderStats("myAi"); }
+    catch (e) { $("aifGo").disabled = false; toast(/TOO_MANY/.test(String(e && e.message)) ? "現在申請的人太多了，晚點再試" : backendError(e)); }
+  };
+  if ($("aifCheck")) $("aifCheck").onclick = async () => { await aifRefresh(); renderStats("myAi"); };
+  if (focus === "myAi") setTimeout(() => { try { $("myAiCard").scrollIntoView({ block: "start" }); } catch (e) { } }, 50);
+}
+/* 作者：AI 好友名單 */
+const AIF = { admin: null, pending: 0 };
+async function aifPoll() { if (!KEY_MODE() || Store.backend !== "sheet") return; try { AIF.admin = await gs("aiFriendAdmin"); AIF.pending = AIF.admin.pending.length; renderWishBar(); } catch (e) { } }
+async function openAiFriendAdmin() {
+  openModal(`<div class="row"><h2 style="font-size:20px;flex:1;min-width:0">🤝 AI 好友名單</h2><button class="icon-btn" id="afClose" aria-label="關閉">${ICON.x}</button></div><p class="muted">讀取中…</p>`);
+  $("afClose").onclick = closeModal;
+  try { AIF.admin = await gs("aiFriendAdmin"); } catch (e) { toast(backendError(e)); closeModal(); return; }
+  drawAiFriendAdmin();
+}
+function drawAiFriendAdmin() {
+  const a = AIF.admin || { pending: [], members: [] }; AIF.pending = a.pending.length; try { renderWishBar(); } catch (e) { }
+  const lims = [5, 10, 20, 30, 50, 100];
+  openModal(`<div class="row"><h2 style="font-size:20px;flex:1;min-width:0">🤝 AI 好友名單</h2><button class="icon-btn" id="afClose" aria-label="關閉">${ICON.x}</button></div>
+    <p class="muted" style="margin:0;font-size:13px">朋友在「我的成就」→「開通 AI 功能」申請。你按同意後，他們用你的金鑰，每人每天有次數上限（每用一次 AI 算 1 次，半夜 12 點重新計算），用完就停，不會失控。也可以請他們改用自己的免費金鑰，完全不用你的額度。</p>
+    <section><span class="eyebrow">等你確認（${a.pending.length}）</span>
+      ${a.pending.length ? a.pending.map(([id, n, note, t]) => `<div class="row" style="gap:8px;align-items:center;margin-top:6px"><span style="flex:1;min-width:0"><b>${esc(n)}</b>${note ? `：${esc(note)}` : ""}<br><span class="muted" style="font-size:12px">${esc(t)} 申請</span></span><button class="btn small primary" data-af="${esc(id)}" data-fd="ok">同意</button><button class="btn small" data-af="${esc(id)}" data-fd="no">不要</button></div>`).join("") : `<p class="muted" style="margin:4px 0 0;font-size:13px">沒有新的申請</p>`}</section>
+    <section><span class="eyebrow">AI 好友（${a.members.length}）</span>
+      ${a.members.length ? a.members.map(([id, n, note, lim, used]) => `<div class="row" style="gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap"><span style="flex:1;min-width:120px"><b>${esc(n)}</b><br><span class="muted" style="font-size:12px">今天用了 ${used} / ${lim} 次${note ? `・${esc(note)}` : ""}</span></span><select class="field" data-afl="${esc(id)}" style="width:auto" aria-label="${esc(n)} 每天上限">${lims.concat(lims.includes(lim) ? [] : [lim]).map(x => `<option value="${x}"${x === lim ? " selected" : ""}>每天 ${x} 次</option>`).join("")}</select><button class="btn small" data-af="${esc(id)}" data-fd="remove">移除</button></div>`).join("") : `<p class="muted" style="margin:4px 0 0;font-size:13px">還沒有 AI 好友</p>`}</section>`);
+  $("afClose").onclick = closeModal;
+  $("gPanel").querySelectorAll("[data-af]").forEach(b => b.onclick = async () => {
+    if (b.dataset.fd === "remove" && !confirm("要移除這位 AI 好友嗎？移除後他就不能用你的 AI 額度。")) return;
+    b.disabled = true; try { AIF.admin = await gs("aiFriendDecide", b.dataset.af, b.dataset.fd, 20); drawAiFriendAdmin(); toast(b.dataset.fd === "ok" ? "開通了！每天 20 次，可以再調整" : b.dataset.fd === "no" ? "已拒絕" : "已移除"); } catch (e) { b.disabled = false; toast(backendError(e)); }
+  });
+  $("gPanel").querySelectorAll("[data-afl]").forEach(sl => sl.onchange = async () => { try { AIF.admin = await gs("aiFriendDecide", sl.dataset.afl, "limit", Number(sl.value)); toast("改好了"); } catch (e) { toast(backendError(e)); } });
+}
+
 /* ===== 加到手機桌面（像 App 一樣有圖示，點了直接進來） ===== */
 let INSTALL_EVT = null;
 window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); INSTALL_EVT = e; try { renderWishBar(); } catch (x) { } });
@@ -7540,6 +7726,7 @@ async function boot() {
   $("assessSkip").onclick = () => { state.assessSkipped = true; Store.save(); renderHome(); };
   renderHome();
   state = await Store.load(); Store.ready = true;
+  aiPersonalApply(); if (aiTok() && Store.backend === "sheet") setTimeout(aifRefresh, 2500);
   setTimeout(() => { try { shareCheck(); } catch (e) { } }, 1800);
   renderHome();
   mergeMyWords();
@@ -7551,7 +7738,7 @@ async function boot() {
   if (Store.backend === "sheet") {
     gs("loadLibrary").then(lib => { mergeLibrary(lib); if (!$("home").hidden) renderHome(); }).catch(() => { });
     await checkStatus(3);
-    setTimeout(inviteCheck, 600);
+    setTimeout(inviteCheck, 600); setTimeout(aifPoll, 3000);
     setTimeout(() => { if (AIV_CAN_MAKE()) aivRefresh(); }, 4000);
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") { clearTimeout(Store.timer); Store.flush(); } });
     renderHome();
@@ -7589,6 +7776,7 @@ function applyStatus(j) {
   SPONSOR = typeof j.sponsor === "string" && /^https:\/\/[^\s"'<>]+$/.test(j.sponsor) ? j.sponsor : "";
   AI.localKey = !!j.available; AI.model = j.model || "";
   AI.kind = j.available ? (Store.backend === "sheet" ? "gas" : "server") : null;
+  aiPersonalApply();
 }
 function whenClaude(cb, tries = 0) {
   if (window.claude && typeof window.claude.use === "function") return cb();
