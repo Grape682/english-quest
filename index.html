@@ -737,7 +737,7 @@ let GUEST = false;
 let SPONSOR = "";
 let OWNER_WHO = "";
 const EQ_BUILD = "c601a3";
-const EQ_WEB = "bb16";
+const EQ_WEB = "b88a";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -4078,6 +4078,28 @@ async function fvSync() {
   if (!$("baby").hidden) renderBaby(false);
 }
 const FR = { a: null };
+async function frKaraoke(song, btn, stage, done) {
+  if (btn._stop) { btn._stop(); return; }
+  bbStopAll();
+  let stream; try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }); }
+  catch (e) { toast("沒辦法使用麥克風，請允許麥克風，或用下面的方式錄"); return; }
+  const mime = pickRecMime(); let rec;
+  try { rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream); } catch (e) { stream.getTracks().forEach(x => x.stop()); toast("這個瀏覽器不能錄音"); return; }
+  const chunks = [], t0 = Date.now(), lg = sgLang(); let stopped = false;
+  rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  rec.onstop = () => {
+    stream.getTracks().forEach(x => x.stop()); btn._stop = null; btn.textContent = "🎤 再錄一次"; btn.classList.remove("live");
+    const blob = new Blob(chunks, { type: rec.mimeType || mime || "audio/webm" });
+    done(blob.size ? { blob, url: URL.createObjectURL(blob), secs: Math.round((Date.now() - t0) / 1000) } : null);
+  };
+  const stop = () => { if (stopped) return; stopped = true; clearTimeout(btn._max); mbStop(); try { rec.stop(); } catch (e) { } };
+  btn._stop = stop; btn.textContent = "⏹ 停止"; btn.classList.add("live"); btn._max = setTimeout(stop, 150000);
+  FR.a = null; const act = $("frAct"); if (act) act.hidden = true;
+  rec.start();
+  const show = i => { const L = song.lines[i], nx = song.lines[i + 1]; stage.innerHTML = `<div class="sgbig" style="font-size:20px">${esc(lg === "zh" ? L[1] : L[0])}</div>${lg === "both" ? `<div class="sgzh">${esc(L[1])}</div>` : ""}${nx ? `<div class="sgnext">下一句：${esc(lg === "zh" ? nx[1] : nx[0])}</div>` : ""}`; };
+  const ok = await mbPlay(song, show, { countIn: true, onCount: n => { stage.innerHTML = `<div class="sgcount">${n || "唱！"}</div>`; }, bass: true, style: sgStyle() === "off" ? "pop" : sgStyle(), melVol: 0.3 });
+  if (ok && !stopped) { stage.innerHTML = `<div class="sgbig" style="font-size:18px">唱完了！👏 按「▶ 聽聽看」</div>`; setTimeout(stop, 600); }
+}
 function openFamRec(key, title, sub, maxSec, after, song, baby) {
   FR.a = null; const who0 = baby ? "baby" : FV_PICK.some(x => x[0] === state.fvWho) ? state.fvWho : isFam() && FV_PICK.some(x => x[0] === famSt().rel) ? famSt().rel : "mom";
   const draw = () => {
@@ -4090,15 +4112,17 @@ function openFamRec(key, title, sub, maxSec, after, song, baby) {
     <div class="row"><h2 style="font-size:20px;flex:1;min-width:0">${baby ? "🎙 錄寶寶的聲音" : "🎙 錄家人的聲音"}</h2><button class="icon-btn" id="frClose" aria-label="關閉">${ICON.x}</button></div>
     <div style="text-align:center"><div style="font-size:24px;font-weight:800">${esc(title)}</div><div class="muted">${esc(sub)}</div></div>
     ${baby ? "" : `<div class="row" style="justify-content:center;gap:8px;flex-wrap:wrap"><span class="muted" style="font-size:13px">誰在錄？</span><div class="seg" style="flex-wrap:wrap;justify-content:center">${FV_PICK.map(([k, n]) => `<button data-frwho="${k}" aria-pressed="${k === who0}">${n}</button>`).join("")}</div></div>`}
-    ${song ? `<div class="row" style="justify-content:center"><button class="btn small" id="frMb">🎵 放音樂盒當伴奏</button></div>` : ""}
+    ${song ? `<div style="display:flex;flex-direction:column;gap:8px;align-items:center"><div class="sgstage" id="frStage" style="min-height:96px;width:100%;box-sizing:border-box"><div class="muted" style="font-size:14px">按下面的按鈕，數 3、2、1 後跟著伴奏唱，唱完會自動停</div></div>
+      <button class="btn primary" id="frKar">🎤 跟著伴奏錄</button>
+      <p class="muted" style="margin:0;font-size:12px;text-align:center">用手機喇叭放伴奏、不要戴耳機，錄起來就是「歌聲＋伴奏」。伴奏用上面選的風格（選「不要」的話用輕快）。也可以用下面的麥克風清唱。</p></div>` : ""}
     <div id="frRec"></div>
     <div class="row" style="justify-content:center;gap:8px" id="frAct" hidden><button class="btn" id="frPlay">▶ 聽聽看</button><button class="btn primary" id="frSave">✅ 存起來</button></div>
     <div id="frHave"></div>
     <p class="muted" style="margin:0;font-size:12px">${fvCloud() ? (isFam() ? "錄音會存到作者的雲端硬碟，家人群組的每個人都聽得到，其他訪客聽不到。" : "錄音存在這台裝置，並備份到你的雲端硬碟「English Quest 家人錄音」。你和家人群組聽得到，其他訪客聽不到。") : "錄音只存在這台手機或電腦，不會上傳到任何地方。"}同一個人再錄一次會換掉舊的。</p>`);
   let who = who0;
   $("gPanel").querySelectorAll("[data-frwho]").forEach(b => b.onclick = () => { who = b.dataset.frwho; state.fvWho = who; Store.save(); $("gPanel").querySelectorAll("[data-frwho]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
-  $("frClose").onclick = () => { mbStop(); stopHuman(); closeModal(); if (after) after(); };
-  if ($("frMb")) $("frMb").onclick = () => mbPlay(song, () => { });
+  $("frClose").onclick = () => { if ($("frKar") && $("frKar")._stop) $("frKar")._stop(); mbStop(); stopHuman(); closeModal(); if (after) after(); };
+  if ($("frKar")) $("frKar").onclick = () => frKaraoke(song, $("frKar"), $("frStage"), a => { if (a) { FR.a = a; $("frAct").hidden = false; toast(`錄好了（${a.secs} 秒），按「聽聽看」`); } });
   recorderUI($("frRec"), { maxSec, hint: baby ? "寶寶要說的時候按麥克風，說完再按一次" : song ? "按麥克風開始唱，唱完再按一次" : "按麥克風，清楚地唸一次，唸完再按一次", onAudio: a => { mbStop(); FR.a = a; $("frAct").hidden = false; } });
   $("frPlay").onclick = () => { if (FR.a) playUrl(FR.a.url); };
   $("frSave").onclick = async () => {
@@ -4614,6 +4638,51 @@ function mbBacking(ctx, out, t0, beat, notes, total, style) {
     }
   }
 }
+/* ---------- 人聲哼唱：用共振峰合成「像人在唱」的母音（電腦合成，哼得出旋律和母音，字聽不太清楚） ---------- */
+const SG_VOX = [["voice", "👩‍🎤 人聲哼唱"], ["box", "🎵 音樂盒"]];
+const sgVox = () => state.sgVox === "box" ? "box" : "voice";
+const VX_F = { i: [310, 2790, 3310], I: [430, 2480, 3070], e: [480, 2400, 2950], E: [610, 2330, 2990], ae: [860, 2050, 2850], a: [850, 1220, 2810], A: [720, 1300, 2780], O: [590, 920, 2710], o: [500, 880, 2700], U: [470, 1160, 2680], u: [370, 950, 2670], er: [500, 1640, 1960], x: [560, 1500, 2700], m: [280, 1300, 2600] };
+const VX_DIP = { aI: ["a", "i"], aU: ["a", "U"], eI: ["e", "i"], oU: ["o", "u"], OI: ["O", "i"] };
+const VX_LET = { a: "eI", b: "i", c: "i", d: "i", e: "i", f: "E", g: "i", h: "eI", i: "aI", j: "eI", k: "eI", l: "E", m: "E", n: "E", o: "oU", p: "i", q: "u", r: "a", s: "E", t: "i", u: "u", v: "i", w: "A", x: "E", y: "aI", z: "i" };
+const VX_WORD = { you: "u", your: "O", to: "u", do: "u", who: "u", two: "u", the: "x", a: "x", one: "A", of: "A", won: "A", bove: "A", love: "A", world: "er", what: "A", was: "A", wool: "U", full: "U", good: "U", are: "a", have: "ae", there: "E", where: "E", here: "i", my: "aI", by: "aI", sky: "aI", why: "aI", fly: "aI", snow: "oU", know: "oU", row: "oU", go: "oU", so: "oU", no: "oU", low: "oU", ery: "i", ev: "E", dia: "aI", mond: "x", sure: "O", lady: "eI", la: "eI", dy: "i", old: "oU", ald: "x" };
+const VX_RULES = [[/^(ee|ea|ie)/, "i"], [/^oo/, "u"], [/^(oi|oy)/, "OI"], [/^(ou|ow)/, "aU"], [/^igh/, "aI"], [/^(ay|ai|ey$|a[^aeiou]e$)/, "eI"], [/^(oa|o[^aeiou]e$|o$)/, "oU"], [/^(i[^aeiou]e$|ie$)/, "aI"], [/^(ar|aa)/, "a"], [/^or/, "O"], [/^(er|ir|ur|ear)/, "er"], [/^(al|aw|au)/, "O"], [/^e$/, "i"], [/^y$/, "i"], [/^e/, "E"], [/^i/, "I"], [/^o/, "a"], [/^u/, "A"]];
+function vxSyl(raw) {
+  const letters = String(raw || "").replace(/[^A-Za-z]/g, ""), w = letters.toLowerCase();
+  if (!w) return { v: "a", c: "" };
+  if (/^[A-Z]s?$/.test(letters)) return { v: VX_LET[w[0]], c: "" };
+  const on = (w.match(/^(qu|y(?=[aeiou])|[^aeiouy])*/) || [""])[0], r = w.slice(on.length);
+  let v = VX_WORD[w];
+  if (!v && /^[^aeiouy]+le$/.test(w)) v = "x";
+  if (!v && r && /^a/.test(r) && !/^(ar|aa|ay|ai|al|aw|au)/.test(r) && !/^a[^aeiou]e$/.test(r)) v = /w$/.test(on) ? "A" : "ae";
+  if (!v) v = (VX_RULES.find(x => x[0].test(r)) || [0, "x"])[1];
+  const c = !on ? "" : /^(s|sh|ch|f|th|h|x)/.test(on) ? "fric" : /^[tkpcq]/.test(on) ? "stop" : /^[mn]/.test(on) ? "nasal" : "voiced";
+  return { v, c, nas: !VX_DIP[v] && /(n|m|ng)$/.test(w), w: /^w/.test(on) };
+}
+function vxNote(ctx, out, t, midi, dur, sy, first, prev) {
+  const f0 = mfreq(midi), end = t + dur, rel = Math.min(0.1, Math.max(0.04, dur * 0.25)), A = 0.6;
+  const env = ctx.createGain(); env.gain.value = 0; env.connect(out);
+  const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 4200; lp.Q.value = 0.5; lp.connect(env);
+  const src = ctx.createGain(); src.gain.value = 1;
+  const p0 = prev && Math.abs(prev - midi) <= 12 && prev !== midi ? mfreq(prev) : f0;
+  const oscs = [[0, 0.75], [8, 0.45]].map(([det, g]) => { const o = ctx.createOscillator(), og = ctx.createGain(); o.type = "sawtooth"; o.detune.value = det; og.gain.value = g; o.connect(og); og.connect(src); o.frequency.setValueAtTime(p0, t); o.frequency.exponentialRampToValueAtTime(f0, t + 0.07); return o; });
+  if (dur > 0.3) { const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = 5.4; lg.gain.setValueAtTime(0, t); lg.gain.linearRampToValueAtTime(0, t + 0.2); lg.gain.linearRampToValueAtTime(f0 * 0.013, t + Math.min(dur, 0.7)); lfo.connect(lg); oscs.forEach(o => lg.connect(o.frequency)); lfo.start(t); lfo.stop(end + rel + 0.05); }
+  const dip = VX_DIP[sy.v], v1 = VX_F[dip ? dip[0] : sy.v] || VX_F.x, v2 = dip ? VX_F[dip[1]] : sy.nas ? VX_F.m : null, vs = first && sy.c === "nasal" ? VX_F.m : first && sy.w ? VX_F.u : null;
+  [[0, 1, 90], [1, 0.5, 110], [2, 0.26, 160]].forEach(([k, g, bw]) => {
+    const bp = ctx.createBiquadFilter(), bg = ctx.createGain(); bp.type = "bandpass"; bp.Q.value = v1[k] / Math.max(bw, f0 * 0.5);
+    if (vs) { bp.frequency.setValueAtTime(vs[k], t); bp.frequency.linearRampToValueAtTime(v1[k], t + 0.08); } else bp.frequency.setValueAtTime(v1[k], t);
+    if (v2) { bp.frequency.setValueAtTime(v1[k], t + dur * (dip ? 0.45 : 0.78)); bp.frequency.linearRampToValueAtTime(v2[k], t + dur * (dip ? 0.85 : 0.97)); }
+    bg.gain.value = g; src.connect(bp); bp.connect(bg); bg.connect(lp);
+  });
+  const atk = !first ? 0.035 : sy.c === "stop" ? 0.02 : sy.c === "voiced" || sy.c === "nasal" ? 0.07 : 0.045;
+  env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(A, t + atk); env.gain.setValueAtTime(A, Math.max(t + atk, end - rel)); env.gain.linearRampToValueAtTime(sy.nas ? A * 0.55 : A * 0.8, end); env.gain.linearRampToValueAtTime(0, end + rel);
+  oscs.forEach(o => { o.start(t); o.stop(end + rel + 0.05); });
+  if (first && (sy.c === "fric" || sy.c === "stop")) {
+    const fr = sy.c === "fric", L = fr ? 0.08 : 0.03, n = ctx.createBufferSource(), nf = ctx.createBiquadFilter(), ng = ctx.createGain(), t1 = Math.max(ctx.currentTime, t - L);
+    n.buffer = mbNoiseBuf(ctx); nf.type = fr ? "highpass" : "bandpass"; nf.frequency.value = fr ? 3800 : 2600; nf.Q.value = fr ? 0.7 : 1.1;
+    ng.gain.setValueAtTime(0.0001, t1); ng.gain.exponentialRampToValueAtTime(fr ? 0.1 : 0.16, t1 + L * 0.6); ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+    n.connect(nf); nf.connect(ng); ng.connect(out); n.start(t1); n.stop(t + 0.05);
+  }
+}
 function mbPlay(song, onLine, opts) {
   opts = opts || {};
   mbStop(); stopHuman(); if (TTS) speechSynthesis.cancel();
@@ -4626,13 +4695,15 @@ function mbPlay(song, onLine, opts) {
   let t = ctx.currentTime + 0.25, pos = 0;
   const later = (x, fn) => MB.timers.push(setTimeout(() => { if (tok === MB.tok) fn(); }, at(x)));
   if (opts.countIn) { for (let k = 3; k >= 1; k--) { mbTick(ctx, out, t, k === 3); const n = k; later(t, () => opts.onCount && opts.onCount(n)); t += beat; } later(t, () => opts.onCount && opts.onCount(0)); }
-  const t0 = t, notes = [];
+  const t0 = t, notes = [], vox = (opts.vox || sgVox()) === "voice";
   (opts.lines || song.lines.map((_, i) => i)).forEach(i => {
-    const L = song.lines[i]; let ni = 0;
+    const L = song.lines[i], syl = vox ? sgSyls(L) : null; let ni = 0, ps = -1, pm = 0;
     later(t, () => onLine && onLine(i));
     parseNotes(L[2]).forEach(([m, d]) => {
+      if (!m) pm = 0;
       if (m) {
-        if (melV > 0) mbTone(ctx, mel, t, m + 12, d * beat);
+        if (melV > 0 && vox) { const si = sgNoteSyl(L, ni); vxNote(ctx, mel, t, m, d * beat, vxSyl(syl[si] && syl[si].t), si !== ps, pm); ps = si; pm = m; }
+        else if (melV > 0) mbTone(ctx, mel, t, m + 12, d * beat);
         notes.push([pos, m, d]);
         const k = ni++; if (opts.onNote) later(t, () => opts.onNote(i, k));
       }
@@ -4727,25 +4798,26 @@ function renderSongs() {
     <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><span class="muted" style="font-size:13px">速度</span><div class="seg">${[["slow", "慢"], ["mid", "中"], ["fast", "快"]].map(([k, n]) => `<button data-sgt="${k}" aria-pressed="${tempo === k}">${n}</button>`).join("")}</div><span class="muted" style="font-size:13px">唱</span><div class="seg">${[1, 2, 3].map(n => `<button data-sgr="${n}" aria-pressed="${reps === n}">${n} 遍</button>`).join("")}</div></div>
     <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><span class="muted" style="font-size:13px">語言</span><div class="seg">${SG_LANGS.map(([k, n]) => `<button data-sgla="${k}" aria-pressed="${sgLang() === k}">${n}</button>`).join("")}</div></div>
     <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><span class="muted" style="font-size:13px">伴奏</span><div class="seg" style="flex-wrap:wrap">${SG_STYLES.map(([k, n]) => `<button data-sgst="${k}" aria-pressed="${sgStyle() === k}">${n}</button>`).join("")}</div><button class="btn small" id="sgTry" title="先聽 4 小節伴奏">▶ 試聽</button></div>
+    <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><span class="muted" style="font-size:13px">歌聲</span><div class="seg">${SG_VOX.map(([k, n]) => `<button data-sgvx="${k}" aria-pressed="${sgVox() === k}">${n}</button>`).join("")}</div></div>
     <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><span class="muted" style="font-size:13px">旋律</span><div class="seg">${SG_MELS.map(([k, n]) => `<button data-sgme="${k}" aria-pressed="${sgMel() === k}">${n}</button>`).join("")}</div></div>
-    <p class="muted" style="margin:0;font-size:12px;text-align:center">🎤 一起唱：數 3、2、1 後開始，字會跟著音符一個一個亮。🔁 跟唱：音樂盒先唱一句，換你唱的時候只留伴奏。${sgLang() !== "en" ? "會先用中文說這首歌在唱什麼。" : ""}想自己唱、只要伴奏，就把「旋律」選「關掉（卡拉OK）」。</p>
+    <p class="muted" style="margin:0;font-size:12px;text-align:center">🎤 一起唱：數 3、2、1 後開始，字會跟著音符一個一個亮。🔁 跟唱：音樂盒先唱一句，換你唱的時候只留伴奏。${sgLang() !== "en" ? "會先用中文說這首歌在唱什麼。" : ""}想自己唱、只要伴奏，就把「旋律」選「關掉（卡拉OK）」。👩‍🎤 人聲哼唱是電腦合成的歌聲，哼得出旋律，但字聽不太清楚，看著歌詞一起唱最好。</p>
     <div class="sglines">${song.lines.map((l, i) => `<div class="sgl" data-sgl="${i}">${sgLang() !== "zh" ? `<div class="en">${esc(l[0])}</div>` : ""}${sgLang() !== "en" ? `<div class="zh"${sgLang() === "zh" ? ' style="font-size:17px"' : ""}>${esc(l[1])}</div>` : ""}</div>`).join("")}</div>
     <div class="reply" style="display:flex;flex-direction:column;gap:8px;border-radius:14px;padding:12px 14px"><b>🎙 爸媽唱給寶寶聽</b>
-      <span class="muted" style="font-size:13px">寶寶最喜歡聽家人的聲音。AI 聲音只能唸、不能真的唱，最好聽的歌聲還是爸媽的。錄一次，以後隨時可以播。</span>
+      <span class="muted" style="font-size:13px">寶寶最喜歡聽家人的聲音。電腦只能哼、AI 只能唸，最好聽的歌聲還是爸媽的。按「🎤 跟著伴奏錄」，錄起來就是有伴奏的歌，以後隨時可以播。</span>
       <div class="row" style="flex-wrap:wrap;gap:8px">${recs.map(r => `<button class="btn small" data-sgp="${r.who}">▶ ${esc(r.name)}唱的</button>`).join("")}<button class="btn small" id="sgRec">🎙 ${recs.length ? "再錄一段／管理錄音" : "錄爸媽唱"}</button></div></div>
     <p class="muted" style="margin:0;font-size:12px;text-align:center">${esc(song.note)}。iPhone 沒聲音的話，請把側邊的靜音開關打開。</p>`;
   sgStage(song, -1);
   $("sgBack").onclick = () => { bbStopAll(); SG.cur = ""; renderSongs(); };
   const toggle = (id, k) => { $(id).onclick = () => { state[k] = state[k] === false; Store.save(); bbStopAll(); renderSongs(); }; };
   const seg = (attr, k) => $("bbView").querySelectorAll(`[data-${attr}]`).forEach(b => b.onclick = () => { state[k] = b.getAttribute("data-" + attr); Store.save(); bbStopAll(); renderSongs(); });
-  seg("sgla", "sgLang"); seg("sgst", "sgStyle"); seg("sgme", "sgMel");
+  seg("sgla", "sgLang"); seg("sgst", "sgStyle"); seg("sgme", "sgMel"); seg("sgvx", "sgVox");
   $("sgTry").onclick = () => { bbStopAll(); sgSetMode(""); if (sgStyle() === "off") { toast("現在選的是「不要伴奏」"); return; } const n = Math.min(song.lines.length, 2); mbPlay(song, i => { sgLine(i); sgStage(song, i, "🎧 試聽伴奏"); }, { lines: [...Array(n).keys()], bass: true, melVol: 0 }).then(() => { sgLine(-1); sgStage(song, -1); }); };
   $("bbView").querySelectorAll("[data-sgt]").forEach(b => b.onclick = () => { state.sgTempo = b.dataset.sgt; Store.save(); bbStopAll(); renderSongs(); });
   $("bbView").querySelectorAll("[data-sgr]").forEach(b => b.onclick = () => { state.sgRep = Number(b.dataset.sgr); Store.save(); bbStopAll(); renderSongs(); });
   const modeBtn = (id, k, fn) => { $(id).onclick = () => { if (SG.mode === k) { bbStopAll(); sgSetMode(""); sgLine(-1); sgStage(song, -1); return; } fn(song); }; };
   modeBtn("sgSing", "sing", sgSing); modeBtn("sgEcho", "echo", sgEcho); modeBtn("sgRead", "read", sgRead);
   $("bbView").querySelectorAll("[data-sgp]").forEach(b => b.onclick = async () => { bbStopAll(); sgSetMode(""); const u = await fvUrl(key, b.dataset.sgp); if (u) playUrl(u); else toast("找不到這段錄音"); });
-  $("sgRec").onclick = () => { bbStopAll(); sgSetMode(""); openFamRec(key, song.t, "跟著音樂盒唱，或自己清唱都可以（最長 2 分鐘）", 120, () => { if (bbView() === "song") renderSongs(); }, song); };
+  $("sgRec").onclick = () => { bbStopAll(); sgSetMode(""); openFamRec(key, song.t, "跟著伴奏唱，或自己清唱都可以（最長 2 分鐘）", 120, () => { if (bbView() === "song") renderSongs(); }, song); };
   aivPrefetch(song.lines.slice(0, 6).map(l => [aivFor(l[0]), l[0]]).concat(song.intro ? [["zh", song.intro]] : []));
 }
 
