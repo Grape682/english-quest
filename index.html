@@ -293,6 +293,82 @@ button.chip:hover{border-color:var(--primary)}
 .sp-face{font-size:52px;line-height:1;margin-top:6px}
 .sp-pend{width:4px;height:52px;background:#7A5230;transform-origin:50% 0;animation:spSwing 1s infinite alternate ease-in-out;position:relative}.sp-pend::after{content:"";position:absolute;left:-9px;bottom:-10px;width:22px;height:22px;border-radius:50%;background:#FFD54A}
 .sp-cradle{position:absolute;left:36%;top:44%;transform-origin:50% -60px;animation:spSwing 2s infinite alternate ease-in-out}
+.stv{display:block;width:100%;height:auto;aspect-ratio:4/3;border-radius:20px;background:#DFF4FF;box-shadow:var(--shadow);touch-action:manipulation}
+.stc .fx,.stc .talkm{display:none}
+.stc.f-happy .fx-happy,.stc.f-calm .fx-calm,.stc.f-sad .fx-sad,.stc.f-angry .fx-angry,.stc.f-surprise .fx-surprise{display:inline}
+.stc.talk .talkm{display:inline}.stc.talk .fx .mouth{display:none}
+.st-talk{transform-box:fill-box;transform-origin:center;animation:stTalk .17s infinite alternate}@keyframes stTalk{from{transform:scaleY(.25)}to{transform:scaleY(1.1)}}
+.st-blink{transform-box:fill-box;transform-origin:center;animation:stBlink 4s infinite}@keyframes stBlink{0%,45%,49%,100%{transform:scaleY(1)}47%{transform:scaleY(.1)}}
+.st-tear{animation:stTear 1.8s infinite ease-in}@keyframes stTear{0%{opacity:0;transform:translateY(0)}20%{opacity:1}100%{opacity:0;transform:translateY(14px)}}
+.stc-act,.stc-head,.stmove{transform-box:fill-box;transform-origin:50% 100%}
+.stc-armL,.stc-armR{transform-box:fill-box;transform-origin:50% 8%}
+.stc .stc-act{animation:stIdle 2.8s infinite ease-in-out}@keyframes stIdle{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.025)}}
+.stc[data-c="bunny"] .st-ear{transform-box:fill-box;transform-origin:50% 100%;animation:stEar 3s infinite}.stc[data-c="bunny"] .st-ear2{transform-box:fill-box;transform-origin:50% 100%;animation:stEar 3s infinite -1.5s}@keyframes stEar{0%,80%,100%{transform:rotate(0)}88%{transform:rotate(-10deg)}}
+.stc.a-jump .stc-act{animation:stJump .55s 2 ease-out}@keyframes stJump{0%,100%{transform:translateY(0)}45%{transform:translateY(-26px) scaleY(1.04)}}
+.stc.a-hop .stc-act{animation:stJump .7s infinite ease-out}
+.stc.a-nod .stc-head{animation:stNod .45s 3 ease-in-out}@keyframes stNod{0%,100%{transform:translateY(0)}50%{transform:translateY(4px) rotate(2deg)}}
+.stc.a-shake .stc-head{animation:stShake .5s 3 ease-in-out}@keyframes stShake{0%,100%{transform:rotate(0)}25%{transform:rotate(-9deg)}75%{transform:rotate(9deg)}}
+.stc.a-look .stc-head{animation:stLook 2.4s 1 ease-in-out}@keyframes stLook{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}70%{transform:rotate(12deg)}}
+.stc.a-think .stc-head{animation:stThink 2.4s 1 ease-in-out forwards}@keyframes stThink{0%{transform:rotate(0)}30%,80%{transform:rotate(-10deg)}100%{transform:rotate(0)}}
+.stc.a-droop .stc-head{animation:stDroop 2.4s 1 ease-in-out forwards}@keyframes stDroop{0%{transform:translateY(0)}40%,100%{transform:translateY(5px) rotate(4deg)}}
+.stc.a-wave .stc-armR{animation:stWave .5s 4 ease-in-out}@keyframes stWave{0%,100%{transform:rotate(-140deg)}50%{transform:rotate(-170deg)}}
+.stc.a-hug .stc-armL{animation:stHugL 1.6s 1 forwards}.stc.a-hug .stc-armR{animation:stHugR 1.6s 1 forwards}@keyframes stHugL{30%,80%{transform:rotate(60deg)}}@keyframes stHugR{30%,80%{transform:rotate(-60deg)}}
+.stc.a-walk .stc-act{animation:stWalk .4s 5 ease-in-out}@keyframes stWalk{0%,100%{transform:rotate(-3deg) translateY(0)}50%{transform:rotate(3deg) translateY(-3px)}}
+.st-enter{animation:stEnter 1.6s 1 ease-out both}@keyframes stEnter{from{transform:translateX(-260px)}to{transform:translateX(0)}}
+.st-enter .stc-act{animation:stWalk .4s 4 ease-in-out}
+.st-sway,.st-sway2{transform-box:fill-box;transform-origin:50% 100%;animation:stSway 4s infinite ease-in-out}.st-sway2{animation-duration:7s}@keyframes stSway{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+.st-cloud{animation:stCloud 36s infinite linear alternate}@keyframes stCloud{from{transform:translateX(-30px)}to{transform:translateX(60px)}}
+.st-sun{transform-box:fill-box;transform-origin:center;animation:stSun 5s infinite ease-in-out}@keyframes stSun{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.st-fly{animation:stFly 9s infinite ease-in-out}@keyframes stFly{0%{transform:translate(0,0)}25%{transform:translate(60px,-30px)}50%{transform:translate(110px,20px)}75%{transform:translate(40px,40px)}100%{transform:translate(0,0)}}
+.st-wing{transform-box:fill-box;transform-origin:center;animation:stWing .35s infinite alternate}@keyframes stWing{from{transform:scaleX(1)}to{transform:scaleX(.35)}}
+.st-ray{animation:stRay 6s infinite ease-in-out}@keyframes stRay{0%,100%{opacity:.08}50%{opacity:.3}}
+.st-leaf{animation:stLeaf 9s infinite linear}@keyframes stLeaf{0%{transform:translate(0,0) rotate(0);opacity:0}10%{opacity:1}100%{transform:translate(40px,230px) rotate(320deg);opacity:0}}
+.st-flow{animation:stFlow 2.4s infinite linear}@keyframes stFlow{to{stroke-dashoffset:-88}}
+.st-smoke{animation:stSmoke 3s infinite ease-out}@keyframes stSmoke{0%{opacity:0;transform:translate(0,0) scale(.6)}30%{opacity:.7}100%{opacity:0;transform:translate(8px,-40px) scale(1.6)}}
+.st-flame{transform-box:fill-box;transform-origin:50% 100%;animation:stFlame .3s infinite alternate}@keyframes stFlame{from{transform:scale(1,1)}to{transform:scale(.85,1.15)}}
+.st-nut.on{transform-box:fill-box;transform-origin:center;animation:stPop .5s 1}@keyframes stPop{50%{transform:scale(1.5)}}
+.sttap{cursor:pointer}.sttap.st-no{transform-box:fill-box;transform-origin:50% 100%;animation:stShake .45s 2}
+.sttap.st-yes{filter:drop-shadow(0 0 8px #FFEB3B)}
+.st-burst{pointer-events:none}.st-burst path{transform-box:fill-box;transform-origin:center;animation:stBurst 1.3s 1 ease-out forwards}@keyframes stBurst{0%{transform:translate(0,0) scale(.3);opacity:1}100%{transform:translate(var(--bx),var(--by)) scale(1.2);opacity:0}}
+.stcalm *:not(.st-talk){animation:none!important}
+@media (prefers-reduced-motion:reduce){.stv *:not(.st-talk){animation:none!important}}
+.stsub{min-height:70px;background:var(--surface);border-radius:16px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:var(--shadow)}
+.stsub .stwho{flex:none;font-size:12px;font-weight:800;color:#fff;background:var(--primary);border-radius:999px;padding:3px 9px}
+.stsub .stwho.narr{background:#8D6E63}
+.stsub .sttxt{font-size:19px;font-weight:700;line-height:1.45}
+.stask{background:#FFF8E1;border:2px solid #FFD54A;border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center}
+.stask .q{font-size:18px;font-weight:800}
+.stopts{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.stopt{min-width:96px;border:2px solid #E0C97F;background:#fff;border-radius:18px;padding:10px 12px;font:inherit;font-size:16px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;color:var(--ink)}
+.stopt b{font-size:34px;line-height:1.1}.stopt.ok{border-color:#2ECC71;background:#E8F8EF}.stopt.no{animation:stShakeX .4s 1}@keyframes stShakeX{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.stctl{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.stctl .btn{min-width:46px}
+.stdots{display:flex;gap:5px;justify-content:center}.stdots i{width:8px;height:8px;border-radius:50%;background:#D5DCE6}.stdots i.on{background:var(--primary)}.stdots i.done{background:#9DB4E8}
+.stparent{background:#EEF6FF;border-radius:16px;padding:12px 14px;font-size:15px;display:flex;flex-direction:column;gap:8px}
+.sten{display:flex;align-items:center;gap:6px 10px;justify-content:center;font-size:15px;flex-wrap:wrap;background:var(--surface);border-radius:14px;padding:8px 12px}.sten>*{white-space:nowrap}
+.sten b{font-size:18px}
+.stthemes{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.sttheme{border:0;border-radius:20px;padding:14px 12px;text-align:left;display:flex;flex-direction:column;gap:4px;font:inherit;color:#223;cursor:pointer;min-height:104px;box-shadow:var(--shadow)}
+.sttheme .ic{font-size:34px;line-height:1}.sttheme b{font-size:16px}.sttheme small{font-size:12px;color:#556;line-height:1.35}
+.sttheme[disabled]{opacity:.55;cursor:default}
+.stlist{display:flex;flex-direction:column;gap:12px}
+.stcard{display:flex;gap:12px;background:var(--surface);border-radius:20px;padding:10px;box-shadow:var(--shadow);border:0;font:inherit;color:var(--ink);text-align:left;cursor:pointer;align-items:stretch}
+.stcard .cov{width:42%;flex:none}.stcard .cov svg{width:100%;height:auto;display:block;border-radius:14px;aspect-ratio:4/3}
+.stcard .meta{display:flex;flex-direction:column;gap:4px;min-width:0}
+.stcard .meta b{font-size:17px}.stcard .meta span{font-size:13px;color:var(--muted);line-height:1.4}
+.sttags{display:flex;flex-wrap:wrap;gap:4px}.sttags i{font-style:normal;font-size:11.5px;background:#EEF2FF;color:#3a4a8a;border-radius:999px;padding:2px 8px}
+.stnew{font-size:11.5px;font-weight:800;color:#fff;background:#FF7043;border-radius:999px;padding:1px 8px;align-self:flex-start}.stnew.seen{background:#9DB4E8}
+.stbook{background:#FFFBF0;border-radius:22px;padding:12px;box-shadow:0 2px 0 #EADFC8,var(--shadow);display:flex;flex-direction:column;gap:12px;border:1px solid #F0E3C6}
+.stbook .stv{box-shadow:none;border:6px solid #fff;outline:1px solid #EADFC8}
+.stbtext{display:flex;flex-direction:column;gap:10px;font-family:"Noto Serif TC","Songti TC",serif}
+.stbtext .narr{font-size:19px;line-height:1.7;color:#4A3B2C;margin:0;cursor:pointer}
+.stbub{display:flex;gap:8px;align-items:flex-start;cursor:pointer;border:0;background:none;padding:0;font:inherit;text-align:left;color:inherit}
+.stbub .bb{background:#fff;border:2px solid #EADFC8;border-radius:18px;padding:8px 12px;font-size:18px;line-height:1.5;position:relative;font-family:"Noto Sans TC",sans-serif}
+.stbub .bb small{display:block;font-size:12px;color:#9a8a76;font-weight:700}
+.stbub.now .bb,.stbtext .narr.now{background:#FFF3C4;border-color:#FFD54A}
+.stav{width:44px;height:44px;flex:none;background:#F6EEDC;border-radius:50%}.stav-n{display:flex;align-items:center;justify-content:center;font-size:24px}
+.stav .stc-act,.stav .st-blink,.stav .stc .stc-act{animation:none}
+.stlesson{display:flex;flex-direction:column;gap:8px}.stlesson li{font-size:16px;line-height:1.6}
 .sgstage{min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;background:var(--surface);border-radius:20px;padding:16px;box-shadow:var(--shadow)}
 .sgbig{font-size:26px;font-weight:800;line-height:1.5}
 .sgbig .sy{display:inline-block;transition:color .1s,transform .1s;color:var(--muted)}
@@ -809,8 +885,8 @@ let GUEST = false;
 // 贊助連結：在 Code.gs 或 english_quest_app.py 開頭的 SPONSOR_URL 設定
 let SPONSOR = "";
 let OWNER_WHO = "";
-const EQ_BUILD = "c601a3";
-const EQ_WEB = "ae5c";
+const EQ_BUILD = "f56e8f";
+const EQ_WEB = "5218";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -3993,16 +4069,16 @@ function prefetchBaby() {
 /* ================= 寶寶聽力的分頁：聽單字・指指看・兒歌・爸媽小抄・成長紀錄 ================= */
 const TIPS = [["起床", "🌅", "早上打開窗簾時說，每天同一句，寶寶很快就會認得。", [["Good morning, sweetie!", "早安，寶貝！"], ["Did you sleep well?", "你睡得好嗎？"], ["Time to wake up.", "該起床囉。"], ["Let's open the curtains.", "我們把窗簾打開。"], ["Look, the sun is up!", "你看，太陽出來了！"], ["Stretch your arms up high!", "手舉高高，伸懶腰！"], ["Let's change your clothes.", "我們來換衣服。"], ["Give me a morning hug!", "給我一個早安抱抱！"]]], ["換尿布", "🧷", "換尿布時寶寶正好看著你的臉，是說英文的好時機。", [["Let's change your diaper.", "我們來換尿布。"], ["Lie down, please.", "請躺下來。"], ["Are you wet?", "你尿尿了嗎？"], ["Pee-yew! Stinky!", "哇，臭臭！"], ["Wipe, wipe, wipe.", "擦擦擦。"], ["Hold still, please.", "請不要動喔。"], ["A clean diaper!", "換上乾淨的尿布！"], ["All done! So fresh!", "好了！好清爽！"]]], ["吃飯", "🥣", "一邊餵一邊說，說到食物時指給寶寶看。", [["Are you hungry?", "你肚子餓了嗎？"], ["Time to eat!", "吃飯時間到了！"], ["Open your mouth.", "嘴巴張開。"], ["One more bite.", "再吃一口。"], ["Is it yummy?", "好吃嗎？"], ["Chew, chew, chew.", "嚼一嚼。"], ["Do you want some water?", "你要喝水嗎？"], ["All gone! Good job!", "吃光光了！好棒！"]]], ["洗澡", "🛁", "洗澡時間輕鬆好玩，配合動作說，寶寶最容易記住。", [["Bath time!", "洗澡時間到了！"], ["Let's take off your clothes.", "我們把衣服脫掉。"], ["Is the water warm?", "水溫溫的嗎？"], ["Splash, splash!", "嘩啦嘩啦！"], ["Let's wash your hair.", "我們來洗頭髮。"], ["Close your eyes.", "眼睛閉起來。"], ["Where's the duck?", "小鴨子在哪裡？"], ["Let's dry you off.", "我們把身體擦乾。"]]], ["穿衣服", "👕", "穿到哪裡就說到哪裡，例如手伸進去時說 Put your arm in.", [["Let's get dressed.", "我們來穿衣服。"], ["Arms up!", "手舉起來！"], ["Where's your head? Peekaboo!", "頭在哪裡？躲貓貓！"], ["Put your arm in.", "手伸進去。"], ["Put on your socks.", "穿上襪子。"], ["Which shirt do you want?", "你想穿哪件衣服？"], ["Red or blue?", "紅色還是藍色？"], ["You look great!", "你看起來好棒！"]]], ["出門", "🚪", "出門看到什麼就說什麼，Look! A dog! 很好用。", [["Let's go outside!", "我們出去吧！"], ["Put on your shoes.", "穿上鞋子。"], ["Hold my hand.", "牽著我的手。"], ["Let's go for a walk.", "我們去散步。"], ["Look! A dog!", "你看！一隻狗！"], ["Say bye-bye!", "說掰掰！"], ["Get in your car seat.", "坐進汽車座椅。"], ["We're home!", "我們到家了！"]]], ["玩耍", "🧸", "玩的時候輪流說 Your turn / My turn，寶寶會慢慢學會輪流。", [["Let's play!", "我們來玩！"], ["Roll the ball to me.", "把球滾給我。"], ["Your turn!", "換你了！"], ["My turn!", "換我了！"], ["Peekaboo! I see you!", "躲貓貓！看到你了！"], ["Let's build a tower.", "我們來疊高高。"], ["Uh-oh! It fell down!", "哎呀！倒下來了！"], ["Let's clean up.", "我們來收玩具。"]]], ["稱讚鼓勵", "👏", "寶寶做到一件小事就說，語氣誇張一點更好。", [["Good job!", "做得好！"], ["Well done!", "很棒！"], ["You did it!", "你做到了！"], ["I'm so proud of you.", "我好以你為榮。"], ["Try again!", "再試一次！"], ["You can do it!", "你可以的！"], ["High five!", "擊掌！"], ["Clap, clap, clap!", "拍拍手！"]]], ["安撫", "💗", "寶寶哭的時候先抱抱，用溫柔的聲音慢慢說。", [["It's okay.", "沒關係。"], ["I'm right here.", "我就在這裡。"], ["Are you hurt?", "你受傷了嗎？"], ["Let me kiss it better.", "我親一下就不痛了。"], ["Don't cry, sweetie.", "別哭，寶貝。"], ["Take a deep breath.", "深呼吸。"], ["You're safe.", "你很安全。"], ["I love you so much.", "我好愛你。"]]], ["睡覺", "🌙", "睡前固定說同樣幾句，寶寶會知道「要睡覺了」。", [["It's time for bed.", "該睡覺了。"], ["Let's brush your teeth.", "我們來刷牙。"], ["Which book do you want?", "你想看哪本書？"], ["Are you sleepy?", "你想睡了嗎？"], ["Close your eyes.", "眼睛閉起來。"], ["Sweet dreams.", "祝你好夢。"], ["Good night. I love you.", "晚安，我愛你。"], ["See you in the morning.", "明天早上見。"]]]];
 const SONGS = [{"id": "twinkle", "t": "Twinkle, Twinkle, Little Star", "zh": "小星星", "ic": "⭐", "beat": 0.55, "note": "1806 年的英國童詩", "lines": [["Twinkle, twinkle, little star,", "一閃一閃小星星，", "C C G G A A G:2", "Twin/kle, twin/kle, lit/tle star,"], ["How I wonder what you are!", "我好想知道你是什麼！", "F F E E D D C:2", "How I won/der what you are!"], ["Up above the world so high,", "高高掛在天空上，", "G G F F E E D:2", "Up a/bove the world so high,"], ["Like a diamond in the sky.", "好像天上的鑽石。", "G G F F E E D:2", "Like a dia/mond in the sky."], ["Twinkle, twinkle, little star,", "一閃一閃小星星，", "C C G G A A G:2", "Twin/kle, twin/kle, lit/tle star,"], ["How I wonder what you are!", "我好想知道你是什麼！", "F F E E D D C:2", "How I won/der what you are!"]], "intro": "這首歌叫〈小星星〉，唱的是天上一閃一閃的星星。"}, {"id": "abc", "t": "The ABC Song", "zh": "ABC 字母歌", "ic": "🔤", "beat": 0.5, "note": "旋律跟〈小星星〉一樣，1835 年出版", "lines": [["A B C D E F G,", "英文字母 A 到 G，", "C C G G A A G:2", "A B C D E F G,"], ["H I J K L M N O P,", "H 到 P，", "F F E E D:.5 D:.5 D:.5 D:.5 C:2", "H I J K L M N O P,"], ["Q R S, T U V,", "Q R S，T U V，", "G G F:2 E E D:2", "Q R S, T U V,"], ["W, X, Y and Z.", "W、X、Y 和 Z。", "G G F:2 E E:.5 E:.5 D:2", "W++, X, Y and Z."], ["Now I know my A B Cs,", "現在我會唸 ABC 了，", "C C G G A A G:2", "Now I know my A B Cs,"], ["Next time won't you sing with me?", "下次要不要跟我一起唱？", "F F E E D D C:2", "Next time won't you sing with me?"]], "intro": "這首是〈ABC 字母歌〉，跟著唱就能記住英文字母。"}, {"id": "baa", "t": "Baa, Baa, Black Sheep", "zh": "咩咩黑綿羊", "ic": "🐑", "beat": 0.5, "note": "1744 年就有的英國童謠", "lines": [["Baa, baa, black sheep, have you any wool?", "咩咩黑綿羊，你有羊毛嗎？", "C C G G A:.5 A:.5 A:.5 A:.5 G:2", "Baa, baa, black sheep, have you a/ny wool?"], ["Yes sir, yes sir, three bags full!", "有的先生，有的先生，滿滿三大袋！", "F F E E D D C:2", "Yes sir, yes sir, three bags full!"], ["One for the master, and one for the dame,", "一袋給主人，一袋給女主人，", "G G:.5 G:.5 F F E:.5 E:.5 E:.5 E:.5 D:2", "One for the mas/ter, and one for the dame,"], ["And one for the little boy who lives down the lane.", "還有一袋給住在巷子那頭的小男孩。", "G:.5 G:.5 G:.5 G:.5 F:.5 F:.5 F E:.5 E:.5 E:.5 E:.5 D:2", "And one for the lit/tle boy who lives down the lane."]], "intro": "這首歌叫〈咩咩黑綿羊〉，綿羊把羊毛分給大家。"}, {"id": "macdonald", "t": "Old MacDonald Had a Farm", "zh": "王老先生有塊地", "ic": "🐮", "beat": 0.42, "note": "傳統美國民謠；裡面的動物都是寶寶聽力學過的字", "lines": [["Old MacDonald had a farm, E-I-E-I-O!", "王老先生有塊地，咿呀咿呀喲！", "C C C G3 A3 A3 G3:2 E E D D C:2", "Old Mac/Don/ald had a farm, E-/I-/E-/I-/O!"], ["And on his farm he had a cow, E-I-E-I-O!", "他的農場養了一隻牛，咿呀咿呀喲！", "G3:.5 G3:.5 C C C G3 A3 G3:2 E E D D C:2", "And on his farm he had a cow, E-/I-/E-/I-/O!"], ["With a moo moo here, and a moo moo there,", "這邊哞哞，那邊哞哞，", "G3:.5 G3:.5 C C C:2 G3:.5 G3:.5 C C C:2", "With a moo moo here, and a moo moo there,"], ["Here a moo, there a moo, everywhere a moo moo.", "這裡哞，那裡哞，到處都哞哞。", "C:.5 C:.5 C C:.5 C:.5 C C:.5 C:.5 C:.5 C:.5 C C", "Here a moo, there a moo, ev/ery/where a moo moo."], ["Old MacDonald had a farm, E-I-E-I-O!", "王老先生有塊地，咿呀咿呀喲！", "C C C G3 A3 A3 G3:2 E E D D C:2", "Old Mac/Don/ald had a farm, E-/I-/E-/I-/O!"], ["And on his farm he had a duck, E-I-E-I-O!", "他的農場養了一隻鴨子，咿呀咿呀喲！", "G3:.5 G3:.5 C C C G3 A3 G3:2 E E D D C:2", "And on his farm he had a duck, E-/I-/E-/I-/O!"], ["With a quack quack here, and a quack quack there,", "這邊呱呱，那邊呱呱，", "G3:.5 G3:.5 C C C:2 G3:.5 G3:.5 C C C:2", "With a quack quack here, and a quack quack there,"], ["Here a quack, there a quack, everywhere a quack quack.", "這裡呱，那裡呱，到處都呱呱。", "C:.5 C:.5 C C:.5 C:.5 C C:.5 C:.5 C:.5 C:.5 C C", "Here a quack, there a quack, ev/ery/where a quack quack."], ["Old MacDonald had a farm, E-I-E-I-O!", "王老先生有塊地，咿呀咿呀喲！", "C C C G3 A3 A3 G3:2 E E D D C:2", "Old Mac/Don/ald had a farm, E-/I-/E-/I-/O!"], ["And on his farm he had a pig, E-I-E-I-O!", "他的農場養了一隻豬，咿呀咿呀喲！", "G3:.5 G3:.5 C C C G3 A3 G3:2 E E D D C:2", "And on his farm he had a pig, E-/I-/E-/I-/O!"], ["With a oink oink here, and a oink oink there,", "這邊齁齁，那邊齁齁，", "G3:.5 G3:.5 C C C:2 G3:.5 G3:.5 C C C:2", "With a oink oink here, and a oink oink there,"], ["Here a oink, there a oink, everywhere a oink oink.", "這裡齁，那裡齁，到處都齁齁。", "C:.5 C:.5 C C:.5 C:.5 C C:.5 C:.5 C:.5 C:.5 C C", "Here a oink, there a oink, ev/ery/where a oink oink."], ["Old MacDonald had a farm, E-I-E-I-O!", "王老先生有塊地，咿呀咿呀喲！", "C C C G3 A3 A3 G3:2 E E D D C:2", "Old Mac/Don/ald had a farm, E-/I-/E-/I-/O!"]], "intro": "這首是〈王老先生有塊地〉，農場裡有牛、鴨子和豬，一起學牠們的叫聲。"}, {"id": "row", "t": "Row, Row, Row Your Boat", "zh": "划小船", "ic": "🚣", "beat": 0.42, "note": "1852 年出版的美國童謠", "lines": [["Row, row, row your boat,", "划，划，划小船，", "C:1.5 C:1.5 C D:.5 E:1.5", "Row, row, row your boat,"], ["Gently down the stream.", "輕輕順著小河流。", "E D:.5 E F:.5 G:3", "Gent/ly down the stream."], ["Merrily, merrily, merrily, merrily,", "快快樂樂，開開心心，", "C5:.5 C5:.5 C5:.5 G:.5 G:.5 G:.5 E:.5 E:.5 E:.5 C:.5 C:.5 C:.5", "Mer/ri/ly, mer/ri/ly, mer/ri/ly, mer/ri/ly,"], ["Life is but a dream.", "人生就像一場夢。", "G F:.5 E D:.5 C:3", "Life is but a dream."]], "intro": "這首歌叫〈划小船〉，我們一起輕輕地划船。"}, {"id": "mary", "t": "Mary Had a Little Lamb", "zh": "瑪莉有隻小綿羊", "ic": "🐏", "beat": 0.5, "note": "1830 年的美國童詩", "lines": [["Mary had a little lamb,", "瑪莉有隻小綿羊，", "E D C D E E E:2", "Ma/ry had a lit/tle lamb,"], ["Little lamb, little lamb.", "小綿羊，小綿羊。", "D D D:2 E G G:2", "Lit/tle lamb, lit/tle lamb."], ["Mary had a little lamb,", "瑪莉有隻小綿羊，", "E D C D E E E", "Ma/ry had a lit/tle lamb,"], ["Its fleece was white as snow.", "牠的毛像雪一樣白。", "E D D E D C:4", "Its fleece was white as snow."], ["Everywhere that Mary went,", "瑪莉走到哪裡，", "E D C D E E E:2", "Ev/ery/where that Ma/ry went,"], ["Mary went, Mary went.", "走到哪，走到哪。", "D D D:2 E G G:2", "Ma/ry went, Ma/ry went."], ["Everywhere that Mary went,", "瑪莉走到哪裡，", "E D C D E E E", "Ev/ery/where that Ma/ry went,"], ["The lamb was sure to go.", "小綿羊就跟到哪裡。", "E D D E D C:4", "The lamb was sure to go."]], "intro": "這首歌叫〈瑪莉有隻小綿羊〉，小綿羊走到哪裡都跟著瑪莉。"}, {"id": "brotherjohn", "t": "Are You Sleeping?", "zh": "你在睡覺嗎（兩隻老虎的旋律）", "ic": "🔔", "beat": 0.5, "note": "法國傳統兒歌；旋律跟〈兩隻老虎〉一樣，爸媽一定會唱", "lines": [["Are you sleeping, are you sleeping,", "你在睡覺嗎？你在睡覺嗎？", "C D E C C D E C", "Are you sleep/ing, are you sleep/ing,"], ["Brother John, Brother John?", "約翰哥哥，約翰哥哥？", "E F G:2 E F G:2", "Bro/ther John, Bro/ther John?"], ["Morning bells are ringing, morning bells are ringing.", "早上的鐘聲響了，早上的鐘聲響了。", "G:.5 A:.5 G:.5 F:.5 E C G:.5 A:.5 G:.5 F:.5 E C", "Morn/ing bells are ring/ing, morn/ing bells are ring/ing."], ["Ding, dang, dong. Ding, dang, dong.", "叮，噹，咚。叮，噹，咚。", "C G3 C:2 C G3 C:2", "Ding, dang, dong. Ding, dang, dong."]], "intro": "這首歌的旋律跟〈兩隻老虎〉一樣，在叫約翰哥哥起床。"}, {"id": "london", "t": "London Bridge Is Falling Down", "zh": "倫敦鐵橋垮下來", "ic": "🌉", "beat": 0.45, "note": "1744 年就有的英國童謠", "lines": [["London Bridge is falling down,", "倫敦鐵橋垮下來，", "G:1.5 A:.5 G F E F G:2", "Lon/don Bridge is fall/ing down,"], ["Falling down, falling down.", "垮下來，垮下來。", "D E F:2 E F G:2", "Fall/ing down, fall/ing down."], ["London Bridge is falling down,", "倫敦鐵橋垮下來，", "G:1.5 A:.5 G F E F G:2", "Lon/don Bridge is fall/ing down,"], ["My fair lady.", "我美麗的姑娘。", "D:2 G:2 E C:3", "My fair la/dy."]], "intro": "這首歌叫〈倫敦鐵橋垮下來〉，是英國很老的童謠。"}, {"id": "hotcross", "t": "Hot Cross Buns", "zh": "熱十字麵包", "ic": "🍞", "beat": 0.5, "note": "1798 年就有的英國叫賣歌；只有三個音，最好學", "lines": [["Hot cross buns! Hot cross buns!", "熱熱的十字麵包！熱熱的十字麵包！", "E D C:2 E D C:2", "Hot cross buns! Hot cross buns!"], ["One a penny, two a penny,", "一便士一個，一便士兩個，", "C:.5 C:.5 C:.5 C:.5 D:.5 D:.5 D:.5 D:.5", "One a pen/ny, two a pen/ny,"], ["Hot cross buns!", "熱熱的十字麵包！", "E D C:2", "Hot cross buns!"]], "intro": "這首歌叫〈熱十字麵包〉，只有三個音，最好學。"}, {"id": "mulberry", "t": "This Is the Way", "zh": "生活歌：刷牙、洗臉、穿衣服", "ic": "🪥", "beat": 0.36, "note": "旋律是 1849 年就有紀錄的英國傳統兒歌〈Here We Go Round the Mulberry Bush〉，歌詞換成每天早上要做的事", "lines": [["This is the way we brush our teeth,", "我們這樣刷牙齒，", "C:1 C:.5 C:1 E:.5 G:1 E:.5 C:1 E:.5", "This is the way we brush our teeth,"], ["Brush our teeth, brush our teeth,", "刷牙齒，刷牙齒，", "D:1 E:.5 D:1.5 D:1 B3:.5 G3:1.5", "Brush our teeth, brush our teeth,"], ["This is the way we brush our teeth,", "我們這樣刷牙齒，", "C:1 C:.5 C:1 E:.5 G:1 E:.5 C:1 E:.5", "This is the way we brush our teeth,"], ["So early in the morning.", "每天早上都要刷。", "G:.5 F:.5 E:.5 D:.5 C:.5 B3:.5 C:3", "So ear/ly in the mor/ning."], ["This is the way we wash our face,", "我們這樣洗洗臉，", "C:1 C:.5 C:1 E:.5 G:1 E:.5 C:1 E:.5", "This is the way we wash our face,"], ["Wash our face, wash our face,", "洗洗臉，洗洗臉，", "D:1 E:.5 D:1.5 D:1 B3:.5 G3:1.5", "Wash our face, wash our face,"], ["This is the way we wash our face,", "我們這樣洗洗臉，", "C:1 C:.5 C:1 E:.5 G:1 E:.5 C:1 E:.5", "This is the way we wash our face,"], ["So early in the morning.", "每天早上洗乾淨。", "G:.5 F:.5 E:.5 D:.5 C:.5 B3:.5 C:3", "So ear/ly in the mor/ning."], ["This is the way we dress ourselves,", "我們這樣穿衣服，", "C:1 C:.5 C:1 E:.5 G:1 E:.5 C:1 E:.5", "This is the way we dress our/selves,"], ["Dress ourselves, dress ourselves,", "穿衣服，穿衣服，", "D:1 E:.5 D:1.5 D:1 B3:.5 G3:1.5", "Dress our/selves, dress our/selves,"], ["This is the way we dress ourselves,", "我們這樣穿衣服，", "C:1 C:.5 C:1 E:.5 G:1 E:.5 C:1 E:.5", "This is the way we dress our/selves,"], ["So early in the morning.", "每天早上自己穿。", "G:.5 F:.5 E:.5 D:.5 C:.5 B3:.5 C:3", "So ear/ly in the mor/ning."], ["This is the way we wash our hands,", "我們這樣洗洗手，", "C:1 C:.5 C:1 E:.5 G:1 E:.5 C:1 E:.5", "This is the way we wash our hands,"], ["Wash our hands, wash our hands,", "洗洗手，洗洗手，", "D:1 E:.5 D:1.5 D:1 B3:.5 G3:1.5", "Wash our hands, wash our hands,"], ["This is the way we wash our hands,", "我們這樣洗洗手，", "C:1 C:.5 C:1 E:.5 G:1 E:.5 C:1 E:.5", "This is the way we wash our hands,"], ["Before we eat our breakfast.", "吃早餐前要洗手。", "G:.5 F:.5 E:.5 D:.5 C:.5 B3:.5 C:3", "Be/fore we eat our break/fast."], ["This is the way we eat our food,", "我們這樣吃早餐，", "C:1 C:.5 C:1 E:.5 G:1 E:.5 C:1 E:.5", "This is the way we eat our food,"], ["Eat our food, eat our food,", "吃早餐，吃早餐，", "D:1 E:.5 D:1.5 D:1 B3:.5 G3:1.5", "Eat our food, eat our food,"], ["This is the way we eat our food,", "我們這樣吃早餐，", "C:1 C:.5 C:1 E:.5 G:1 E:.5 C:1 E:.5", "This is the way we eat our food,"], ["So early in the morning.", "每天早上吃飽飽。", "G:.5 F:.5 E:.5 D:.5 C:.5 B3:.5 C:3", "So ear/ly in the mor/ning."]], "intro": "這首歌唱每天早上要做的事：刷牙、洗臉、穿衣服、洗手、吃早餐。"}, {"id": "hickory", "t": "Hickory Dickory Dock", "zh": "滴答滴答鐘", "ic": "🐭", "beat": 0.42, "note": "1744 年就有的英國童謠", "lines": [["Hickory, dickory, dock,", "滴答滴答鐘，", "C D E D C B3 C:2 R", "Hick/o/ry, dick/o/ry, dock,"], ["The mouse ran up the clock.", "小老鼠爬上了時鐘。", "G3 C:2 E D:2 B3 C:3", "The mouse ran up the clock."], ["The clock struck one, the mouse ran down.", "時鐘噹一聲，老鼠跑下來。", "C C:2 C E:2 E D:2 D F:3", "The clock struck one, the mouse ran down."], ["Hickory, dickory, dock.", "滴答滴答鐘。", "E F E D C B3 C:3", "Hick/o/ry, dick/o/ry, dock."]], "intro": "這首歌叫〈滴答滴答鐘〉，小老鼠爬上時鐘，鐘一響就跑下來了。"}, {"id": "rain", "t": "Rain, Rain, Go Away", "zh": "雨啊雨，快走開", "ic": "🌧️", "beat": 0.42, "note": "1600 年代就有的英國童謠", "lines": [["Rain, rain, go away,", "雨啊雨，快走開，", "G:2 E:2 G G E:2", "Rain, rain, go a/way,"], ["Come again another day.", "改天再來玩。", "G G E A G G E:2", "Come a/gain an/oth/er day."], ["Rain, rain, go away,", "雨啊雨，快走開，", "G:2 E:2 G G E:2", "Rain, rain, go a/way,"], ["Little baby wants to play.", "寶寶想要出去玩。", "G G E A G G E:2", "Lit/tle ba/by wants to play."]], "intro": "下雨了，寶寶想出去玩，我們一起請雨快走開。"}, {"id": "rockabye", "t": "Rock-a-bye Baby", "zh": "搖啊搖，寶寶睡", "ic": "🌙", "beat": 0.42, "note": "1765 年就有的英國搖籃曲（中文歌詞改得比較溫和）", "lines": [["Rock-a-bye baby, on the treetop,", "搖啊搖，寶寶在樹梢，", "E G E5:2 D5:.5 C5:.5 E:2 G C5:2 B:2", "Rock/a/bye ba/by, on the tree/top,"], ["When the wind blows, the cradle will rock.", "風兒吹，搖籃輕輕搖。", "F:2 G F5:2 E5 D5:1.5 D5:.5 C5 A G:2", "When the wind blows, the cra/dle will rock."], ["When the bough breaks, the cradle will fall,", "樹枝彎一彎，搖籃晃一晃，", "E:2 G E5:2 D5 C5:1.5 E:.5 G C5 B:2", "When the bough breaks, the cra/dle will fall,"], ["Down will come baby, cradle and all.", "寶寶和搖籃，都被穩穩接住。", "G:2 C5 F5:2 E5:.5 C5:.5 D5:1.5 A:.5 B C5:3", "Down will come ba/by, cra/dle and all."]], "intro": "這是一首搖籃曲，輕輕搖、慢慢睡。"}, {"id": "birthday", "t": "Happy Birthday", "zh": "生日快樂歌", "ic": "🎂", "beat": 0.45, "note": "旋律 1893 年出版，現在是公眾領域；第三句會換成寶寶的名字", "lines": [["Happy birthday to you,", "祝你生日快樂，", "G3:.75 G3:.25 A3 G3 C B3:2", "Hap/py birth/day to you,"], ["Happy birthday to you,", "祝你生日快樂，", "G3:.75 G3:.25 A3 G3 D C:2", "Hap/py birth/day to you,"], ["Happy birthday, dear Baby,", "祝寶寶生日快樂，", "G3:.75 G3:.25 G E C B3 A3:2", "Hap/py birth/day, dear Ba/by,"], ["Happy birthday to you!", "祝你生日快樂！", "F:.75 F:.25 E C D C:2", "Hap/py birth/day to you!"]], "intro": "今天是寶寶的生日嗎？一起唱生日快樂歌！"}];
-const BB_VIEWS = [["listen", "🎧", "聽單字"], ["point", "👆", "指指看"], ["song", "🎵", "兒歌"], ["day", "📺", "一天動畫"], ["tips", "📝", "爸媽小抄"], ["grow", "🌱", "成長紀錄"]];
+const BB_VIEWS = [["listen", "🎧", "聽單字"], ["point", "👆", "指指看"], ["song", "🎵", "兒歌"], ["day", "📺", "動畫故事"], ["tips", "📝", "爸媽小抄"], ["grow", "🌱", "成長紀錄"]];
 const bbView = () => BB && BB_VIEWS.some(v => v[0] === BB.view) ? BB.view : "listen";
 function bbTabs() { return `<nav class="bbviews" role="tablist" aria-label="寶寶聽力的功能">${BB_VIEWS.map(([k, ic, n]) => `<button class="vt${bbView() === k ? " on" : ""}" data-bview="${k}" role="tab" aria-selected="${bbView() === k}"><span aria-hidden="true">${ic}</span>${n}</button>`).join("")}</nav>`; }
-function bbStopAll(keepList) { if (BB) { BB.tok++; BB.auto = false; BB.dark = false; } PT.tok++; SG.tok++; TP.tok++; if (!keepList) { SG.ltok = (SG.ltok || 0) + 1; SG.listOn = false; } try { DY.tok++; DY.busy = ""; BR.tok++; clearInterval(BR.timer); dyWake(false); } catch (e) { } mbStop(); stopHuman(); if (TTS) speechSynthesis.cancel(); }
+function bbStopAll(keepList) { if (BB) { BB.tok++; BB.auto = false; BB.dark = false; } PT.tok++; SG.tok++; TP.tok++; if (!keepList) { SG.ltok = (SG.ltok || 0) + 1; SG.listOn = false; } try { DY.tok++; DY.busy = ""; BR.tok++; clearInterval(BR.timer); dyWake(false); ST.tok++; ST.playing = false; } catch (e) { } mbStop(); stopHuman(); if (TTS) speechSynthesis.cancel(); }
 function bbBindTabs() { if ($("bbWho")) $("bbWho").onclick = () => { bbStopAll(); renderBaby(false); openBabies(); }; $("baby").querySelectorAll("[data-bview]").forEach(b => b.onclick = () => { bbStopAll(); BB.view = b.dataset.bview; renderBaby(false); try { window.scrollTo(0, 0); } catch (e) { } }); }
 function renderBabyView() {
   $("baby").innerHTML = `<header class="top"><button class="icon-btn" id="bbBack" aria-label="離開">${ICON.x}</button><h2 style="font-size:22px;flex:1;min-width:0">寶寶聽力</h2>${bbWhoBtn()}</header>${bbTabs()}<div id="bbView" class="bbview"></div>`;
   $("bbBack").onclick = () => { bbStopAll(); show("home"); renderHome(); };
   bbBindTabs();
-  ({ point: renderPoint, song: renderSongs, day: renderDay, tips: renderTips, grow: renderGrow })[bbView()]();
+  ({ point: renderPoint, song: renderSongs, day: renderStoryTab, tips: renderTips, grow: renderGrow })[bbView()]();
 }
 /* 唸一句英文：有 AI 語音就用 AI，沒有就用電腦語音（作者那邊會排隊產生） */
 async function sayLine(text, slow) {
@@ -4022,6 +4098,7 @@ function babyExtraAivItems() {
   [PT_CHEER_ZH, PT_RETRY_ZH, "唱得好棒！", "好棒！", "開始刷牙囉！", "刷好了，好乾淨！"].forEach(zh);
   DY_SCENES.forEach(sc => { add(sc.en); add(sc.ask); zh(sc.zh); zh(sc.askZh); });
   BR_PARTS.forEach(x => { zh(x[0]); add(x[1]); }); ["Great job!", "Let's brush our teeth!", "All clean! Great job!"].forEach(add);
+  stAivItems().forEach(x => out.push(x));
   SONGS.forEach(sg => { zh(sg.intro); sg.lines.forEach(l => zh(l[1])); });
   return out;
 }
@@ -4474,9 +4551,10 @@ function renderGrow() {
       ${ev.length ? `<div style="display:flex;flex-direction:column;gap:6px">${(showAll ? ev : ev.slice(0, 12)).map(([d, k, x, by]) => `<div class="row" style="gap:10px;align-items:center"><span class="muted" style="font-size:13px;width:44px">${mdDate(d)}</span><span style="font-size:22px">${x[1]}</span><span style="flex:1;min-width:0">${k === "say" ? "🗣 會說" : "👆 會指"} <b>${esc(x[0])}</b>（${esc(x[3])}）${by && by !== "爸媽" ? `<br><span class="muted" style="font-size:12px">${esc(by)}記的</span>` : ""}</span>${k === "say" ? (fvList(bvKey(x[0])).length ? `<button class="btn small" data-gbp="${esc(x[0])}" aria-label="聽寶寶說 ${esc(x[0])}">▶ 👶</button>` : `<button class="btn small" data-gbr="${esc(x[0])}" aria-label="錄寶寶說 ${esc(x[0])}">🎙</button>`) : ""}${ageText(birth, d) ? `<span class="muted" style="font-size:12px">${ageText(birth, d)}</span>` : ""}</div>`).join("")}${ev.length > 12 && !showAll ? `<button class="btn small" id="grMore">顯示全部 ${ev.length} 筆</button>` : ""}</div>`
         : `<p class="muted" style="margin:0">還沒有紀錄。寶寶會指出某個東西、或說出某個字的時候，在下面點 👆 或 🗣，就會記下日期。</p>`}
     </section>
-    ${(() => { const sc = DY_SCENES.map(x => [x, Number(get("scene " + x.id).heard) || 0]), sg = SONGS.map(x => [x, Number(get("song " + x.id).heard) || 0]), br = Number(get("scene brushtime").heard) || 0;
-      if (!sc.some(x => x[1]) && !sg.some(x => x[1]) && !br) return "";
-      return `<section style="display:flex;flex-direction:column;gap:8px"><h3 style="font-size:17px;margin:0">📺 一天動畫・🎵 兒歌</h3>
+    ${(() => { const sc = DY_SCENES.map(x => [x, Number(get("scene " + x.id).heard) || 0]), sg = SONGS.map(x => [x, Number(get("song " + x.id).heard) || 0]), br = Number(get("scene brushtime").heard) || 0, so = STORIES.map(x => [x, Number(get("story " + x.id).heard) || 0]);
+      if (!sc.some(x => x[1]) && !sg.some(x => x[1]) && !br && !so.some(x => x[1])) return "";
+      return `<section style="display:flex;flex-direction:column;gap:8px"><h3 style="font-size:17px;margin:0">📺 動畫故事・🎵 兒歌</h3>
+      <div class="gwords">${so.filter(x => x[1]).map(([x, n]) => `<span class="gw"><span aria-hidden="true">${x.ic}</span>${esc(x.t)} ×${n}</span>`).join("")}</div>
       <p class="muted" style="margin:0;font-size:12px">看過、唱過幾次${growCloud() ? "（全家的手機一起算）" : ""}。${br ? `🪥 陪刷牙 ${br} 次。` : ""}</p>
       <div class="gwords">${sc.filter(x => x[1]).map(([x, n]) => `<span class="gw"><span aria-hidden="true">${x.ic}</span>${esc(x.n)} ×${n}</span>`).join("")}</div>
       <div class="gwords">${sg.filter(x => x[1]).map(([x, n]) => `<span class="gw"><span aria-hidden="true">${x.ic}</span>${esc(x.zh)} ×${n}</span>`).join("")}</div></section>`; })()}
@@ -7248,7 +7326,7 @@ const PATHS = [
   { id: "adv", ic: "🚀", name: "進階・說得道地", who: "能溝通，想更自然、更精準", desc: "用自己的材料練、更細的回饋、每天開口、教別人、每週挑戰。" },
 ];
 const PATH_LINKS = {
-  baby: [["🎧", "寶寶聽力", () => openBaby()], ["⭐", "今日 10 個字", () => openBaby(BB_DAILY)], ["👆", "指指看", () => { openBaby(); BB.view = "point"; renderBaby(false); }], ["🎵", "兒歌", () => { openBaby(); BB.view = "song"; renderBaby(false); }], ["📺", "一天動畫", () => { openBaby(); BB.view = "day"; renderBaby(false); }], ["📝", "爸媽小抄", () => { openBaby(); BB.view = "tips"; renderBaby(false); }], ["🌱", "成長紀錄", () => { openBaby(); BB.view = "grow"; renderBaby(false); }]],
+  baby: [["🎧", "寶寶聽力", () => openBaby()], ["⭐", "今日 10 個字", () => openBaby(BB_DAILY)], ["👆", "指指看", () => { openBaby(); BB.view = "point"; renderBaby(false); }], ["🎵", "兒歌", () => { openBaby(); BB.view = "song"; renderBaby(false); }], ["📺", "動畫故事", () => { openBaby(); BB.view = "day"; ST.view = "home"; renderBaby(false); }], ["📝", "爸媽小抄", () => { openBaby(); BB.view = "tips"; renderBaby(false); }], ["🌱", "成長紀錄", () => { openBaby(); BB.view = "grow"; renderBaby(false); }]],
   start: [["📅", "今日任務", () => startDaily()], ["🧱", "今日積木", () => startPractice("ckDaily")], ["🎤", "情境口說", () => startPractice("spkDaily")], ["🧳", "出國急救包", () => startPractice("travel")], ["💬", "角色對話", () => startPractice("chat")], ["📔", "說的日記", () => startPractice("diary")], ["🧪", "程度測驗", () => startPractice("assess")]],
 };
 const CHAL = {
@@ -8031,6 +8109,7 @@ function renderDay() {
   DY.busy = ""; if (!dyList().some(s => s.id === DY.cur)) DY.cur = dyList()[0].id;
   const lg = dyLang();
   $("bbView").innerHTML = `
+    <div class="row" style="gap:8px;align-items:center"><button class="btn small" id="dyBack">← 動畫故事</button><b style="font-size:17px">🌞 寶寶的生活日記</b></div>
     <div class="row bbctl" style="gap:8px;flex-wrap:wrap"><div class="seg">${DY_PARTS.map(([k, n]) => `<button data-dypt="${k}" aria-pressed="${dyPart() === k}">${n}</button>`).join("")}</div></div>
     <div class="bbthemes dyscenes">${dyList().map(s => `<button class="tchip${s.id === DY.cur ? " on" : ""}" data-dys="${s.id}"><span aria-hidden="true">${s.ic}</span>${esc(s.n)}</button>`).join("")}</div>
     <div class="dystage" id="dyStage"></div>
@@ -8045,6 +8124,7 @@ function renderDay() {
       <div class="row" style="flex-wrap:wrap;gap:8px" id="dyFam"></div>
       <label class="row" style="gap:6px;align-items:center;font-size:13px"><input type="checkbox" id="dyFamOn"${state.dyFam !== false ? " checked" : ""}> 有家人錄音就用家人的聲音</label></div>
     <p class="muted" style="margin:0;font-size:12px;text-align:center">圖是程式畫的、會動的原創小朋友。每一幕先說中文、再說英文，英文字會一個一個亮。🙋 換你做：動畫停下來，請寶寶跟著做動作。🎵 唱這段：用〈Here We Go Round the Mulberry Bush〉的傳統旋律唱這個動作。</p>`;
+  $("dyBack").onclick = () => { dyStop(); ST.view = "home"; renderStoryTab(); };
   $("bbView").querySelectorAll("[data-dypt]").forEach(b => b.onclick = () => { dyStop(); state.dyPart = b.dataset.dypt; Store.save(); renderDay(); });
   $("bbView").querySelectorAll("[data-dys]").forEach(b => b.onclick = () => { const was = DY.busy; dyStop(); dyShow(b.dataset.dys); if (was !== "all") dyRun("one"); });
   $("bbView").querySelectorAll("[data-dyla]").forEach(b => b.onclick = () => { dyStop(); state.dyLang = b.dataset.dyla; Store.save(); renderDay(); });
@@ -8154,6 +8234,505 @@ function sleepStop(done) {
   SLP.tok++; clearInterval(SLP.timer); mbStop(); dyWake(false);
   const ov = $("sleepOv"); if (ov) ov.remove();
   if (done) toast("睡前模式結束了，晚安 🌙");
+}
+
+/* ================= 🐻 動畫故事：角色（原創 SVG） ================= */
+/* 每個角色：名字、AI 聲音代號、沒有 AI 語音時瀏覽器語音的音高／速度、顏色、畫法 */
+const ST_CHARS = {
+  narr: { n: "旁白", v: "zh", pitch: 1, rate: 0.88 },
+  bear: { n: "熊熊", v: "zbe", pitch: 0.75, rate: 0.85, sp: "bear", col: "#B9824F", belly: "#EBCB9E", s: 1 },
+  bunny: { n: "兔兔", v: "zbu", pitch: 1.5, rate: 0.95, sp: "bunny", col: "#F6F1F8", belly: "#FFFFFF", s: 0.86, line: "#D9CADD" },
+  fox: { n: "狐狸", v: "zfo", pitch: 1.2, rate: 0.95, sp: "fox", col: "#EE8A3C", belly: "#FFF4E8", s: 0.9 },
+  squirrel: { n: "松鼠", v: "zsq", pitch: 1.7, rate: 1, sp: "squirrel", col: "#C97B44", belly: "#F2D3A9", s: 0.72 },
+  elephant: { n: "小象", v: "zel", pitch: 0.6, rate: 0.82, sp: "elephant", col: "#9FB6CD", belly: "#C7D6E5", s: 1.1 },
+  mama: { n: "熊媽媽", v: "zma", pitch: 1.05, rate: 0.85, sp: "bear", col: "#A87245", belly: "#E6C493", s: 1.25, scarf: "#F28CB1" },
+  kid: { n: "小朋友", v: "zki", pitch: 1.4, rate: 0.95, sp: "kid", s: 1 }
+};
+const ST_INK = "#3B2A20";
+/* 五種表情：開心、平常、難過、生氣、驚訝；說話時嘴巴會開合 */
+function stFace(my, cheek) {
+  const eye = (r) => `<g class="st-blink"><ellipse cx="-9" cy="-74" rx="${r}" ry="${r * 1.15}" fill="${ST_INK}"/><ellipse cx="9" cy="-74" rx="${r}" ry="${r * 1.15}" fill="${ST_INK}"/><circle cx="-8" cy="-75.5" r="1" fill="#fff"/><circle cx="10" cy="-75.5" r="1" fill="#fff"/></g>`;
+  const st = `stroke="${ST_INK}" stroke-width="2.2" fill="none" stroke-linecap="round"`;
+  return `<g class="fx fx-happy"><path d="M-13 -73 q4 -5 8 0 M5 -73 q4 -5 8 0" ${st}/><path class="mouth" d="M-6 ${my - 1} q6 7 12 0" ${st}/></g>
+    <g class="fx fx-calm">${eye(3)}<path class="mouth" d="M-5 ${my} q5 4 10 0" ${st}/></g>
+    <g class="fx fx-sad">${eye(3)}<path d="M-14 -80 l8 -3 M14 -80 l-8 -3" ${st}/><path class="mouth" d="M-6 ${my + 3} q6 -6 12 0" ${st}/><ellipse class="st-tear" cx="-12" cy="-68" rx="2" ry="3" fill="#5DADE2"/></g>
+    <g class="fx fx-angry">${eye(3)}<path d="M-14 -84 l9 4 M14 -84 l-9 4" ${st}/><path class="mouth" d="M-6 ${my + 2} h12" ${st}/><circle cx="-16" cy="-64" r="4" fill="#FF6B6B" opacity=".55"/><circle cx="16" cy="-64" r="4" fill="#FF6B6B" opacity=".55"/></g>
+    <g class="fx fx-surprise">${eye(4.2)}<path d="M-14 -85 q5 -4 10 0 M4 -85 q5 -4 10 0" ${st}/><ellipse class="mouth" cx="0" cy="${my + 1}" rx="3.6" ry="4.6" fill="#8E2B2B"/></g>
+    <g class="talkm"><ellipse class="st-talk" cx="0" cy="${my + 1}" rx="5" ry="4.2" fill="#8E2B2B"/></g>
+    ${cheek ? `<circle cx="-17" cy="-63" r="4.5" fill="#FFAFAF" opacity=".55"/><circle cx="17" cy="-63" r="4.5" fill="#FFAFAF" opacity=".55"/>` : ""}`;
+}
+function stSpecies(c) {
+  const col = c.col, bel = c.belly, ln = c.line ? ` stroke="${c.line}" stroke-width="1.5"` : "";
+  const body = (tail) => `${tail || ""}<ellipse cx="-11" cy="-3" rx="9" ry="5" fill="${col}"${ln}/><ellipse cx="11" cy="-3" rx="9" ry="5" fill="${col}"${ln}/>
+    <ellipse cx="0" cy="-28" rx="23" ry="27" fill="${col}"${ln}/><ellipse cx="0" cy="-23" rx="14" ry="16" fill="${bel}"/>
+    <g class="stc-armL"><ellipse cx="-22" cy="-30" rx="7" ry="13" fill="${col}"${ln}/></g><g class="stc-armR"><ellipse cx="22" cy="-30" rx="7" ry="13" fill="${col}"${ln}/></g>`;
+  if (c.sp === "bear") return { body: body() + (c.scarf ? `<path d="M-20 -50 q20 12 40 0 l-2 9 q-18 10 -36 0z" fill="${c.scarf}"/><path d="M10 -46 l8 16 l-9 -3z" fill="${c.scarf}"/>` : ""),
+    ears: `<circle cx="-19" cy="-92" r="9" fill="${col}"/><circle cx="-19" cy="-92" r="5" fill="${bel}"/><circle cx="19" cy="-92" r="9" fill="${col}"/><circle cx="19" cy="-92" r="5" fill="${bel}"/>${c.scarf ? `<circle cx="24" cy="-99" r="5" fill="${c.scarf}"/><circle cx="24" cy="-99" r="2" fill="#FFE08A"/>` : ""}`,
+    snout: `<ellipse cx="0" cy="-62" rx="12" ry="9" fill="${bel}"/><ellipse cx="0" cy="-67" rx="4.5" ry="3.4" fill="${ST_INK}"/>`, my: -60 };
+  if (c.sp === "bunny") return { body: body(`<circle cx="21" cy="-14" r="8" fill="#fff"${ln}/>`),
+    ears: `<g class="st-ear"><ellipse cx="-10" cy="-108" rx="7" ry="22" fill="${col}"${ln}/><ellipse cx="-10" cy="-106" rx="3.5" ry="15" fill="#F7B6C8"/></g><g class="st-ear2"><ellipse cx="10" cy="-108" rx="7" ry="22" fill="${col}"${ln}/><ellipse cx="10" cy="-106" rx="3.5" ry="15" fill="#F7B6C8"/></g>`,
+    snout: `<ellipse cx="0" cy="-66" rx="3.2" ry="2.5" fill="#F48FB1"/>`, my: -61, cheek: 1 };
+  if (c.sp === "fox") return { body: body(`<path d="M14 -16 q30 -4 30 -34 q-2 -16 -12 -12 q4 18 -20 30z" fill="${col}"/><path d="M38 -54 q-4 -10 -10 -8 q4 6 2 12z" fill="#fff"/>`),
+    ears: `<path d="M-25 -84 L-17 -112 L-5 -94Z" fill="${col}"/><path d="M-20 -101 L-17 -112 L-12 -103Z" fill="#4A3020"/><path d="M25 -84 L17 -112 L5 -94Z" fill="${col}"/><path d="M20 -101 L17 -112 L12 -103Z" fill="#4A3020"/>`,
+    snout: `<path d="M-24 -70 q8 18 24 18 q16 0 24 -18 q-12 6 -24 2 q-12 4 -24 -2z" fill="${bel}"/><ellipse cx="0" cy="-64" rx="4" ry="3" fill="${ST_INK}"/>`, my: -58 };
+  if (c.sp === "squirrel") return { body: body(`<path d="M12 -10 q34 -6 26 -48 q-6 -24 -22 -14 q14 6 10 22 q-4 18 -20 22z" fill="#B0652F"/><path d="M28 -66 q-6 -10 -12 -6 q8 4 8 10z" fill="${bel}"/>`),
+    ears: `<circle cx="-16" cy="-94" r="7" fill="${col}"/><path d="M-18 -101 l-2 -7 l5 4z" fill="${col}"/><circle cx="16" cy="-94" r="7" fill="${col}"/><path d="M18 -101 l2 -7 l-5 4z" fill="${col}"/>`,
+    snout: `<ellipse cx="0" cy="-63" rx="11" ry="8" fill="${bel}"/><ellipse cx="0" cy="-67" rx="3.5" ry="2.6" fill="${ST_INK}"/>`, my: -60, cheek: 1 };
+  if (c.sp === "elephant") return { body: body(),
+    ears: `<ellipse cx="-29" cy="-72" rx="16" ry="20" fill="${col}"/><ellipse cx="-29" cy="-72" rx="10" ry="14" fill="#F2C4D4"/><ellipse cx="29" cy="-72" rx="16" ry="20" fill="${col}"/><ellipse cx="29" cy="-72" rx="10" ry="14" fill="#F2C4D4"/>`,
+    snout: "", trunk: `<path class="st-trunk" d="M0 -68 q-2 22 8 30 q6 4 9 -2" stroke="#7F98B2" stroke-width="12" fill="none" stroke-linecap="round"/><path d="M0 -68 q-2 22 8 30 q6 4 9 -2" stroke="${col}" stroke-width="8" fill="none" stroke-linecap="round"/>`, my: -57, cheek: 1 };
+  return { body: `<ellipse cx="-9" cy="-3" rx="8" ry="5" fill="#E74C3C"/><ellipse cx="9" cy="-3" rx="8" ry="5" fill="#E74C3C"/><rect x="-14" y="-24" width="11" height="22" rx="5" fill="#5B6C8F"/><rect x="3" y="-24" width="11" height="22" rx="5" fill="#5B6C8F"/><rect x="-20" y="-56" width="40" height="38" rx="15" fill="#FFC93C"/>
+      <g class="stc-armL"><rect x="-28" y="-54" width="9" height="28" rx="4.5" fill="#FFD9B8"/></g><g class="stc-armR"><rect x="19" y="-54" width="9" height="28" rx="4.5" fill="#FFD9B8"/></g>`,
+    ears: `<path d="M-26 -74 Q-25 -102 0 -101 Q26 -102 26 -74 Q14 -88 0 -87 Q-14 -88 -26 -74Z" fill="#5B3A29"/>`, col: "#FFD9B8", snout: "", my: -60, cheek: 1, kid: 1 };
+}
+/* 畫一個角色：o = { x, y, face, act, flip, enter, s } */
+function stChar(key, o) {
+  const c = ST_CHARS[key]; if (!c || !c.sp) return "";
+  const sp = stSpecies(c), s = (o.s || 1) * c.s, ln = c.line ? ` stroke="${c.line}" stroke-width="1.5"` : "";
+  const head = sp.kid
+    ? `<path d="M-26 -74 Q-25 -102 0 -101 Q26 -102 26 -74" fill="#5B3A29"/><circle cx="0" cy="-74" r="26" fill="#FFD9B8"/>${sp.ears}`
+    : `${sp.ears}<circle cx="0" cy="-72" r="26" fill="${c.col}"${ln}/>${sp.snout}`;
+  return `<g class="stpos" transform="translate(${o.x} ${o.y != null ? o.y : 262}) scale(${o.flip ? -s : s} ${s})"><g class="stmove${o.enter ? " st-enter" : ""}">
+    <g class="stc f-${o.face || "calm"}${o.act ? " a-" + o.act : ""}" data-c="${key}" role="img" aria-label="${c.n}">
+      <ellipse class="st-shadow" cx="0" cy="1" rx="26" ry="5" fill="#000" opacity=".12"/>
+      <g class="stc-act">${sp.body}<g class="stc-head">${head}${stFace(sp.my, sp.cheek)}${sp.trunk || ""}</g></g>
+    </g></g></g>`;
+}
+/* 角色的小頭像（故事書的對話泡泡用） */
+function stAvatar(key) {
+  const c = ST_CHARS[key]; if (!c || !c.sp) return `<span class="stav stav-n" aria-hidden="true">📖</span>`;
+  return `<svg class="stav" viewBox="-40 -125 80 80" aria-hidden="true">${stChar(key, { x: 0, y: 0, s: 1 / c.s, face: "happy" }).replace('class="stpos"', 'class="stpos stav-in"')}</svg>`;
+}
+
+/* ================= 場景（背景） ================= */
+const stTrees = (pts, dark) => pts.map(([x, y, r, k]) => `<g class="st-sway2" style="animation-delay:${-k}s"><rect x="${x - 5}" y="${y}" width="10" height="${262 - y}" fill="${dark ? "#6B4A32" : "#8B5E3C"}"/><circle cx="${x}" cy="${y}" r="${r}" fill="${dark ? "#3E8E5A" : "#5DBB63"}"/><circle cx="${x - r * 0.4}" cy="${y - r * 0.3}" r="${r * 0.6}" fill="${dark ? "#4FA06A" : "#77CC70"}"/></g>`).join("");
+const stFlowers = (pts, red) => pts.map(([x, y, k]) => `<g class="st-sway" style="animation-delay:${-k}s"><line x1="${x}" y1="${y}" x2="${x}" y2="${y + 12}" stroke="#4E9A3E" stroke-width="2"/><circle cx="${x}" cy="${y}" r="${red ? 5 : 4}" fill="${red ? "#E53935" : ["#FFD54A", "#F48FB1", "#FFFFFF"][Math.round(k * 3) % 3]}"/><circle cx="${x}" cy="${y}" r="1.6" fill="#FFF3B0"/></g>`).join("");
+const stCloud = (x, y, s, d) => `<g class="st-cloud" style="animation-delay:${d}s"><g transform="translate(${x} ${y}) scale(${s})"><circle cx="0" cy="0" r="14" fill="#fff"/><circle cx="16" cy="-6" r="18" fill="#fff"/><circle cx="34" cy="0" r="13" fill="#fff"/><rect x="0" y="0" width="34" height="13" fill="#fff"/></g></g>`;
+const stButterfly = () => `<g class="st-fly"><g transform="translate(250 120)"><g class="st-wing"><ellipse cx="-7" cy="0" rx="8" ry="10" fill="#FFD54A"/><ellipse cx="7" cy="0" rx="8" ry="10" fill="#FFD54A"/><ellipse cx="-6" cy="9" rx="5" ry="6" fill="#FFB300"/><ellipse cx="6" cy="9" rx="5" ry="6" fill="#FFB300"/></g><rect x="-1.5" y="-8" width="3" height="20" rx="1.5" fill="#5B3A29"/></g></g>`;
+function stAppleTree(x, tap) {
+  return `<g${tap ? ` data-tap="${tap}" class="sttap"` : ""}><rect x="${x - 8}" y="150" width="16" height="112" fill="#8B5E3C"/><circle cx="${x}" cy="140" r="46" fill="#5DBB63"/><circle cx="${x - 22}" cy="122" r="26" fill="#77CC70"/><circle cx="${x + 24}" cy="128" r="28" fill="#6CC46A"/>
+    ${[[-24, 132], [10, 116], [22, 150], [-6, 158], [-30, 106], [30, 130]].map(([dx, dy]) => `<circle cx="${x + dx}" cy="${dy}" r="6.5" fill="#E53935"/><rect x="${x + dx - 0.8}" y="${dy - 10}" width="1.6" height="5" fill="#5B3A29"/>`).join("")}</g>`;
+}
+const ST_BG = {
+  meadow: (o, u) => `<defs><linearGradient id="${u}sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${o.eve ? "#FFB677" : "#8FD3FF"}"/><stop offset="1" stop-color="${o.eve ? "#FFE3B5" : "#DFF4FF"}"/></linearGradient></defs>
+    <rect width="400" height="300" fill="url(#${u}sk)"/>
+    <g class="st-sun"><circle cx="${o.eve ? 330 : 60}" cy="${o.eve ? 200 : 52}" r="26" fill="${o.eve ? "#FF8A50" : "#FFC93C"}"/></g>
+    ${stCloud(90, 56, 1, 0)}${stCloud(260, 40, 0.8, -14)}
+    <ellipse cx="90" cy="250" rx="180" ry="60" fill="#9BD67A"/><ellipse cx="330" cy="255" rx="170" ry="55" fill="#8BCB6A"/><rect y="245" width="400" height="55" fill="#8BCF6A"/>
+    ${o.trees ? `<g data-tap="pine" class="sttap"><rect x="226" y="170" width="12" height="92" fill="#7A5230"/><path d="M232 98 L268 176 L196 176Z" fill="#3E8E5A"/><path d="M232 80 L260 136 L204 136Z" fill="#4FA06A"/></g>${stAppleTree(305, "apple")}<g data-tap="round" class="sttap"><rect x="364" y="160" width="12" height="102" fill="#8B5E3C"/><circle cx="370" cy="148" r="34" fill="#5DBB63"/><circle cx="356" cy="136" r="20" fill="#77CC70"/></g>` : ""}
+    ${o.red ? stFlowers(Array.from({ length: 22 }, (_, i) => [14 + i * 18 + (i % 3) * 4, 262 + (i % 4) * 8, (i % 5) * 0.37]), true) : stFlowers([[40, 266, 0], [96, 276, 0.6], [180, 270, 1.2], [300, 278, 0.3], [360, 268, 0.9]])}
+    ${o.butterfly ? stButterfly() : ""}`,
+  forest: (o, u) => `<defs><linearGradient id="${u}sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFE3CC"/><stop offset="1" stop-color="#8FC9A0"/></linearGradient></defs>
+    <rect width="400" height="300" fill="url(#${u}sk)"/>
+    ${stTrees([[30, 90, 40, 0], [110, 70, 46, 0.5], [200, 84, 42, 1], [290, 66, 48, 1.5], [380, 92, 40, 2]], true)}
+    <path class="st-ray" d="M150 0 L190 0 L260 262 L200 262Z" fill="#FFFDE7" opacity=".25"/><path class="st-ray" style="animation-delay:-2s" d="M260 0 L285 0 L340 262 L300 262Z" fill="#FFFDE7" opacity=".2"/>
+    <rect y="240" width="400" height="60" fill="#6BAF5A"/>
+    ${stTrees([[-10, 120, 34, 0.2], [400, 116, 36, 0.8]])}
+    <g><rect x="64" y="252" width="6" height="12" fill="#F5E6CC"/><path d="M56 254 q11 -16 22 0z" fill="#E53935"/><circle cx="62" cy="249" r="1.8" fill="#fff"/><circle cx="70" cy="251" r="1.6" fill="#fff"/></g>
+    ${[[60, 0], [180, -3], [330, -6]].map(([x, d]) => `<ellipse class="st-leaf" style="animation-delay:${d}s" cx="${x}" cy="40" rx="5" ry="3" fill="#9CCC65"/>`).join("")}`,
+  river: (o, u) => `<defs><linearGradient id="${u}sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9EDBFF"/><stop offset="1" stop-color="#E6F7FF"/></linearGradient></defs>
+    <rect width="400" height="300" fill="url(#${u}sk)"/>${stCloud(250, 46, 0.9, -6)}
+    ${stTrees([[40, 120, 30, 0], [120, 110, 34, 0.7], [360, 116, 32, 1.4]])}
+    <rect y="150" width="400" height="44" fill="#9BD67A"/><rect y="190" width="400" height="56" fill="#6EC1F0"/>
+    ${[200, 214, 228].map((y, k) => `<line class="st-flow" x1="0" y1="${y}" x2="400" y2="${y}" stroke="#BFE7FF" stroke-width="3" stroke-dasharray="18 26" style="animation-delay:${-k * 0.4}s"/>`).join("")}
+    ${o.bridge ? `<path d="M286 246 L330 246 L322 186 L298 186Z" fill="#B9875A"/>${[192, 204, 216, 228, 240].map(y => `<line x1="${300 - (y - 186) * 0.2}" y1="${y}" x2="${320 + (y - 186) * 0.13}" y2="${y}" stroke="#8B5E3C" stroke-width="2"/>`).join("")}<line x1="290" y1="246" x2="298" y2="182" stroke="#7A5230" stroke-width="3"/><line x1="326" y1="246" x2="322" y2="182" stroke="#7A5230" stroke-width="3"/>` : ""}
+    <rect y="244" width="400" height="56" fill="#8BCF6A"/>
+    ${o.rock ? `<ellipse cx="300" cy="248" rx="38" ry="14" fill="#A0A8B0"/><ellipse cx="300" cy="244" rx="34" ry="11" fill="#B8C0C8"/>` : ""}
+    ${[[30, 232], [380, 236]].map(([x, y]) => `<g class="st-sway"><path d="M${x} ${y + 20} q-4 -20 0 -34 M${x + 6} ${y + 20} q4 -18 2 -30" stroke="#4E9A3E" stroke-width="3" fill="none"/><ellipse cx="${x}" cy="${y - 14}" rx="3" ry="8" fill="#8D6E63"/></g>`).join("")}
+    ${o.nuts ? [[244, 268], [262, 274], [280, 268]].map(([x, y], k) => `<g class="st-nut" data-nut="${k}"><ellipse cx="${x}" cy="${y}" rx="6" ry="7" fill="#A0522D"/><path d="M${x - 7} ${y - 4} q7 -7 14 0z" fill="#6D3B1F"/><text class="st-nutn" x="${x}" y="${y - 14}" font-size="14" font-weight="900" text-anchor="middle" fill="#E65100"></text></g>`).join("") : ""}`,
+  home: (o, u) => `<defs><linearGradient id="${u}sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${o.eve ? "#FF9E6D" : "#8FD3FF"}"/><stop offset="1" stop-color="${o.eve ? "#FFE0B2" : "#DFF4FF"}"/></linearGradient></defs>
+    <rect width="400" height="300" fill="url(#${u}sk)"/>
+    ${o.eve ? `<circle cx="60" cy="214" r="30" fill="#FF7043" opacity=".85"/>` : `<g class="st-sun"><circle cx="60" cy="50" r="24" fill="#FFC93C"/></g>${stCloud(130, 50, 0.8, -4)}`}
+    <ellipse cx="350" cy="250" rx="110" ry="96" fill="#7DBF5E"/>
+    <rect x="368" y="98" width="14" height="40" fill="#8D6E63"/>${[0, -1.5].map(d => `<circle class="st-smoke" style="animation-delay:${d}s" cx="375" cy="92" r="7" fill="#fff" opacity=".7"/>`).join("")}
+    <path d="M320 262 v-44 a26 26 0 0 1 52 0 v44z" fill="#8B5E3C"/><circle cx="362" cy="238" r="3" fill="#FFD54A"/>
+    <circle cx="296" cy="196" r="12" fill="${o.eve ? "#FFE082" : "#BDE7FF"}" stroke="#8B5E3C" stroke-width="4"/>
+    ${stAppleTree(230)}
+    <rect y="252" width="400" height="48" fill="#8BCF6A"/>
+    ${stFlowers([[30, 268, 0.2], [150, 274, 0.8], [270, 270, 1.4]])}
+    ${o.cake ? `<ellipse cx="190" cy="282" rx="120" ry="14" fill="#F48FB1" opacity=".9"/><g transform="translate(190 268)"><rect x="-22" y="-16" width="44" height="18" rx="4" fill="#F6C66B"/><path d="M-22 -16 h44 v5 q-6 7 -11 0 q-5 7 -11 0 q-6 7 -11 0 q-5 7 -11 0z" fill="#FFB300"/><rect x="-1.5" y="-28" width="3" height="12" fill="#fff"/><ellipse class="st-flame" cx="0" cy="-31" rx="3" ry="5" fill="#FF9800"/></g>` : ""}`
+};
+const stBg = (bg, o, u) => (ST_BG[bg] || ST_BG.meadow)(o || {}, u || "st");
+
+/* ================= 🐻 動畫故事：主題與故事腳本（資料） ================= */
+const ST_THEMES = [
+  { id: "diary", ic: "🌞", n: "寶寶的生活日記", d: "起床、刷牙、吃早餐到說晚安的一天", bg: "#FFF1C9" },
+  { id: "animal", ic: "🐻", n: "動物朋友大冒險", d: "熊熊、兔兔、狐狸和松鼠的森林故事", bg: "#E4F4DA" },
+  { id: "nature", ic: "🌈", n: "奇妙的大自然", d: "彩虹、雨滴、種子和星星", bg: "#DDF0FF" },
+  { id: "learn", ic: "🔢", n: "玩中學小教室", d: "數字、顏色、形狀、大小", bg: "#F3E5FF" },
+  { id: "feel", ic: "❤️", n: "情緒小劇場", d: "生氣、難過、開心都可以說出來", bg: "#FFE3EA" },
+  { id: "night", ic: "🌙", n: "睡前故事時間", d: "慢慢的、溫柔的晚安故事", bg: "#E2E6FF" }
+];
+/* 每一頁：bg 場景、o 場景細節、cast 出場角色、lines 旁白和對話（誰、說什麼、表情、動作）、ask 互動、en 學一句英文、parent 陪讀提示 */
+const STORIES = [
+  {
+    id: "bearhome", theme: "animal", ic: "🐻", t: "熊熊找不到回家的路", mins: 5,
+    intro: "熊熊追蝴蝶追到森林裡，找不到家了！好朋友們會怎麼幫他呢？",
+    tags: ["認識心情", "請人幫忙", "數數 1～3", "觀察"],
+    cast: ["bear", "bunny", "squirrel", "fox", "mama"],
+    place: "草地、森林、小河邊、熊熊的家",
+    cover: { bg: "forest", o: {}, cast: [{ c: "bear", x: 150, f: "sad" }, { c: "bunny", x: 260, f: "happy", flip: 1 }] },
+    pages: [
+      { bg: "meadow", o: { butterfly: 1 }, cast: [{ c: "bear", x: 130, f: "happy", enter: 1 }],
+        lines: [["narr", "陽光暖暖的早上，熊熊在草地上玩。"],
+          ["bear", "哇！有一隻黃色的蝴蝶！", "surprise", "jump"],
+          ["bear", "蝴蝶蝴蝶，等等我！我們一起玩！", "happy", "walk"],
+          ["narr", "蝴蝶飛呀飛，熊熊跑呀跑，跑得好遠好遠。"]],
+        en: ["Butterfly!", "蝴蝶！"], parent: "問問寶寶：你看過蝴蝶嗎？牠是什麼顏色的？" },
+      { bg: "forest", cast: [{ c: "bear", x: 200, f: "surprise" }],
+        lines: [["narr", "咦？四周都是高高的大樹，蝴蝶也不見了。"],
+          ["bear", "這裡是哪裡呀？", "surprise", "look"],
+          ["bear", "我的家呢？我找不到回家的路了……", "sad", "shake"],
+          ["narr", "熊熊心裡有點害怕，鼻子酸酸的，眼睛紅紅的。", "sad", "droop"]],
+        ask: { type: "choice", q: "寶寶，熊熊現在的心情是怎麼樣呢？", opts: [["😊", "開心"], ["😢", "難過、害怕", 1]],
+          hint: "你看，熊熊的嘴巴往下彎，眼睛紅紅的。再看一次，熊熊是開心，還是難過呢？",
+          ok: "答對了！熊熊有點難過，也有點害怕。害怕的時候，可以說出來喔。" },
+        en: ["I'm lost.", "我迷路了。"], parent: "可以跟寶寶說：「難過、害怕都沒關係，可以說出來，爸爸媽媽會幫你。」" },
+      { bg: "forest", cast: [{ c: "bear", x: 140, f: "sad" }, { c: "bunny", x: 280, f: "happy", flip: 1, enter: 1 }],
+        lines: [["narr", "這時候，草叢裡跳出了一隻小兔子。"],
+          ["bunny", "嗨！我是兔兔。熊熊，你怎麼了？", "happy", "jump"],
+          ["bear", "兔兔，我迷路了，找不到家……", "sad", "droop"],
+          ["bunny", "別擔心，我陪你一起找！你家旁邊有什麼呢？", "happy", "nod"],
+          ["bear", "嗯……我家門口有一棵好大的蘋果樹，上面有紅紅的蘋果！", "calm", "think"],
+          ["bunny", "紅紅的蘋果樹！好，我們出發吧！", "happy", "wave"]],
+        en: ["Don't worry!", "別擔心！"], parent: "問問寶寶：熊熊迷路了，兔兔是怎麼幫忙的？" },
+      { bg: "river", o: { rock: 1, nuts: 1 }, cast: [{ c: "bear", x: 90, f: "calm" }, { c: "bunny", x: 160, f: "happy" }, { c: "squirrel", x: 300, y: 242, f: "surprise", flip: 1 }],
+        lines: [["narr", "他們走到小河邊，聽到嘩啦嘩啦的水聲。"],
+          ["squirrel", "哇，有客人！你們要去哪裡呀？", "surprise", "jump"],
+          ["bunny", "松鼠你好！我們在找一棵有紅蘋果的大樹。", "happy", "wave"],
+          ["squirrel", "我知道、我知道！我剛剛就是從那邊撿果子回來的！", "happy", "nod"]],
+        ask: { type: "count", q: "寶寶，小松鼠撿了幾顆果子呢？我們一起數一數！", opts: [["2", "兩顆"], ["3", "三顆", 1], ["4", "四顆"]],
+          hint: "我們用手指，一顆一顆數：一、二、三。", ok: "答對了！一、二、三，是三顆果子！" },
+        en: ["Three nuts!", "三顆果子！"], parent: "和寶寶一起用手指點著畫面數一數：一、二、三。" },
+      { bg: "river", o: { bridge: 1 }, cast: [{ c: "bear", x: 80, f: "calm" }, { c: "bunny", x: 140, f: "happy" }, { c: "squirrel", x: 196, f: "happy" }, { c: "fox", x: 370, f: "happy", flip: 1, enter: 1 }],
+        lines: [["squirrel", "過了小河，往紅紅的小花那邊走，就到了！", "happy", "wave"],
+          ["bear", "可是……河水好像很深，我不敢過去。", "sad", "shake"],
+          ["fox", "不要走進水裡喔！那邊有一座小木橋，走橋才安全。", "happy", "nod"],
+          ["bear", "謝謝你，狐狸！", "happy", "nod"],
+          ["fox", "不客氣！我陪你們走過去。", "happy", "wave"],
+          ["narr", "大家一個接一個，慢慢地走過小木橋。"]],
+        en: ["Thank you!", "謝謝你！"], parent: "提醒寶寶：在水邊要牽著大人的手，不可以自己靠近水。" },
+      { bg: "meadow", o: { red: 1, trees: 1 }, cast: [{ c: "bear", x: 60, f: "calm" }, { c: "bunny", x: 116, f: "happy" }, { c: "fox", x: 166, f: "happy", s: 0.9 }],
+        lines: [["narr", "走過小木橋，眼前是一大片紅紅的小花。"],
+          ["bunny", "熊熊，你看那邊！有好多樹喔。", "surprise", "jump"],
+          ["bear", "哪一棵是我家門口的蘋果樹呢？", "calm", "think"]],
+        ask: { type: "tap", q: "寶寶，你能幫熊熊找到有紅蘋果的那棵樹嗎？點點看！", target: "apple",
+          hint: "這棵樹上沒有蘋果喔。找找看，哪一棵樹上有紅紅圓圓的蘋果？", ok: "找到了！就是這棵紅蘋果樹！" },
+        en: ["Apple tree!", "蘋果樹！"], parent: "問問寶寶：蘋果是什麼顏色的？還有什麼東西也是紅色的？" },
+      { bg: "home", cast: [{ c: "fox", x: 40, f: "happy", s: 0.85 }, { c: "squirrel", x: 92, f: "happy" }, { c: "bunny", x: 140, f: "happy" }, { c: "bear", x: 200, f: "happy", enter: 1 }, { c: "mama", x: 300, f: "surprise", flip: 1 }],
+        lines: [["mama", "熊熊！你跑到哪裡去了？媽媽好擔心你。", "surprise", "look"],
+          ["bear", "媽媽！我迷路了，是好朋友們帶我回家的！", "happy", "jump"],
+          ["mama", "你害怕的時候有說出來，還請大家幫忙，真勇敢。", "happy", "hug"],
+          ["mama", "謝謝兔兔、松鼠和狐狸，謝謝你們！", "happy", "wave"],
+          ["squirrel", "不客氣！", "happy", "jump"]],
+        en: ["I'm home!", "我回家了！"], parent: "可以和寶寶練習：在外面跟家人走散時，待在原地，請警察、店員或帶著小孩的爸爸媽媽幫忙。" },
+      { bg: "home", o: { eve: 1, cake: 1 }, cast: [{ c: "fox", x: 36, f: "happy", s: 0.85 }, { c: "squirrel", x: 84, f: "happy" }, { c: "bunny", x: 128, f: "happy" }, { c: "bear", x: 254, f: "happy", flip: 1 }, { c: "mama", x: 338, f: "happy", flip: 1 }],
+        lines: [["narr", "熊媽媽拿出香香甜甜的蜂蜜蛋糕，請大家一起吃。"],
+          ["bunny", "哇，好香喔！謝謝熊媽媽！", "happy", "jump"],
+          ["bear", "有好朋友真好。明天我們再一起玩吧！", "happy", "wave"],
+          ["narr", "太陽慢慢下山了。熊熊知道，遇到困難的時候，只要說出來，就會有人幫忙。"]],
+        en: ["Good friends!", "好朋友！"], parent: "問問寶寶：今天熊熊遇到了誰？誰幫了他？" }
+    ],
+    lesson: ["😢 難過、害怕的時候，可以說出來。", "🙋 跟家人走散時：待在原地，請警察、店員或帶小孩的爸爸媽媽幫忙。", "🌊 在水邊要牽大人的手，走橋才安全。", "🔢 數一數：一、二、三。", "🍎 觀察：紅紅圓圓的蘋果長在樹上。"]
+  }
+];
+const stStory = id => STORIES.find(s => s.id === id);
+
+/* ================= 🐻 動畫故事：語音控制（每個角色不同聲音） ================= */
+function sayZhP(text, rate, pitch) {
+  return new Promise(res => {
+    if (!TTS || !text) return res();
+    stopHuman(); speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text), v = zhVoice();
+    if (v) u.voice = v; u.lang = (v && v.lang) || "zh-TW"; u.rate = rate || 0.88; u.pitch = Math.max(0.1, Math.min(2, pitch || 1));
+    let fin = false; const end = () => { if (!fin) { fin = true; res(); } };
+    u.onend = end; u.onerror = end; setTimeout(end, 12000);
+    setTimeout(() => speechSynthesis.speak(u), 60);
+  });
+}
+const stReadMs = t => Math.max(1500, String(t).length * 260);
+/* 有 AI 語音就用角色自己的 AI 聲音；沒有就用瀏覽器語音（調音高分角色）；都沒有也會照字幕時間播完 */
+async function stVoice(who, text, tok) {
+  const ch = ST_CHARS[who] || ST_CHARS.narr, t0 = Date.now(), min = stReadMs(text);
+  if (state.stMute) { await waitMs(min); return; }
+  const u = await aivWait(ch.v, text, 3000);
+  if (tok !== ST.tok) return;
+  let ok = false;
+  if (u) ok = await playUrl(u, 1);
+  if (tok !== ST.tok) return;
+  if (!ok) { if (AIV_ON()) aivQueue([[ch.v, text]]); await sayZhP(text, ch.rate, ch.pitch); }
+  const used = Date.now() - t0; if (used < min * 0.6) await waitMs(min - used);
+}
+function stStopAudio() { stopHuman(); if (TTS) speechSynthesis.cancel(); }
+function stPrefetch(S, pg) {
+  const out = [];
+  [pg, pg + 1].forEach(k => { const P = S.pages[k]; if (!P) return; P.lines.forEach(([w, t]) => out.push([(ST_CHARS[w] || ST_CHARS.narr).v, t])); if (P.ask) out.push(["zh", P.ask.q]); });
+  aivPrefetch(out.slice(0, 12));
+}
+function stAivItems() {
+  const out = [];
+  STORIES.forEach(S => {
+    S.pages.forEach(P => {
+      P.lines.forEach(([w, t]) => out.push([(ST_CHARS[w] || ST_CHARS.narr).v, t]));
+      if (P.ask) ["q", "hint", "ok"].forEach(k => P.ask[k] && out.push(["zh", P.ask[k]]));
+      if (P.en) out.push([aivFor(P.en[0]), P.en[0]]);
+    });
+    out.push(["zh", S.intro]);
+  });
+  ST_CHEER.forEach(t => out.push(["zh", t]));
+  return out;
+}
+const ST_CHEER = ["你好棒！", "沒關係，我們再試一次。"];
+
+/* ================= 🐻 動畫故事：動畫控制 ================= */
+const ST = { tok: 0, view: "home", sid: "", pg: 0, ln: 0, drawn: -1, playing: false, mode: "anim", bp: 0 };
+const stCalm = () => state.stCalm === true;
+function stScene(P, u, still) {
+  return `<svg class="stv${stCalm() || still ? " stcalm" : ""}" viewBox="0 0 400 300" role="img" aria-label="故事插圖">${stBg(P.bg, P.o, u)}${P.cast.map(c => stChar(c.c, { x: c.x, y: c.y, face: c.f, flip: c.flip, enter: still ? 0 : c.enter, s: c.s })).join("")}</svg>`;
+}
+const stEl = key => $("stStage") ? $("stStage").querySelector(`.stc[data-c="${key}"]`) : null;
+function stSetFace(key, f) { const el = stEl(key); if (!el || !f) return; el.className.baseVal.split(" ").filter(c => c.indexOf("f-") === 0).forEach(c => el.classList.remove(c)); el.classList.add("f-" + f); }
+function stSetAct(key, a) {
+  const el = stEl(key); if (!el || !a) return;
+  el.className.baseVal.split(" ").filter(c => c.indexOf("a-") === 0).forEach(c => el.classList.remove(c));
+  void el.getBoundingClientRect(); el.classList.add("a-" + a);
+  clearTimeout(el._at); el._at = setTimeout(() => el.classList.remove("a-" + a), 2600);
+}
+function stTalk(key, on) { const el = stEl(key); if (el) el.classList.toggle("talk", !!on); }
+function stDraw(S, pg) {
+  const P = S.pages[pg]; if (!$("stStage")) return;
+  $("stStage").innerHTML = stScene(P, "p" + pg, ST.mode === "book");
+  $("stStage").querySelectorAll(".stc").forEach(el => el.onclick = () => stTapChar(el.dataset.c));
+  ST.drawn = pg; stDots(S); stPrefetch(S, pg);
+  if ($("stEn")) $("stEn").innerHTML = ""; if ($("stPar")) $("stPar").hidden = true; if ($("stAsk")) { $("stAsk").hidden = true; $("stAsk").innerHTML = ""; }
+}
+function stDots(S) { const d = $("stDots"); if (!d) return; const cur = ST.mode === "book" ? ST.bp : ST.pg; d.innerHTML = S.pages.map((_, i) => `<i class="${i === cur ? "on" : i < cur ? "done" : ""}"></i>`).join("") + `<span class="muted" style="font-size:12px;margin-left:6px">${Math.min(cur + 1, S.pages.length)} / ${S.pages.length}</span>`; }
+function stSub(who, text) {
+  const b = $("stSub"); if (!b) return;
+  if (!text) { b.innerHTML = `<span class="muted" style="font-size:14px">按 ▶ 開始看故事</span>`; return; }
+  const ch = ST_CHARS[who] || ST_CHARS.narr;
+  b.innerHTML = `<span class="stwho${who === "narr" ? " narr" : ""}">${esc(ch.n)}</span><span class="sttxt">${esc(text)}</span>`;
+}
+/* 說一句：設定表情和動作、字幕、嘴巴動、播放語音 */
+async function stLine(S, P, line, tok) {
+  const [who, text, face, act, tgt] = line, key = who === "narr" ? (tgt || (face || act ? P.cast[0].c : "")) : who;
+  if (key) { stSetFace(key, face); stSetAct(key, act); }
+  stSub(who, text); bookNow(line);
+  if (who !== "narr") stTalk(who, true);
+  await stVoice(who, text, tok);
+  stTalk(who, false);
+}
+function bookNow(line) { const box = $("stBText"); if (!box) return; box.querySelectorAll(".now").forEach(x => x.classList.remove("now")); const P = stStory(ST.sid).pages[ST.mode === "book" ? ST.bp : ST.pg]; const i = P ? P.lines.indexOf(line) : -1; const el = i >= 0 ? box.querySelector(`[data-li="${i}"]`) : null; if (el) el.classList.add("now"); }
+function stBurst() {
+  const svg = $("stStage") && $("stStage").querySelector("svg"); if (!svg) return;
+  const g = document.createElementNS(svg.namespaceURI, "g"); g.setAttribute("class", "st-burst");
+  g.innerHTML = Array.from({ length: 10 }, (_, i) => { const a = i / 10 * Math.PI * 2; return `<path style="--bx:${Math.round(Math.cos(a) * 120)}px;--by:${Math.round(Math.sin(a) * 90)}px" d="M200 138 l4 9 l9 4 l-9 4 l-4 9 l-4 -9 l-9 -4 l9 -4z" fill="${["#FFD54A", "#FF8A65", "#81C784", "#64B5F6", "#F48FB1"][i % 5]}"/>`; }).join("");
+  svg.appendChild(g); setTimeout(() => g.remove(), 1500);
+}
+/* 互動：選答案、數數、點畫面；答錯不扣分，給提示再試一次 */
+function stAsk(S, P, tok) {
+  const A = P.ask, box = $("stAsk"); if (!A || !box) return Promise.resolve(true);
+  return new Promise(res => {
+    let done = false, busy = false;
+    const finish = async () => {
+      if (done) return; done = true; stBurst(); stSetAct(P.cast[0].c, A.type === "choice" ? "nod" : "jump"); if (A.type !== "choice") stSetFace(P.cast[0].c, "happy");
+      box.querySelectorAll("button").forEach(b => b.disabled = true);
+      stSub("narr", A.ok); await stVoice("narr", A.ok, tok); if (tok !== ST.tok) return;
+      box.hidden = true; res(true);
+    };
+    const wrong = async (el) => {
+      if (busy || done) return; busy = true; if (el) { el.classList.remove("no", "st-no"); void el.getBoundingClientRect(); el.classList.add(A.type === "tap" ? "st-no" : "no"); }
+      stSub("narr", A.hint);
+      if (A.type === "count") stCountNuts();
+      await stVoice("narr", A.hint, tok); busy = false;
+    };
+    box.hidden = false;
+    box.innerHTML = `<div class="q">🙋 ${esc(A.q)}</div>${A.type === "tap" ? `<div class="muted" style="font-size:13px">👆 直接點上面的圖</div>` : `<div class="stopts">${A.opts.map((o, i) => `<button class="stopt" data-ai="${i}"><b>${esc(o[0])}</b>${esc(o[1])}</button>`).join("")}</div>`}
+      <button class="btn small" id="stSkip">跳過這題</button>`;
+    box.querySelectorAll("[data-ai]").forEach(b => b.onclick = () => { if (A.opts[Number(b.dataset.ai)][2]) { b.classList.add("ok"); finish(); } else wrong(b); });
+    if (A.type === "tap") $("stStage").querySelectorAll("[data-tap]").forEach(t => t.onclick = () => { if (t.dataset.tap === A.target) { t.classList.add("st-yes"); finish(); } else wrong(t); });
+    $("stSkip").onclick = () => { if (done) return; done = true; stStopAudio(); box.hidden = true; res(true); };
+    stSub("narr", A.q); stVoice("narr", A.q, tok);
+  });
+}
+function stCountNuts() {
+  const ns = $("stStage") ? [...$("stStage").querySelectorAll(".st-nut")] : [];
+  ns.forEach((n, i) => setTimeout(() => { n.classList.remove("on"); void n.getBoundingClientRect(); n.classList.add("on"); const t = n.querySelector(".st-nutn"); if (t) t.textContent = String(i + 1); }, 900 + i * 700));
+}
+async function stSayEn(P, tok) {
+  const b = $("stEn"); if (!b || !P.en) return;
+  b.innerHTML = `<div class="sten"><span>🔤 學一句英文</span><b>${esc(P.en[0])}</b><span class="muted">${esc(P.en[1])}</span><button class="btn small" id="stEnBtn" aria-label="聽英文">🔊</button></div>`;
+  $("stEnBtn").onclick = () => sayLine(P.en[0], false);
+  if (state.stEn === false) return;
+  if (state.stMute) { await waitMs(1200); return; }
+  await sayLine(P.en[0], true); if (tok !== ST.tok) return; await waitMs(400);
+}
+async function stRun(tok) {
+  const S = stStory(ST.sid); if (!S) return;
+  while (ST.pg < S.pages.length) {
+    const P = S.pages[ST.pg];
+    if (ST.drawn !== ST.pg) { stDraw(S, ST.pg); await waitMs(P.cast.some(c => c.enter) && !stCalm() ? 1500 : 600); if (tok !== ST.tok) return; }
+    for (; ST.ln < P.lines.length; ST.ln++) { await stLine(S, P, P.lines[ST.ln], tok); if (tok !== ST.tok) return; await waitMs(380); if (tok !== ST.tok) return; }
+    if (P.ask) { await stAsk(S, P, tok); if (tok !== ST.tok) return; }
+    await stSayEn(P, tok); if (tok !== ST.tok) return;
+    if (state.stParent) { stParentPause(S, P); return; }
+    await waitMs(1100); if (tok !== ST.tok) return;
+    ST.pg++; ST.ln = 0;
+  }
+  stFinish(S);
+}
+function stParentPause(S, P) {
+  ST.playing = false; stPlayBtn();
+  const b = $("stPar"); if (!b) return; b.hidden = false;
+  b.innerHTML = `<b>👨‍👩‍👧 陪讀時間</b><span>${esc(P.parent || "和寶寶聊聊這一頁看到了什麼。")}</span><button class="btn primary" id="stParNext">${ST.pg + 1 < S.pages.length ? "下一頁 ▶" : "看完了 ▶"}</button>`;
+  $("stParNext").onclick = () => { b.hidden = true; ST.pg++; ST.ln = 0; stPlay(); };
+}
+function stPlay() { ST.playing = true; stPlayBtn(); const tok = ++ST.tok; stRun(tok).then(() => { if (tok === ST.tok && ST.mode === "anim" && !state.stParent) { ST.playing = false; stPlayBtn(); } }); }
+function stPause() { ST.tok++; ST.playing = false; stStopAudio(); document.querySelectorAll(".stc.talk").forEach(e => e.classList.remove("talk")); stPlayBtn(); }
+function stPlayBtn() { const b = $("stPlay"); if (b) { b.textContent = ST.playing ? "⏸ 暫停" : ST.pg >= (stStory(ST.sid) || { pages: [] }).pages.length ? "🔁 重看" : "▶ 播放"; b.setAttribute("aria-label", ST.playing ? "暫停" : "播放"); } }
+function stGo(pg) { const S = stStory(ST.sid); stPause(); ST.pg = Math.max(0, Math.min(S.pages.length - 1, pg)); ST.ln = 0; ST.drawn = -1; stPlay(); }
+function stTapChar(key) {
+  if (ST.mode === "book") { bookSayChar(key); return; }
+  if (ST.playing) return;
+  const S = stStory(ST.sid), P = S && S.pages[ST.pg]; if (!P) return;
+  const line = P.lines.find(l => l[0] === key); if (!line) { stSetAct(key, "jump"); return; }
+  const tok = ++ST.tok; stLine(S, P, line, tok);
+}
+function stFinish(S) {
+  ST.playing = false; stPlayBtn();
+  const seen = Object.assign({}, state.stSeen || {}); seen[S.id] = (seen[S.id] || 0) + 1; state.stSeen = seen; Store.save();
+  growMark("story " + S.id, "heard");
+  stSub("narr", "故事說完了！你好棒！");
+  const b = $("stAsk"); if (!b) return; b.hidden = false; b.innerHTML = stLessonHtml(S) + `<div class="row" style="gap:8px;flex-wrap:wrap;justify-content:center"><button class="btn primary" id="stAgain">🔁 再看一次</button><button class="btn" id="stToBook">📖 用故事書看</button><button class="btn" id="stToList">← 故事列表</button></div>`;
+  stLessonBind(b);
+  $("stAgain").onclick = () => { ST.pg = 0; ST.ln = 0; ST.drawn = -1; b.hidden = true; stPlay(); };
+  $("stToBook").onclick = () => { ST.mode = "book"; ST.bp = 0; stOpenView(); };
+  $("stToList").onclick = () => { stPause(); ST.view = "theme:" + S.theme; renderStoryTab(); };
+  if (!state.stMute) stVoice("narr", "故事說完了！你好棒！", ST.tok);
+}
+function stLessonHtml(S) {
+  return `<div style="text-align:left;width:100%"><b style="font-size:17px">🌟 這個故事學到了</b><ul class="stlesson" style="margin:6px 0 0;padding-left:20px">${S.lesson.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+    <b style="font-size:15px;display:block;margin-top:8px">🔤 故事裡的英文</b><div class="row" style="gap:6px;flex-wrap:wrap;margin-top:4px">${S.pages.filter(p => p.en).map(p => `<button class="btn small" data-sten="${esc(p.en[0])}">🔊 ${esc(p.en[0])} <span class="muted">${esc(p.en[1])}</span></button>`).join("")}</div></div>`;
+}
+function stLessonBind(box) { box.querySelectorAll("[data-sten]").forEach(b => b.onclick = () => sayLine(b.dataset.sten, true)); }
+
+/* ================= 📖 故事書模式 ================= */
+function bookRender(S) {
+  const n = S.pages.length, last = ST.bp >= n;
+  const box = $("stBody"); if (!box) return;
+  if (last) {
+    box.innerHTML = `<div class="stbook"><div style="text-align:center;font-size:44px">🌟</div><h3 style="margin:0;text-align:center">${esc(S.t)}・故事說完了</h3>${stLessonHtml(S)}
+      <div class="row" style="gap:8px;flex-wrap:wrap;justify-content:center"><button class="btn" id="bkPrev">◀ 上一頁</button><button class="btn primary" id="bkAgain">🔁 從頭再讀</button><button class="btn" id="bkAnim">🎬 看動畫</button></div></div>`;
+    stLessonBind(box);
+    $("bkPrev").onclick = () => { stPause(); ST.bp = n - 1; bookRender(S); };
+    $("bkAgain").onclick = () => { stPause(); ST.bp = 0; bookRender(S); };
+    $("bkAnim").onclick = () => { stPause(); ST.mode = "anim"; ST.pg = 0; ST.ln = 0; ST.drawn = -1; stOpenView(); };
+    const seen = Object.assign({}, state.stSeen || {}); seen[S.id] = (seen[S.id] || 0) + 1; state.stSeen = seen; Store.save(); growMark("story " + S.id, "heard");
+    return;
+  }
+  const P = S.pages[ST.bp];
+  box.innerHTML = `<div class="stbook"><div id="stStage"></div><div class="stdots" id="stDots"></div>
+    <div class="stbtext" id="stBText">${P.lines.map(([w, t], i) => w === "narr" ? `<p class="narr" data-li="${i}">${esc(t)}</p>` : `<button class="stbub" data-li="${i}">${stAvatar(w)}<span class="bb"><small>${esc(ST_CHARS[w].n)}</small>${esc(t)}</span></button>`).join("")}</div>
+    <div class="stask" id="stAsk" hidden></div><div id="stEn"></div>
+    ${P.parent ? `<div class="stparent"><span><b>👨‍👩‍👧 陪讀小提示：</b>${esc(P.parent)}</span></div>` : ""}
+    <div class="row" style="gap:8px;flex-wrap:wrap;justify-content:center"><button class="btn" id="bkPrev"${ST.bp ? "" : " disabled"}>◀ 上一頁</button><button class="btn primary" id="bkRead">🔊 朗讀這頁</button><button class="btn" id="bkNext">下一頁 ▶</button></div></div>`;
+  ST.pg = ST.bp; stDraw(S, ST.bp); ST.drawn = -1;
+  stSayEnCard(P);
+  if (P.ask) { $("stAsk").hidden = false; $("stAsk").innerHTML = `<div class="q">🙋 ${esc(P.ask.q)}</div><button class="btn" id="bkAsk">來回答</button>`; $("bkAsk").onclick = () => { stPause(); const tok = ++ST.tok; stAsk(S, P, tok); }; }
+  $("stBText").querySelectorAll("[data-li]").forEach(el => el.onclick = () => { stPause(); const tok = ++ST.tok; stLine(S, P, P.lines[Number(el.dataset.li)], tok); });
+  $("bkPrev").onclick = () => { stPause(); ST.bp = Math.max(0, ST.bp - 1); bookRender(S); };
+  $("bkNext").onclick = () => { stPause(); ST.bp++; bookRender(S); };
+  $("bkRead").onclick = () => bookRead(S, P);
+  if (state.stAuto) bookRead(S, P);
+}
+function stSayEnCard(P) { const b = $("stEn"); if (!b || !P.en) return; b.innerHTML = `<div class="sten"><span>🔤 學一句英文</span><b>${esc(P.en[0])}</b><span class="muted">${esc(P.en[1])}</span><button class="btn small" id="stEnBtn" aria-label="聽英文">🔊</button></div>`; $("stEnBtn").onclick = () => sayLine(P.en[0], true); }
+async function bookRead(S, P) {
+  if (ST.playing) { stPause(); return; }
+  ST.playing = true; const tok = ++ST.tok; const btn = $("bkRead"); if (btn) btn.textContent = "⏸ 停止朗讀";
+  for (const line of P.lines) { await stLine(S, P, line, tok); if (tok !== ST.tok) return; await waitMs(350); if (tok !== ST.tok) return; }
+  bookNow(null);
+  if (P.ask && state.stAuto) { await stAsk(S, P, tok); if (tok !== ST.tok) return; }
+  ST.playing = false; if (btn) btn.textContent = "🔊 朗讀這頁";
+  if (state.stAuto) { await waitMs(1200); if (tok !== ST.tok) return; ST.bp++; bookRender(S); }
+}
+function bookSayChar(key) {
+  const S = stStory(ST.sid), P = S && S.pages[ST.bp]; if (!P) return;
+  const lines = P.lines.filter(l => l[0] === key);
+  stPause(); const tok = ++ST.tok;
+  if (!lines.length) { stSetAct(key, "jump"); return; }
+  (async () => { for (const l of lines) { await stLine(S, P, l, tok); if (tok !== ST.tok) return; await waitMs(300); } })();
+}
+
+/* ================= 主題首頁、故事列表、播放頁 ================= */
+const stFavs = () => Array.isArray(state.stFav) ? state.stFav : [];
+function stCover(S) { const c = S.cover; return `<svg viewBox="0 0 400 300" class="stcalm" aria-hidden="true">${stBg(c.bg, c.o, "cv" + S.id)}${c.cast.map(x => stChar(x.c, { x: x.x, y: x.y, face: x.f, flip: x.flip, s: x.s })).join("")}</svg>`; }
+function stCard(S) {
+  const seen = (state.stSeen || {})[S.id], fav = stFavs().includes(S.id);
+  return `<button class="stcard" data-sto="${S.id}"><span class="cov">${stCover(S)}</span><span class="meta"><b>${S.ic} ${esc(S.t)}</b><span>${esc(S.intro)}</span>
+    <span class="sttags">${S.tags.map(t => `<i>${esc(t)}</i>`).join("")}</span><span style="display:flex;gap:6px;align-items:center;font-size:12px" class="muted">⏱ 約 ${S.mins} 分鐘・${S.pages.length} 頁 <span class="stnew${seen ? " seen" : ""}">${seen ? `看過 ${seen} 次` : "新故事"}</span>${fav ? " ❤️" : ""}</span></span></button>`;
+}
+function renderStoryTab() {
+  bbStopAll(); ST.playing = false;
+  const v = ST.view || "home";
+  if (v === "diary") return renderDay();
+  if (v.indexOf("story:") === 0) { ST.sid = v.slice(6); return stOpenView(); }
+  if (v.indexOf("theme:") === 0) return stThemeView(v.slice(6));
+  stHome();
+}
+function stHome() {
+  const rec = (state.stRecent || []).map(stStory).filter(Boolean), favs = stFavs().map(stStory).filter(Boolean);
+  $("bbView").innerHTML = `
+    <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn primary" id="stRand">🎲 隨機挑一個故事</button></div>
+    ${rec.length ? `<div><b style="font-size:15px">🕘 最近看過</b><div class="bbthemes" style="margin-top:6px">${rec.map(S => `<button class="tchip" data-sto="${S.id}">${S.ic} ${esc(S.t)}</button>`).join("")}</div></div>` : ""}
+    ${favs.length ? `<div><b style="font-size:15px">❤️ 我的收藏</b><div class="bbthemes" style="margin-top:6px">${favs.map(S => `<button class="tchip" data-sto="${S.id}">${S.ic} ${esc(S.t)}</button>`).join("")}</div></div>` : ""}
+    <div class="stthemes">${ST_THEMES.map(T => { const n = T.id === "diary" ? 12 : STORIES.filter(S => S.theme === T.id).length; return `<button class="sttheme" data-stt="${T.id}" style="background:${T.bg}"${n ? "" : " disabled"}><span class="ic">${T.ic}</span><b>${esc(T.n)}</b><small>${esc(T.d)}</small><small style="font-weight:700">${T.id === "diary" ? "12 幕生活動畫" : n ? `${n} 個故事` : "下一批製作中"}</small></button>`; }).join("")}</div>
+    <p class="muted" style="margin:0;font-size:12px;text-align:center">角色、場景和故事都是原創的，用程式畫出來、會動的動畫，不用下載影片。每個故事都有動畫和故事書兩種看法，有互動問答，也可以開「家長陪讀」一頁一頁慢慢聊。</p>`;
+  $("bbView").querySelectorAll("[data-stt]").forEach(b => b.onclick = () => { ST.view = b.dataset.stt === "diary" ? "diary" : "theme:" + b.dataset.stt; renderStoryTab(); });
+  $("bbView").querySelectorAll("[data-sto]").forEach(b => b.onclick = () => stOpen(b.dataset.sto));
+  $("stRand").onclick = () => { const S = STORIES[Math.floor(Math.random() * STORIES.length)]; stOpen(S.id); };
+}
+function stThemeView(tid) {
+  const T = ST_THEMES.find(x => x.id === tid) || ST_THEMES[1], list = STORIES.filter(S => S.theme === tid);
+  $("bbView").innerHTML = `<button class="btn small" id="stBack" style="align-self:flex-start">← 動畫故事</button>
+    <div style="background:${T.bg};border-radius:20px;padding:12px 14px"><b style="font-size:19px">${T.ic} ${esc(T.n)}</b><div class="muted" style="font-size:13px">${esc(T.d)}</div></div>
+    <div class="stlist">${list.map(stCard).join("")}</div>`;
+  $("stBack").onclick = () => { ST.view = "home"; renderStoryTab(); };
+  $("bbView").querySelectorAll("[data-sto]").forEach(b => b.onclick = () => stOpen(b.dataset.sto));
+}
+function stOpen(id) {
+  const S = stStory(id); if (!S) return;
+  state.stRecent = [id].concat((state.stRecent || []).filter(x => x !== id)).slice(0, 5); Store.save();
+  ST.view = "story:" + id; ST.sid = id; ST.pg = 0; ST.ln = 0; ST.bp = 0; ST.drawn = -1; ST.mode = state.stMode === "book" ? "book" : "anim";
+  renderStoryTab();
+}
+function stOpenView() {
+  const S = stStory(ST.sid); if (!S) { ST.view = "home"; return stHome(); }
+  const fav = stFavs().includes(S.id), tog = (k, on, a, b) => `<div class="seg"><button data-sttg="${k}" data-v="1" aria-pressed="${on}">${a}</button><button data-sttg="${k}" data-v="0" aria-pressed="${!on}">${b}</button></div>`;
+  $("bbView").innerHTML = `<div class="row" style="gap:8px;align-items:center"><button class="btn small" id="stBack">← 故事列表</button><b style="flex:1;min-width:0;font-size:17px">${S.ic} ${esc(S.t)}</b><button class="icon-btn" id="stFav" aria-label="${fav ? "取消收藏" : "收藏"}" aria-pressed="${fav}">${fav ? "❤️" : "🤍"}</button></div>
+    <div class="seg" style="align-self:center"><button data-stm="anim" aria-pressed="${ST.mode === "anim"}">🎬 動畫</button><button data-stm="book" aria-pressed="${ST.mode === "book"}">📖 故事書</button></div>
+    <div id="stBody" style="display:flex;flex-direction:column;gap:10px"></div>
+    <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><span class="muted" style="font-size:13px">聲音</span>${tog("stMute", !state.stMute, "🔊 開", "🔇 靜音")}<span class="muted" style="font-size:13px">學一句英文</span>${tog("stEn", state.stEn !== false, "要", "不要")}</div>
+    <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><span class="muted" style="font-size:13px">${ST.mode === "book" ? "自動翻頁朗讀" : "家長陪讀（每頁停下來聊）"}</span>${ST.mode === "book" ? tog("stAuto", !!state.stAuto, "開", "關") : tog("stParent", !!state.stParent, "開", "關")}<span class="muted" style="font-size:13px">減少動態</span>${tog("stCalm", stCalm(), "開", "關")}</div>
+    <p class="muted" style="margin:0;font-size:12px">📍 ${esc(S.place)}・出場：${S.cast.map(k => ST_CHARS[k].n).join("、")}・學習：${S.tags.join("、")}。點畫面裡的角色，可以聽他說話。</p>`;
+  $("stBack").onclick = () => { stPause(); ST.view = "theme:" + S.theme; renderStoryTab(); };
+  $("stFav").onclick = () => { const f = stFavs(); state.stFav = f.includes(S.id) ? f.filter(x => x !== S.id) : f.concat([S.id]); Store.save(); const on = state.stFav.includes(S.id); $("stFav").textContent = on ? "❤️" : "🤍"; $("stFav").setAttribute("aria-pressed", on); toast(on ? "收藏好了 ❤️" : "取消收藏"); };
+  $("bbView").querySelectorAll("[data-stm]").forEach(b => b.onclick = () => { stPause(); ST.mode = b.dataset.stm; state.stMode = ST.mode; Store.save(); if (ST.mode === "book") ST.bp = Math.min(ST.pg, S.pages.length - 1); else { ST.pg = Math.min(ST.bp, S.pages.length - 1); ST.ln = 0; ST.drawn = -1; } stOpenView(); });
+  $("bbView").querySelectorAll("[data-sttg]").forEach(b => b.onclick = () => {
+    const k = b.dataset.sttg, on = b.dataset.v === "1"; state[k] = k === "stMute" ? !on : on; Store.save();
+    b.parentNode.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b));
+    if (k === "stCalm") { const sv = $("stStage") && $("stStage").querySelector("svg"); if (sv) sv.classList.toggle("stcalm", on || ST.mode === "book" && false); }
+    if (k === "stMute" && ST.playing && ST.mode === "anim") { stPause(); stPlay(); }
+  });
+  if (ST.mode === "book") return bookRender(S);
+  $("stBody").innerHTML = `<div id="stStage"></div><div class="stdots" id="stDots"></div><div class="stsub" id="stSub" aria-live="polite"></div>
+    <div class="stask" id="stAsk" hidden></div><div id="stEn"></div><div class="stparent" id="stPar" hidden></div>
+    <div class="stctl"><button class="btn" id="stPrev" aria-label="上一頁">⏮</button><button class="btn primary" id="stPlay" style="min-width:110px">▶ 播放</button><button class="btn" id="stRe" aria-label="重播這頁">🔁 這頁</button><button class="btn" id="stNext" aria-label="下一頁">⏭</button></div>`;
+  ST.drawn = -1; stDraw(S, Math.min(ST.pg, S.pages.length - 1)); stSub("", "");
+  $("stPlay").onclick = () => { if (ST.playing) stPause(); else { if (ST.pg >= S.pages.length) { ST.pg = 0; ST.ln = 0; ST.drawn = -1; } $("stAsk").hidden = true; stPlay(); } };
+  $("stRe").onclick = () => stGo(Math.min(ST.pg, S.pages.length - 1));
+  $("stPrev").onclick = () => stGo(Math.min(ST.pg, S.pages.length - 1) - 1);
+  $("stNext").onclick = () => stGo(Math.min(ST.pg, S.pages.length - 1) + 1);
+  stPlayBtn();
 }
 
 /* ===== 加到手機桌面（像 App 一樣有圖示，點了直接進來） ===== */
