@@ -931,7 +931,7 @@ let GUEST = false;
 let SPONSOR = "";
 let OWNER_WHO = "";
 const EQ_BUILD = "f8af2a";
-const EQ_WEB = "272f";
+const EQ_WEB = "b33a";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -8534,7 +8534,11 @@ const ST_PROPS = {
   bigcloud: p => `<g class="st-bob2"><circle cx="-40" cy="0" r="30" fill="${p.c || "#fff"}"/><circle cx="0" cy="-18" r="40" fill="${p.c || "#fff"}"/><circle cx="42" cy="0" r="30" fill="${p.c || "#fff"}"/><rect x="-40" y="0" width="82" height="28" rx="14" fill="${p.c || "#fff"}"/></g>`,
   vapor: p => [0, 1, 2].map(i => `<path class="st-vapor" style="animation-delay:${-i}s" d="M${i * 24 - 24} 0 q-8 -12 0 -24 q8 -12 0 -24" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity=".8"/>`).join(""),
   watermelon: p => `<path d="M-22 0 a22 22 0 0 0 44 0z" fill="#43A047"/><path d="M-19 0 a19 19 0 0 0 38 0z" fill="#EF5350"/>${[-8, 0, 8].map(x => `<ellipse cx="${x}" cy="7" rx="1.5" ry="2.5" fill="#333"/>`).join("")}`,
-  tile: p => `<rect x="-24" y="-48" width="48" height="48" rx="12" fill="${p.c || "#42A5F5"}"/><rect x="-24" y="-48" width="48" height="10" rx="5" fill="#fff" opacity=".25"/><text x="0" y="-14" font-size="${p.z || 30}" font-weight="900" fill="#fff" text-anchor="middle">${esc(p.t || "")}</text>${p.sub ? `<text x="0" y="16" font-size="13" font-weight="800" fill="#4A3B2C" text-anchor="middle">${esc(p.sub)}</text>` : ""}`,
+  tile: p => `<rect x="-24" y="-48" width="48" height="48" rx="12" fill="${p.c || "#42A5F5"}"/><rect x="-24" y="-48" width="48" height="10" rx="5" fill="#fff" opacity=".25"/><text x="0" y="-14" font-size="${p.z || 30}" font-weight="900" fill="#fff" text-anchor="middle">${esc(p.t || "")}</text>${p.sub ? `<text x="0" y="16" font-size="13" font-weight="800" fill="#4A3B2C" text-anchor="middle">${esc(p.sub)}</text>` : ""}${p.e ? `<text x="0" y="${p.sub ? 42 : 22}" font-size="22" text-anchor="middle">${p.e}</text>` : ""}`,
+  /* 一整張表：字母表、注音表（p.split：前面幾個一種顏色、後面另一種顏色） */
+  chart: p => { const it = p.items || [], cols = p.cols || 10, cs = p.cs || 28, g = 4, pal = ["#E53935", "#FB8C00", "#43A047", "#1E88E5", "#8E24AA", "#00897B"];
+    return it.map((t, i) => { const r = Math.floor(i / cols), c = i % cols, n = Math.min(cols, it.length - r * cols), x = -(n * (cs + g) - g) / 2 + c * (cs + g), y = r * (cs + g), col = p.split ? (i < p.split ? "#1E88E5" : "#E91E63") : pal[i % 6];
+      return `<rect x="${x}" y="${y}" width="${cs}" height="${cs}" rx="7" fill="${col}"/><text x="${x + cs / 2}" y="${y + cs * 0.74}" font-size="${Math.round(cs * 0.62)}" font-weight="900" fill="#fff" text-anchor="middle">${esc(t)}</text>`; }).join(""); },
   emo: p => `<text x="0" y="-4" font-size="${p.z || 40}" text-anchor="middle">${p.t || ""}</text>`,
   many: p => { const n = p.n || 3, per = p.per || 5, gap = p.gap || 34; return Array.from({ length: n }, (_, i) => { const r = Math.floor(i / per), c = i % per, w = Math.min(per, n - r * per), x = (c - (w - 1) / 2) * gap, y = -r * (gap + 4); return `<g${p.nc ? "" : ` class="st-nut"`}><text x="${x}" y="${y - 2}" font-size="${p.z || 26}" text-anchor="middle">${p.k || "🍎"}</text>${p.nc ? "" : `<text class="st-nutn" x="${x}" y="${y - 30}" font-size="13" font-weight="900" text-anchor="middle" fill="#E65100"></text>`}</g>`; }).join(""); },
   fence: p => `<g>${Array.from({ length: 9 }, (_, i) => `<rect x="${-160 + i * 40}" y="-44" width="10" height="44" rx="3" fill="#D7B48A"/>`).join("")}<rect x="-170" y="-34" width="340" height="7" fill="#C49A6C"/><rect x="-170" y="-16" width="340" height="7" fill="#C49A6C"/></g>`,
@@ -9249,7 +9253,10 @@ STORIES.push(
 );
 
 /* ================= 🔢 玩中學小教室：8 個故事（看畫面、數一數、找一找） ================= */
-const stTiles = (arr, y, cols, tapPrefix) => arr.map((t, i) => ({ p: "tile", x: Math.round(200 + (i - (arr.length - 1) / 2) * (arr.length > 5 ? 60 : 72)), y: y || 120, t, c: (cols || ["#E53935", "#FB8C00", "#43A047", "#1E88E5", "#8E24AA", "#00897B"])[i % 6], s: arr.length > 5 ? 0.9 : 1, tap: tapPrefix ? tapPrefix + i : undefined }));
+const stTiles = (arr, y, cols, tapPrefix) => arr.map((t, i) => ({ p: "tile", x: Math.round(200 + (i - (arr.length - 1) / 2) * (arr.length > 6 ? 52 : arr.length > 5 ? 60 : 72)), y: y || 120, t, c: (cols || ["#E53935", "#FB8C00", "#43A047", "#1E88E5", "#8E24AA", "#00897B"])[i % 6], s: arr.length > 6 ? 0.8 : arr.length > 5 ? 0.9 : 1, tap: tapPrefix ? tapPrefix + i : undefined }));
+/* 英文字母：每個字母都有單字和圖 */
+const ST_ABC = { A: ["apple", "🍎"], B: ["bear", "🐻"], C: ["cat", "🐱"], D: ["dog", "🐶"], E: ["egg", "🥚"], F: ["fish", "🐟"], G: ["grapes", "🍇"], H: ["hat", "🎩"], I: ["ice cream", "🍦"], J: ["juice", "🧃"], K: ["kite", "🪁"], L: ["lion", "🦁"], M: ["monkey", "🐵"], N: ["nose", "👃"], O: ["orange", "🍊"], P: ["pig", "🐷"], Q: ["queen", "👸"], R: ["rabbit", "🐰"], S: ["sun", "☀️"], T: ["tiger", "🐯"], U: ["umbrella", "☂️"], V: ["violin", "🎻"], W: ["whale", "🐳"], X: ["fox", "🦊"], Y: ["yo-yo", "🪀"], Z: ["zebra", "🦓"] };
+const stAbc = (letters, tapPrefix) => stTiles(letters.split("").map(k => k + k.toLowerCase()), 96, null, tapPrefix).map((p, i) => Object.assign(p, { s: 1, x: Math.round(200 + (i - (letters.length - 1) / 2) * 70), z: 26, sub: ST_ABC[letters[i]][0], e: ST_ABC[letters[i]][1] }));
 STORIES.push(
   {
     id: "count10", theme: "learn", ic: "🔢", t: "一起數到 10", mins: 5,
@@ -9300,9 +9307,9 @@ STORIES.push(
     lesson: ["🔢 認識數字：1、2、3、4、5、6、7、8、9、10。", "🖐️ 一隻手有五根手指頭，兩隻手有十根。", "👆 數東西時，一個一個點著數，就不會數錯。"]
   },
   {
-    id: "abc", theme: "learn", ic: "🔤", t: "ABC 字母小火車", mins: 5,
-    intro: "嘟嘟！字母小火車開來了，車上載著 A 到 Z 二十六個字母！",
-    tags: ["英文字母 A～Z", "字母和單字", "找一找"],
+    id: "abc", theme: "learn", ic: "🔤", t: "ABC 字母小火車", mins: 7,
+    intro: "嘟嘟！字母小火車開來了，車上載著 A 到 Z 二十六個字母，每個字母都帶著一個好朋友單字！",
+    tags: ["英文字母 A～Z", "26 個字母都有單字", "找一找"],
     cast: ["bunny", "fox"],
     place: "火車站旁的草地",
     cover: { bg: "meadow", o: {}, props: [{ p: "train", x: 220, y: 236 }, ...stTiles(["A", "B", "C"], 120)], cast: [{ c: "bunny", x: 80, f: "happy" }] },
@@ -9310,44 +9317,48 @@ STORIES.push(
       { bg: "meadow", o: {}, props: [{ p: "train", x: 230, y: 250, cls: "st-drive" }], cast: [{ c: "bunny", x: 70, f: "happy" }, { c: "fox", x: 130, f: "happy" }],
         lines: [["narr", "[cheerful] 嘟嘟——字母小火車開來了！"],
           ["bunny", "[excitement] 車上載著好多英文字母！", "surprise", "jump"],
-          ["fox", "[cheerful] 英文字母一共有二十六個，我們一起來認識它們！", "happy", "wave"]],
+          ["fox", "[cheerful] 英文字母一共有二十六個，每個字母都帶著一個好朋友單字。我們一起來認識它們！", "happy", "wave"]],
         en: ["Choo choo!", "嘟嘟！"], parent: "可以先到「兒歌」唱〈ABC Song〉，再來看這個故事。" },
-      { bg: "meadow", o: {}, props: stTiles(["A", "B", "C", "D", "E"], 110, null, "L"), cast: [{ c: "bunny", x: 120, f: "happy" }, { c: "fox", x: 290, f: "happy", flip: 1 }],
-        lines: [["bunny", "[cheerful] A、B、C、D、E！", "happy", "jump"],
-          ["fox", "[playful] A 是 apple，蘋果！[cheerful] B 是 bear，熊熊！", "happy", "nod"]],
+      { bg: "meadow", o: {}, props: stAbc("ABCDE", "L"), cast: [{ c: "bunny", x: 40, f: "happy", s: 0.8 }, { c: "fox", x: 360, f: "happy", flip: 1, s: 0.8 }],
+        lines: [["bunny", "[cheerful] A，apple，蘋果！B，bear，熊熊！C，cat，貓咪！", "happy", "jump"],
+          ["fox", "[playful] D，dog，小狗！E，egg，雞蛋！", "happy", "nod"]],
         ask: { type: "tap", target: "L2", q: "[curiosity] 寶寶，你能找到字母 C 嗎？點點看！",
           hint: "[gentle] 這個不是 C 喔。C 像一個開口的圓圈，再找找看！", ok: "[excitement] 找到了！這是 C！C 是 cat，貓咪！" },
         en: ["A, B, C!", "A、B、C！"], parent: "可以和寶寶玩「找字母」：在書本或招牌上找找看 A、B、C。" },
-      { bg: "meadow", o: {}, props: stTiles(["F", "G", "H", "I", "J"], 110), cast: [{ c: "bunny", x: 120, f: "happy" }, { c: "fox", x: 290, f: "happy", flip: 1 }],
-        lines: [["fox", "[cheerful] F、G、H、I、J！", "happy", "jump"],
-          ["bunny", "[playful] F 是 fish，小魚！[cheerful] H 是 hat，帽子！", "happy", "nod"]],
+      { bg: "meadow", o: {}, props: stAbc("FGHIJ"), cast: [{ c: "bunny", x: 40, f: "happy", s: 0.8 }, { c: "fox", x: 360, f: "happy", flip: 1, s: 0.8 }],
+        lines: [["fox", "[cheerful] F，fish，小魚！G，grapes，葡萄！H，hat，帽子！", "happy", "jump"],
+          ["bunny", "[playful] I，ice cream，冰淇淋！J，juice，果汁！", "happy", "nod"]],
         en: ["Fish!", "小魚！"], parent: "問問寶寶：小魚的英文怎麼說？" },
-      { bg: "meadow", o: {}, props: stTiles(["K", "L", "M", "N", "O"], 110), cast: [{ c: "bunny", x: 120, f: "happy" }, { c: "fox", x: 290, f: "happy", flip: 1 }],
-        lines: [["bunny", "[cheerful] K、L、M、N、O！", "happy", "jump"],
-          ["fox", "[playful] M 是 monkey，猴子！[laughs] O 是 orange，橘子！", "happy", "nod"]],
+      { bg: "meadow", o: {}, props: stAbc("KLMNO"), cast: [{ c: "bunny", x: 40, f: "happy", s: 0.8 }, { c: "fox", x: 360, f: "happy", flip: 1, s: 0.8 }],
+        lines: [["bunny", "[cheerful] K，kite，風箏！L，lion，獅子！M，monkey，猴子！", "happy", "jump"],
+          ["fox", "[playful] N，nose，鼻子！[laughs] O，orange，橘子！", "happy", "nod"]],
         ask: { type: "choice", q: "[curiosity] 寶寶，monkey 猴子，是哪一個字母開頭呢？", opts: [["M", "M", 1], ["K", "K"], ["O", "O"]],
           hint: "[gentle] monkey，[slow] mmm……monkey，聽聽看，第一個聲音是什麼？", ok: "[excitement] 答對了！M，monkey，猴子！" },
         en: ["Monkey!", "猴子！"], parent: "可以和寶寶玩「M 是 monkey」的接龍。" },
-      { bg: "meadow", o: {}, props: stTiles(["P", "Q", "R", "S", "T"], 110), cast: [{ c: "bunny", x: 120, f: "happy" }, { c: "fox", x: 290, f: "happy", flip: 1 }],
-        lines: [["fox", "[cheerful] P、Q、R、S、T！", "happy", "jump"],
-          ["bunny", "[playful] P 是 pig，小豬！[cheerful] S 是 sun，太陽！", "happy", "nod"]],
+      { bg: "meadow", o: {}, props: stAbc("PQRST"), cast: [{ c: "bunny", x: 40, f: "happy", s: 0.8 }, { c: "fox", x: 360, f: "happy", flip: 1, s: 0.8 }],
+        lines: [["fox", "[cheerful] P，pig，小豬！Q，queen，皇后！R，rabbit，兔子！", "happy", "jump"],
+          ["bunny", "[laughs] rabbit 就是我！[cheerful] S，sun，太陽！T，tiger，老虎！", "happy", "nod"]],
         en: ["Sun!", "太陽！"], parent: "問問寶寶：太陽的英文怎麼說？" },
-      { bg: "meadow", o: {}, props: stTiles(["U", "V", "W", "X", "Y", "Z"], 110), cast: [{ c: "bunny", x: 120, f: "happy" }, { c: "fox", x: 290, f: "happy", flip: 1 }],
-        lines: [["bunny", "[cheerful] U、V、W、X、Y、Z！", "happy", "jump"],
-          ["fox", "[excitement] Z 是 zebra，斑馬！[proud] 二十六個字母，全部到齊了！", "happy", "wave"]],
-        en: ["Zebra!", "斑馬！"], parent: "可以和寶寶比賽：誰先找到 Z？" },
-      { bg: "meadow", o: { eve: 1 }, props: [{ p: "train", x: 230, y: 250, cls: "st-drive" }], cast: [{ c: "bunny", x: 70, f: "happy" }, { c: "fox", x: 130, f: "happy" }],
-        lines: [["bunny", "[happy] 我們一起唱字母歌吧！", "happy", "jump"]],
+      { bg: "meadow", o: {}, props: stAbc("UVW"), cast: [{ c: "bunny", x: 60, f: "happy", s: 0.9 }, { c: "fox", x: 340, f: "happy", flip: 1, s: 0.9 }],
+        lines: [["bunny", "[cheerful] U，umbrella，雨傘！V，violin，小提琴！W，whale，鯨魚！", "happy", "jump"]],
+        en: ["Whale!", "鯨魚！"], parent: "可以和寶寶一起做動作：撐雨傘、拉小提琴、鯨魚噴水。" },
+      { bg: "meadow", o: {}, props: stAbc("XYZ"), cast: [{ c: "bunny", x: 60, f: "happy", s: 0.9 }, { c: "fox", x: 340, f: "happy", flip: 1, s: 0.9 }],
+        lines: [["fox", "[playful] X 很害羞，很少站在單字的前面。[laughs] 你聽：fox，X 躲在 fox 的最後面，就是我狐狸！", "happy", "jump"],
+          ["bunny", "[cheerful] Y，yo-yo，溜溜球！Z，zebra，斑馬！", "happy", "nod"]],
+        en: ["Zebra!", "斑馬！"], parent: "X 開頭的常見單字很少，所以用 fox（X 在最後）來認識它。" },
+      { bg: "meadow", o: { eve: 1 }, props: [{ p: "chart", x: 200, y: 30, items: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""), cols: 9, cs: 32 }], cast: [{ c: "bunny", x: 120, f: "happy" }, { c: "fox", x: 280, f: "happy", flip: 1 }],
+        lines: [["fox", "[proud] A 到 Z，二十六個字母，全部到齊了！", "happy", "wave"],
+          ["bunny", "[happy] 我們一起唱字母歌吧！", "happy", "jump"]],
         ask: { type: "do", ic: "🎵", act: "jump", q: "[cheerful] 寶寶，我們一起唱：[playful] A、B、C、D、E、F、G……",
           ok: "[excitement] 唱得好棒！字母小火車，明天見！" },
         en: ["A to Z!", "A 到 Z！"], parent: "可以到「兒歌」唱〈ABC Song〉，一邊唱一邊指字母。" }
     ],
-    lesson: ["🔤 英文字母有 26 個，從 A 到 Z。", "🍎 A 是 apple、B 是 bear、C 是 cat、M 是 monkey、S 是 sun、Z 是 zebra。", "👂 聽單字的第一個聲音，就知道是哪個字母開頭。"]
+    lesson: ["🔤 英文字母有 26 個，從 A 到 Z。", "🍎 A apple、B bear、C cat、D dog、E egg、F fish、G grapes、H hat、I ice cream、J juice、K kite、L lion、M monkey。", "🐷 N nose、O orange、P pig、Q queen、R rabbit、S sun、T tiger、U umbrella、V violin、W whale、X fox、Y yo-yo、Z zebra。", "👂 聽單字的第一個聲音，就知道是哪個字母開頭。"]
   },
   {
-    id: "zhuyin", theme: "learn", ic: "🅱️", t: "ㄅㄆㄇ找朋友", mins: 5,
-    intro: "注音符號是幫我們唸字的小幫手！一起來認識八個注音朋友。",
-    tags: ["注音入門", "ㄅㄆㄇㄈ", "ㄉㄊㄋㄌ"],
+    id: "zhuyin", theme: "learn", ic: "🅱️", t: "ㄅㄆㄇ找朋友 ①", mins: 5,
+    intro: "注音符號一共有 37 個，是幫我們唸字的小幫手！第 1 集，先認識ㄅㄆㄇㄈ、ㄉㄊㄋㄌ八個注音朋友。",
+    tags: ["注音 第 1 集（共 5 集）", "ㄅㄆㄇㄈ", "ㄉㄊㄋㄌ"],
     cast: ["bunny", "bear"],
     place: "草地上的小黑板",
     cover: { bg: "meadow", o: {}, props: stTiles(["ㄅ", "ㄆ", "ㄇ"], 120), cast: [{ c: "bunny", x: 90, f: "happy" }, { c: "bear", x: 310, f: "happy", flip: 1 }] },
@@ -9355,38 +9366,38 @@ STORIES.push(
       { bg: "meadow", o: {}, props: stTiles(["ㄅ", "ㄆ", "ㄇ", "ㄈ"], 110), cast: [{ c: "bunny", x: 90, f: "happy" }, { c: "bear", x: 310, f: "happy", flip: 1 }],
         lines: [["bunny", "[cheerful] 我們來認識注音符號！", "happy", "wave"],
           ["bear", "[curiosity] 注音符號是什麼呀？", "calm", "think"],
-          ["bunny", "[warm] 注音是唸字的小幫手，[cheerful] 會告訴我們一個字怎麼唸。", "happy", "nod"]],
+          ["bunny", "[warm] 注音是唸字的小幫手，[cheerful] 會告訴我們一個字怎麼唸。注音一共有三十七個，我們一集一集慢慢認識！", "happy", "nod"]],
         parent: "這個故事是注音的入門，先聽、先看，不需要會寫。" },
-      { bg: "meadow", o: {}, props: [{ p: "tile", x: 110, y: 120, t: "ㄅ", sub: "爸爸", c: "#E53935" }, { p: "tile", x: 290, y: 120, t: "ㄆ", sub: "葡萄", c: "#8E24AA" }], cast: [{ c: "bunny", x: 200, f: "happy" }],
+      { bg: "meadow", o: {}, props: [{ p: "tile", x: 110, y: 120, t: "ㄅ", sub: "爸爸", e: "👨", c: "#E53935" }, { p: "tile", x: 290, y: 120, t: "ㄆ", sub: "葡萄", e: "🍇", c: "#8E24AA" }], cast: [{ c: "bunny", x: 200, f: "happy" }],
         lines: [["bunny", "[cheerful] 這是{ㄅ|玻}。{ㄅ|玻}、{ㄅ|玻}，爸爸的爸。", "happy", "nod"],
           ["bunny", "[playful] 這是{ㄆ|坡}。{ㄆ|坡}、{ㄆ|坡}，葡萄的葡。", "happy", "jump"]],
-        parent: "可以和寶寶一起唸：玻、玻，爸爸。" },
-      { bg: "meadow", o: {}, props: [{ p: "tile", x: 110, y: 120, t: "ㄇ", sub: "媽媽", c: "#F06292" }, { p: "tile", x: 290, y: 120, t: "ㄈ", sub: "飛機", c: "#1E88E5" }], cast: [{ c: "bear", x: 200, f: "happy" }],
+        parent: "可以和寶寶一起唸：{ㄅ|玻}、{ㄅ|玻}，爸爸。" },
+      { bg: "meadow", o: {}, props: [{ p: "tile", x: 110, y: 120, t: "ㄇ", sub: "媽媽", e: "👩", c: "#F06292" }, { p: "tile", x: 290, y: 120, t: "ㄈ", sub: "飛機", e: "✈️", c: "#1E88E5" }], cast: [{ c: "bear", x: 200, f: "happy" }],
         lines: [["bear", "[cheerful] 這是{ㄇ|摸}。{ㄇ|摸}、{ㄇ|摸}，媽媽的媽。", "happy", "nod"],
           ["bear", "[playful] 這是{ㄈ|佛}。{ㄈ|佛}、{ㄈ|佛}，飛機的飛。", "happy", "jump"]],
-        parent: "可以和寶寶一起唸：摸、摸，媽媽。" },
+        parent: "可以和寶寶一起唸：{ㄇ|摸}、{ㄇ|摸}，媽媽。" },
       { bg: "meadow", o: {}, props: stTiles(["ㄅ", "ㄆ", "ㄇ", "ㄈ"], 120, null, "Z"), cast: [{ c: "bunny", x: 70, f: "happy" }, { c: "bear", x: 330, f: "happy", flip: 1 }],
         lines: [["bunny", "[curiosity] 熊熊，你還記得媽媽的媽，是哪一個注音嗎？", "calm", "think"]],
         ask: { type: "tap", target: "Z2", q: "[curiosity] 寶寶，你能找到{ㄇ|摸}嗎？媽媽的媽，點點看！",
           hint: "[gentle] 這個不是{ㄇ|摸}喔。{ㄇ|摸}的樣子，像一個小門，再找找看！", ok: "[excitement] 找到了！{ㄇ|摸}，媽媽的媽！" },
         parent: "可以把注音卡片放在桌上，和寶寶玩「找一找」。" },
-      { bg: "meadow", o: {}, props: [{ p: "tile", x: 110, y: 120, t: "ㄉ", sub: "大象", c: "#43A047" }, { p: "tile", x: 290, y: 120, t: "ㄊ", sub: "兔子", c: "#FB8C00" }], cast: [{ c: "bunny", x: 200, f: "happy" }],
+      { bg: "meadow", o: {}, props: [{ p: "tile", x: 110, y: 120, t: "ㄉ", sub: "大象", e: "🐘", c: "#43A047" }, { p: "tile", x: 290, y: 120, t: "ㄊ", sub: "兔子", e: "🐰", c: "#FB8C00" }], cast: [{ c: "bunny", x: 200, f: "happy" }],
         lines: [["bunny", "[cheerful] 這是{ㄉ|得}。{ㄉ|得}、{ㄉ|得}，大象的大。", "happy", "nod"],
           ["bunny", "[laughs] 這是{ㄊ|特}。{ㄊ|特}、{ㄊ|特}，兔子的兔，就是我！", "happy", "jump"]],
-        parent: "可以和寶寶一起唸：特、特，兔子。" },
-      { bg: "meadow", o: {}, props: [{ p: "tile", x: 110, y: 120, t: "ㄋ", sub: "牛奶", c: "#00897B" }, { p: "tile", x: 290, y: 120, t: "ㄌ", sub: "老虎", c: "#6D4C41" }], cast: [{ c: "bear", x: 200, f: "happy" }],
+        parent: "可以和寶寶一起唸：{ㄊ|特}、{ㄊ|特}，兔子。" },
+      { bg: "meadow", o: {}, props: [{ p: "tile", x: 110, y: 120, t: "ㄋ", sub: "牛奶", e: "🥛", c: "#00897B" }, { p: "tile", x: 290, y: 120, t: "ㄌ", sub: "老虎", e: "🐯", c: "#6D4C41" }], cast: [{ c: "bear", x: 200, f: "happy" }],
         lines: [["bear", "[cheerful] 這是{ㄋ|訥}。{ㄋ|訥}、{ㄋ|訥}，牛奶的牛。", "happy", "nod"],
           ["bear", "[playful] 這是{ㄌ|勒}。{ㄌ|勒}、{ㄌ|勒}，老虎的老。[laughs] 吼——", "happy", "jump"]],
-        parent: "可以和寶寶一起唸：勒、勒，老虎。" },
+        parent: "可以和寶寶一起唸：{ㄌ|勒}、{ㄌ|勒}，老虎。" },
       { bg: "meadow", o: {}, props: stTiles(["ㄉ", "ㄊ", "ㄋ", "ㄌ"], 110), cast: [{ c: "bunny", x: 70, f: "happy" }, { c: "bear", x: 330, f: "happy", flip: 1 }],
         lines: [["bear", "[curiosity] 兔兔，兔子的兔，是哪一個注音呢？", "calm", "think"]],
-        ask: { type: "choice", q: "[curiosity] 寶寶，兔子的「兔」，是哪一個注音開頭呢？", opts: [["ㄊ", "特", 1], ["ㄅ", "玻"], ["ㄇ", "摸"]],
-          hint: "[gentle] 兔、兔，[slow] 特……兔，聽聽看，第一個聲音是什麼？", ok: "[excitement] 答對了！{ㄊ|特}，兔子的兔！" },
+        ask: { type: "choice", q: "[curiosity] 寶寶，兔子的「兔」，是哪一個注音開頭呢？", opts: [["ㄊ", "", 1], ["ㄅ", ""], ["ㄇ", ""]],
+          hint: "[gentle] 兔、兔，[slow] {ㄊ|特}……兔，聽聽看，第一個聲音是什麼？", ok: "[excitement] 答對了！{ㄊ|特}，兔子的兔！" },
         parent: "可以把家人的稱呼拿來玩：爸爸是{ㄅ|玻}、媽媽是{ㄇ|摸}。" },
       { bg: "meadow", o: { eve: 1 }, props: stTiles(["ㄅ", "ㄆ", "ㄇ", "ㄈ", "ㄉ", "ㄊ"], 100), cast: [{ c: "bunny", x: 120, f: "happy" }, { c: "bear", x: 280, f: "happy", flip: 1 }],
         lines: [["bear", "[happy] {ㄅㄆㄇㄈ|玻、坡、摸、佛}，{ㄉㄊㄋㄌ|得、特、訥、勒}！", "happy", "jump"],
-          ["bunny", "[proud] 我們今天認識了八個注音朋友！", "happy", "wave"]],
-        parent: "每天唸兩三個就好，慢慢來，寶寶會越來越熟。" }
+          ["bunny", "[proud] 我們今天認識了八個注音朋友！[cheerful] 下一集，還有新的注音朋友等著我們喔！", "happy", "wave"]],
+        parent: "每天唸兩三個就好，慢慢來，寶寶會越來越熟。下一集是「ㄅㄆㄇ找朋友 ②」。" }
     ],
     lesson: ["🅱️ 注音符號是唸字的小幫手。", "🔤 今天認識了：ㄅ（爸）、ㄆ（葡）、ㄇ（媽）、ㄈ（飛）、ㄉ（大）、ㄊ（兔）、ㄋ（牛）、ㄌ（老）。", "👂 聽字的第一個聲音，就知道是哪個注音開頭。"]
   },
@@ -10533,6 +10544,177 @@ STORIES.push(
   }
 );
 
+/* ================= 🔢 注音系列：第 2～5 集（加上第 1 集，37 個注音全部認識） ================= */
+const stZt = (t, sub, e, c, x) => ({ p: "tile", x, y: 104, t, sub, e, c });
+const ZY_ALL = "ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄧㄨㄩㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦ".split("");
+STORIES.splice(STORIES.findIndex(S => S.id === "zhuyin") + 1, 0,
+  {
+    id: "zhuyin2", theme: "learn", ic: "🐶", t: "ㄅㄆㄇ找朋友 ②", mins: 5,
+    intro: "第 2 集：狐狸和象象要認識六個新的注音朋友——ㄍㄎㄏ、ㄐㄑㄒ。",
+    tags: ["注音 第 2 集（共 5 集）", "ㄍㄎㄏ", "ㄐㄑㄒ"],
+    cast: ["fox", "elephant"],
+    place: "草地上的小黑板",
+    cover: { bg: "meadow", o: {}, props: stTiles(["ㄍ", "ㄎ", "ㄏ"], 120), cast: [{ c: "fox", x: 80, f: "happy" }, { c: "elephant", x: 320, f: "happy", flip: 1 }] },
+    pages: [
+      { bg: "meadow", o: {}, props: stTiles(["ㄍ", "ㄎ", "ㄏ", "ㄐ", "ㄑ", "ㄒ"], 110), cast: [{ c: "fox", x: 70, f: "happy" }, { c: "elephant", x: 330, f: "happy", flip: 1 }],
+        lines: [["fox", "[cheerful] 上一集，我們認識了{ㄅㄆㄇㄈ|玻、坡、摸、佛}、{ㄉㄊㄋㄌ|得、特、訥、勒}。", "happy", "wave"],
+          ["elephant", "[warm] 今天，再來認識六個新的注音朋友！", "happy", "nod"]],
+        parent: "可以先複習第 1 集的八個注音，再開始新的。" },
+      { bg: "meadow", o: {}, props: [stZt("ㄍ", "狗", "🐶", "#6D4C41", 110), stZt("ㄎ", "恐龍", "🦖", "#43A047", 290)], cast: [{ c: "fox", x: 200, f: "happy" }],
+        lines: [["fox", "[cheerful] 這是{ㄍ|哥}。{ㄍ|哥}、{ㄍ|哥}，小狗的狗。[playful] 汪汪！", "happy", "nod"],
+          ["fox", "[playful] 這是{ㄎ|科}。{ㄎ|科}、{ㄎ|科}，恐龍的恐。[laughs] 吼——", "happy", "jump"]],
+        parent: "可以和寶寶一起唸：{ㄍ|哥}、{ㄍ|哥}，小狗。" },
+      { bg: "meadow", o: {}, props: [stZt("ㄏ", "花", "🌸", "#E91E63", 110), stZt("ㄐ", "雞", "🐔", "#FB8C00", 290)], cast: [{ c: "elephant", x: 200, f: "happy" }],
+        lines: [["elephant", "[warm] 這是{ㄏ|喝}。{ㄏ|喝}、{ㄏ|喝}，花朵的花。[soft] 好香喔。", "happy", "nod"],
+          ["elephant", "[playful] 這是{ㄐ|基}。{ㄐ|基}、{ㄐ|基}，小雞的雞。[laughs] 咕咕咕！", "happy", "jump"]],
+        parent: "可以和寶寶一起唸：{ㄐ|基}、{ㄐ|基}，小雞。" },
+      { bg: "meadow", o: {}, props: [stZt("ㄑ", "企鵝", "🐧", "#1E88E5", 110), stZt("ㄒ", "西瓜", "🍉", "#E53935", 290)], cast: [{ c: "fox", x: 200, f: "happy" }],
+        lines: [["fox", "[cheerful] 這是{ㄑ|欺}。{ㄑ|欺}、{ㄑ|欺}，企鵝的企。[playful] 搖搖擺擺。", "happy", "nod"],
+          ["fox", "[delighted] 這是{ㄒ|希}。{ㄒ|希}、{ㄒ|希}，西瓜的西。[happy] 又甜又多汁！", "happy", "jump"]],
+        parent: "{ㄐㄑㄒ|基、欺、希}三個長得有點像，不用急，多看幾次就會分辨。" },
+      { bg: "meadow", o: {}, props: [stZt("ㄐ", "", "", "#FB8C00", 110), stZt("ㄑ", "", "", "#1E88E5", 200), stZt("ㄒ", "", "", "#E53935", 290)], cast: [{ c: "elephant", x: 50, f: "calm" }, { c: "fox", x: 350, f: "happy", flip: 1 }],
+        lines: [["elephant", "[curiosity] 狐狸，西瓜的西，是哪一個注音呢？", "calm", "think"]],
+        ask: { type: "choice", q: "[curiosity] 寶寶，西瓜的「西」，是哪一個注音開頭呢？", opts: [["ㄒ", "", 1], ["ㄐ", ""], ["ㄑ", ""]],
+          hint: "[gentle] 西、西，[slow] {ㄒ|希}……西，聽聽看，第一個聲音是什麼？", ok: "[excitement] 答對了！{ㄒ|希}，西瓜的西！" },
+        parent: "可以拿家裡的水果玩：西瓜是{ㄒ|希}、雞蛋是{ㄐ|基}。" },
+      { bg: "meadow", o: {}, props: stTiles(["ㄍ", "ㄎ", "ㄏ", "ㄐ", "ㄑ", "ㄒ"], 120, null, "G"), cast: [{ c: "fox", x: 60, f: "happy" }, { c: "elephant", x: 340, f: "calm", flip: 1 }],
+        lines: [["fox", "[playful] 汪汪！小狗的狗，是哪一個注音呢？", "happy", "think"]],
+        ask: { type: "tap", target: "G0", q: "[curiosity] 寶寶，你能找到{ㄍ|哥}嗎？小狗的狗，點點看！",
+          hint: "[gentle] 這個不是{ㄍ|哥}喔。{ㄍ|哥}的樣子，像一個彎彎的小鉤子，再找找看！", ok: "[excitement] 找到了！{ㄍ|哥}，小狗的狗！" },
+        parent: "可以把注音卡片放在桌上，和寶寶玩「找一找」。" },
+      { bg: "meadow", o: { eve: 1 }, props: stTiles(["ㄍ", "ㄎ", "ㄏ", "ㄐ", "ㄑ", "ㄒ"], 100), cast: [{ c: "fox", x: 120, f: "happy" }, { c: "elephant", x: 280, f: "happy", flip: 1 }],
+        lines: [["elephant", "[happy] {ㄍㄎㄏ|哥、科、喝}，{ㄐㄑㄒ|基、欺、希}！", "happy", "jump"],
+          ["fox", "[proud] 今天又認識了六個注音朋友！下一集見！", "happy", "wave"]],
+        parent: "到這一集，已經認識 14 個注音了。" }
+    ],
+    lesson: ["🐶 ㄍ（狗）、ㄎ（恐龍）、ㄏ（花）。", "🐔 ㄐ（雞）、ㄑ（企鵝）、ㄒ（西瓜）。", "👂 聽字的第一個聲音，就知道是哪個注音開頭。"]
+  },
+  {
+    id: "zhuyin3", theme: "learn", ic: "🦁", t: "ㄅㄆㄇ找朋友 ③", mins: 5,
+    intro: "第 3 集：松鼠和刺刺要認識七個注音朋友——ㄓㄔㄕㄖ、ㄗㄘㄙ。",
+    tags: ["注音 第 3 集（共 5 集）", "ㄓㄔㄕㄖ", "ㄗㄘㄙ"],
+    cast: ["squirrel", "hedgehog"],
+    place: "草地上的小黑板",
+    cover: { bg: "meadow", o: {}, props: stTiles(["ㄓ", "ㄔ", "ㄕ"], 120), cast: [{ c: "squirrel", x: 80, f: "happy" }, { c: "hedgehog", x: 320, f: "happy", flip: 1 }] },
+    pages: [
+      { bg: "meadow", o: {}, props: stTiles(["ㄓ", "ㄔ", "ㄕ", "ㄖ", "ㄗ", "ㄘ", "ㄙ"], 110), cast: [{ c: "squirrel", x: 50, f: "happy", s: 0.85 }, { c: "hedgehog", x: 350, f: "happy", flip: 1, s: 0.85 }],
+        lines: [["squirrel", "[excitement] 今天有七個注音朋友要來！", "happy", "jump"],
+          ["hedgehog", "[warm] 前面四個要把舌頭翹起來，[playful] 後面三個舌頭平平的。", "happy", "nod"]],
+        parent: "ㄓㄔㄕㄖ是翹舌音，ㄗㄘㄙ是平舌音。小小孩還唸不準是很正常的，先聽、先認就好。" },
+      { bg: "meadow", o: {}, props: [stZt("ㄓ", "豬", "🐷", "#F06292", 110), stZt("ㄔ", "毛毛蟲", "🐛", "#43A047", 290)], cast: [{ c: "squirrel", x: 200, f: "happy" }],
+        lines: [["squirrel", "[cheerful] 這是{ㄓ|知}。{ㄓ|知}、{ㄓ|知}，小豬的豬。[laughs] 噗噗！", "happy", "nod"],
+          ["squirrel", "[playful] 這是{ㄔ|吃}。{ㄔ|吃}、{ㄔ|吃}，毛毛蟲的蟲。[cheerful] 爬呀爬。", "happy", "jump"]],
+        parent: "可以和寶寶一起唸：{ㄓ|知}、{ㄓ|知}，小豬。" },
+      { bg: "meadow", o: {}, props: [stZt("ㄕ", "獅子", "🦁", "#FB8C00", 110), stZt("ㄖ", "肉", "🍖", "#E53935", 290)], cast: [{ c: "hedgehog", x: 200, f: "happy" }],
+        lines: [["hedgehog", "[playful] 這是{ㄕ|詩}。{ㄕ|詩}、{ㄕ|詩}，獅子的獅。[laughs] 吼——", "happy", "jump"],
+          ["hedgehog", "[cheerful] 這是{ㄖ|日}。{ㄖ|日}、{ㄖ|日}，吃肉的肉。", "happy", "nod"]],
+        parent: "可以和寶寶一起唸：{ㄕ|詩}、{ㄕ|詩}，獅子。" },
+      { bg: "meadow", o: {}, props: [stZt("ㄗ", "嘴巴", "👄", "#8E24AA", 90), stZt("ㄘ", "草莓", "🍓", "#E53935", 200), stZt("ㄙ", "雨傘", "☂️", "#1E88E5", 310)], cast: [{ c: "squirrel", x: 40, f: "happy", s: 0.8 }, { c: "hedgehog", x: 360, f: "happy", flip: 1, s: 0.8 }],
+        lines: [["squirrel", "[cheerful] 這是{ㄗ|資}，嘴巴的嘴。[playful] 這是{ㄘ|疵}，草莓的草。", "happy", "nod"],
+          ["hedgehog", "[warm] 這是{ㄙ|思}。{ㄙ|思}、{ㄙ|思}，雨傘的傘。", "happy", "nod"]],
+        parent: "{ㄗㄘㄙ|資、疵、思}的舌頭平平的，像在說悄悄話。" },
+      { bg: "meadow", o: {}, props: [stZt("ㄓ", "", "", "#F06292", 110), stZt("ㄕ", "", "", "#FB8C00", 200), stZt("ㄙ", "", "", "#1E88E5", 290)], cast: [{ c: "hedgehog", x: 50, f: "calm" }, { c: "squirrel", x: 350, f: "happy", flip: 1 }],
+        lines: [["hedgehog", "[curiosity] 松鼠，獅子的獅，是哪一個注音呢？", "calm", "think"]],
+        ask: { type: "choice", q: "[curiosity] 寶寶，獅子的「獅」，是哪一個注音開頭呢？", opts: [["ㄕ", "", 1], ["ㄓ", ""], ["ㄙ", ""]],
+          hint: "[gentle] 獅、獅，[slow] {ㄕ|詩}……獅，聽聽看，第一個聲音是什麼？", ok: "[excitement] 答對了！{ㄕ|詩}，獅子的獅！" },
+        parent: "{ㄕ|詩}和{ㄙ|思}很像，只差舌頭翹不翹，大一點再分辨也沒關係。" },
+      { bg: "meadow", o: {}, props: stTiles(["ㄓ", "ㄔ", "ㄕ", "ㄖ", "ㄗ", "ㄘ", "ㄙ"], 120, null, "C"), cast: [{ c: "squirrel", x: 50, f: "happy", s: 0.85 }, { c: "hedgehog", x: 350, f: "calm", flip: 1, s: 0.85 }],
+        lines: [["squirrel", "[curiosity] 下雨了！要撐雨傘，雨傘的傘是哪一個？", "happy", "think"]],
+        ask: { type: "tap", target: "C6", q: "[curiosity] 寶寶，你能找到{ㄙ|思}嗎？雨傘的傘，點點看！",
+          hint: "[gentle] 這個不是{ㄙ|思}喔。{ㄙ|思}的樣子，像一個小三角形，再找找看！", ok: "[excitement] 找到了！{ㄙ|思}，雨傘的傘！" },
+        parent: "可以把注音卡片放在桌上，和寶寶玩「找一找」。" },
+      { bg: "meadow", o: { eve: 1 }, props: stTiles(["ㄓ", "ㄔ", "ㄕ", "ㄖ", "ㄗ", "ㄘ", "ㄙ"], 100), cast: [{ c: "squirrel", x: 120, f: "happy" }, { c: "hedgehog", x: 280, f: "happy", flip: 1 }],
+        lines: [["hedgehog", "[happy] {ㄓㄔㄕㄖ|知、吃、詩、日}，{ㄗㄘㄙ|資、疵、思}！", "happy", "jump"],
+          ["squirrel", "[proud] 聲母二十一個，全部認識了！下一集，換韻母出場！", "happy", "wave"]],
+        parent: "第 1～3 集的 21 個是「聲母」，第 4、5 集是「韻母」。" }
+    ],
+    lesson: ["🐷 ㄓ（豬）、ㄔ（毛毛蟲）、ㄕ（獅子）、ㄖ（肉）。", "👄 ㄗ（嘴巴）、ㄘ（草莓）、ㄙ（雨傘）。", "👅 ㄓㄔㄕㄖ舌頭翹起來，ㄗㄘㄙ舌頭平平的。"]
+  },
+  {
+    id: "zhuyin4", theme: "learn", ic: "🐢", t: "ㄅㄆㄇ找朋友 ④", mins: 5,
+    intro: "第 4 集：韻母出場了！兔兔和象象要認識ㄧㄨㄩ、ㄚㄛㄜㄝ。",
+    tags: ["注音 第 4 集（共 5 集）", "ㄧㄨㄩ", "ㄚㄛㄜㄝ"],
+    cast: ["bunny", "elephant"],
+    place: "草地上的小黑板",
+    cover: { bg: "meadow", o: {}, props: stTiles(["ㄧ", "ㄨ", "ㄩ"], 120, ["#E91E63", "#AD1457", "#D81B60"]), cast: [{ c: "bunny", x: 80, f: "happy" }, { c: "elephant", x: 320, f: "happy", flip: 1 }] },
+    pages: [
+      { bg: "meadow", o: {}, props: stTiles(["ㄧ", "ㄨ", "ㄩ", "ㄚ", "ㄛ", "ㄜ", "ㄝ"], 110, ["#E91E63", "#AD1457", "#D81B60", "#C2185B", "#EC407A", "#F06292", "#AD1457"]), cast: [{ c: "bunny", x: 50, f: "happy", s: 0.85 }, { c: "elephant", x: 350, f: "happy", flip: 1, s: 0.85 }],
+        lines: [["bunny", "[cheerful] 前面認識的二十一個注音，叫做聲母。", "happy", "nod"],
+          ["elephant", "[warm] 今天，換「韻母」出場囉！[cheerful] 韻母的聲音，嘴巴張開就可以拉得長長的。", "happy", "wave"]],
+        parent: "韻母可以一直拉長音，例如「啊——」，聲母就沒辦法。" },
+      { bg: "meadow", o: {}, props: [stZt("ㄧ", "衣服", "👕", "#E91E63", 90), stZt("ㄨ", "烏龜", "🐢", "#AD1457", 200), stZt("ㄩ", "魚", "🐟", "#D81B60", 310)], cast: [{ c: "bunny", x: 40, f: "happy", s: 0.8 }, { c: "elephant", x: 360, f: "happy", flip: 1, s: 0.8 }],
+        lines: [["bunny", "[cheerful] 這是{ㄧ|衣}，衣服的衣。[playful] 這是{ㄨ|烏}，烏龜的烏。", "happy", "nod"],
+          ["elephant", "[warm] 這是{ㄩ|迂}。{ㄩ|迂}、{ㄩ|迂}，小魚的魚。[playful] 嘴巴要嘟起來喔。", "happy", "nod"]],
+        parent: "{ㄧ|衣}嘴角往兩邊，{ㄨ|烏}嘴巴圓圓，{ㄩ|迂}嘴巴嘟嘟的。可以對著鏡子一起做。" },
+      { bg: "meadow", o: {}, props: [stZt("ㄧ", "", "", "#E91E63", 110), stZt("ㄨ", "", "", "#AD1457", 200), stZt("ㄩ", "", "", "#D81B60", 290)], cast: [{ c: "elephant", x: 50, f: "calm" }, { c: "bunny", x: 350, f: "happy", flip: 1 }],
+        lines: [["elephant", "[playful] 小魚游過來了！小魚的魚，是哪一個注音呢？", "calm", "think"]],
+        ask: { type: "choice", q: "[curiosity] 寶寶，小魚的「魚」，是哪一個注音呢？", opts: [["ㄩ", "", 1], ["ㄧ", ""], ["ㄨ", ""]],
+          hint: "[gentle] 魚、魚，[slow] 嘴巴嘟起來……{ㄩ|迂}，聽聽看！", ok: "[excitement] 答對了！{ㄩ|迂}，小魚的魚！" },
+        parent: "可以邊做嘴型邊唸：{ㄧ|衣}（笑）、{ㄨ|烏}（圓）、{ㄩ|迂}（嘟）。" },
+      { bg: "meadow", o: {}, props: [stZt("ㄚ", "阿公", "👴", "#C2185B", 110), stZt("ㄛ", "公雞喔喔", "🐓", "#EC407A", 290)], cast: [{ c: "bunny", x: 200, f: "happy" }],
+        lines: [["bunny", "[cheerful] 這是{ㄚ|啊}。{ㄚ|啊}、{ㄚ|啊}，阿公的阿。[playful] 嘴巴張大大：{ㄚ|啊}——", "happy", "nod"],
+          ["bunny", "[laughs] 這是{ㄛ|喔}。{ㄛ|喔}、{ㄛ|喔}，公雞叫：喔喔喔！", "happy", "jump"]],
+        parent: "看醫生時說「啊——」，就是{ㄚ|啊}的聲音。" },
+      { bg: "meadow", o: {}, props: [stZt("ㄜ", "鵝", "🦢", "#F06292", 110), stZt("ㄝ", "椰子", "🥥", "#AD1457", 290)], cast: [{ c: "elephant", x: 200, f: "happy" }],
+        lines: [["elephant", "[warm] 這是{ㄜ|鵝}。{ㄜ|鵝}、{ㄜ|鵝}，大白鵝的鵝。", "happy", "nod"],
+          ["elephant", "[cheerful] 這是{ㄝ|欸}。{ㄝ|欸}很少自己出來玩，[playful] 它常常和{ㄧ|衣}手牽手，變成椰子的椰。", "happy", "jump"]],
+        parent: "ㄝ很少單獨出現，常見的是ㄧㄝ（椰、爺）、ㄩㄝ（月）。" },
+      { bg: "meadow", o: {}, props: stTiles(["ㄧ", "ㄨ", "ㄩ", "ㄚ", "ㄛ", "ㄜ", "ㄝ"], 120, ["#E91E63", "#AD1457", "#D81B60", "#C2185B", "#EC407A", "#F06292", "#AD1457"], "Y"), cast: [{ c: "bunny", x: 50, f: "happy", s: 0.85 }, { c: "elephant", x: 350, f: "calm", flip: 1, s: 0.85 }],
+        lines: [["bunny", "[curiosity] 嘴巴張大大，{ㄚ|啊}——是哪一個呢？", "happy", "think"]],
+        ask: { type: "tap", target: "Y3", q: "[curiosity] 寶寶，你能找到{ㄚ|啊}嗎？阿公的阿，點點看！",
+          hint: "[gentle] 這個不是{ㄚ|啊}喔。{ㄚ|啊}的樣子，像一個小樹枝，再找找看！", ok: "[excitement] 找到了！{ㄚ|啊}，阿公的阿！" },
+        parent: "可以把注音卡片放在桌上，和寶寶玩「找一找」。" },
+      { bg: "meadow", o: { eve: 1 }, props: stTiles(["ㄧ", "ㄨ", "ㄩ", "ㄚ", "ㄛ", "ㄜ", "ㄝ"], 100, ["#E91E63", "#AD1457", "#D81B60", "#C2185B", "#EC407A", "#F06292", "#AD1457"]), cast: [{ c: "bunny", x: 120, f: "happy" }, { c: "elephant", x: 280, f: "happy", flip: 1 }],
+        lines: [["elephant", "[happy] {ㄧㄨㄩ|衣、烏、迂}，{ㄚㄛㄜㄝ|啊、喔、鵝、欸}！", "happy", "jump"],
+          ["bunny", "[proud] 下一集是最後一集，所有的注音朋友都要到齊囉！", "happy", "wave"]],
+        parent: "到這一集，已經認識 28 個注音了。" }
+    ],
+    lesson: ["👕 ㄧ（衣服）、ㄨ（烏龜）、ㄩ（魚）。", "👴 ㄚ（阿公）、ㄛ（公雞喔喔）、ㄜ（鵝）、ㄝ（椰子的椰：ㄧㄝ）。", "👄 韻母的聲音可以拉得長長的。"]
+  },
+  {
+    id: "zhuyin5", theme: "learn", ic: "🏆", t: "ㄅㄆㄇ找朋友 ⑤", mins: 6,
+    intro: "最後一集：ㄞㄟㄠㄡ、ㄢㄣㄤㄥ、ㄦ。認識完，37 個注音朋友全部到齊！",
+    tags: ["注音 第 5 集（共 5 集）", "ㄞㄟㄠㄡ", "ㄢㄣㄤㄥㄦ", "37 個全部到齊"],
+    cast: ["bear", "bunny"],
+    place: "草地上的小黑板",
+    cover: { bg: "meadow", o: {}, props: [{ p: "chart", x: 200, y: 26, items: ZY_ALL, cols: 10, cs: 26, split: 21 }], cast: [{ c: "bear", x: 110, f: "happy" }, { c: "bunny", x: 290, f: "happy", flip: 1 }] },
+    pages: [
+      { bg: "meadow", o: {}, props: stTiles(["ㄞ", "ㄟ", "ㄠ", "ㄡ", "ㄢ", "ㄣ", "ㄤ", "ㄥ", "ㄦ"], 110, ["#E91E63", "#AD1457", "#D81B60", "#C2185B", "#EC407A", "#F06292"]).map((p, i) => Object.assign(p, { x: 40 + i * 40, s: 0.72 })), cast: [{ c: "bear", x: 110, f: "happy" }, { c: "bunny", x: 290, f: "happy", flip: 1 }],
+        lines: [["bear", "[cheerful] 最後一集，有九個韻母朋友！", "happy", "wave"],
+          ["bunny", "[playful] 它們很愛玩躲貓貓，[warm] 常常躲在字的後面。我們一起把它們找出來！", "happy", "nod"]],
+        parent: "這一集會示範「拼音」：前面一個聲母，後面一個韻母，合起來就是一個字。" },
+      { bg: "meadow", o: {}, props: [stZt("ㄞ", "愛", "❤️", "#E91E63", 110), stZt("ㄟ", "杯子", "🥤", "#AD1457", 290)], cast: [{ c: "bear", x: 200, f: "happy" }],
+        lines: [["bear", "[warm] 這是{ㄞ|哀}。{ㄞ|哀}、{ㄞ|哀}，我愛你的愛。", "happy", "hug"],
+          ["bear", "[playful] 這是{ㄟ|A}。杯子的杯，{ㄅ|玻}、{ㄟ|A}，[cheerful] 杯！{ㄟ|A}躲在杯的後面。", "happy", "nod"]],
+        parent: "可以抱抱寶寶說：「我{ㄞ|哀}你，愛你的愛。」" },
+      { bg: "meadow", o: {}, props: [stZt("ㄠ", "貓", "🐱", "#D81B60", 110), stZt("ㄡ", "猴子", "🐵", "#C2185B", 290)], cast: [{ c: "bunny", x: 200, f: "happy" }],
+        lines: [["bunny", "[cheerful] 這是{ㄠ|凹}。貓咪的貓，{ㄇ|摸}、{ㄠ|凹}，[playful] 貓！喵——", "happy", "nod"],
+          ["bunny", "[laughs] 這是{ㄡ|歐}。猴子的猴，{ㄏ|喝}、{ㄡ|歐}，猴！", "happy", "jump"]],
+        parent: "唸快一點：{ㄇ|摸}——{ㄠ|凹}——貓！讓寶寶感覺兩個聲音合在一起。" },
+      { bg: "meadow", o: {}, props: [stZt("ㄇ", "", "", "#F06292", 110), { p: "emo", x: 200, y: 96, t: "➕", z: 30 }, stZt("？", "", "", "#9E9E9E", 290), { p: "emo", x: 200, y: 160, t: "🐱", z: 40 }], cast: [{ c: "bear", x: 50, f: "calm" }, { c: "bunny", x: 350, f: "happy", flip: 1 }],
+        lines: [["bear", "[curiosity] 貓咪的貓，{ㄇ|摸}的後面，躲著哪一個韻母呢？", "calm", "think"]],
+        ask: { type: "choice", q: "[curiosity] 寶寶，貓，{ㄇ|摸}的後面，要加哪一個注音呢？", opts: [["ㄠ", "", 1], ["ㄡ", ""], ["ㄞ", ""]],
+          hint: "[gentle] 貓、貓，[slow] {ㄇ|摸}——{ㄠ|凹}——貓，聽聽看後面的聲音！", ok: "[excitement] 答對了！{ㄇ|摸}、{ㄠ|凹}，貓！" },
+        parent: "拼音對小小孩還太早，聽聽看、玩一玩就好，不用要求會拼。" },
+      { bg: "meadow", o: {}, props: [stZt("ㄢ", "飯", "🍚", "#EC407A", 110), stZt("ㄣ", "門", "🚪", "#AD1457", 290)], cast: [{ c: "bear", x: 200, f: "happy" }],
+        lines: [["bear", "[cheerful] 這是{ㄢ|安}。吃飯的飯，{ㄈ|佛}、{ㄢ|安}，飯！[happy] 好好吃！", "happy", "nod"],
+          ["bear", "[playful] 這是{ㄣ|恩}。門口的門，{ㄇ|摸}、{ㄣ|恩}，門！叩叩叩。", "happy", "jump"]],
+        parent: "{ㄢ|安}嘴巴張比較大，{ㄣ|恩}嘴巴比較小。" },
+      { bg: "meadow", o: {}, props: [stZt("ㄤ", "糖果", "🍬", "#E91E63", 90), stZt("ㄥ", "燈", "💡", "#D81B60", 200), stZt("ㄦ", "耳朵", "👂", "#C2185B", 310)], cast: [{ c: "bunny", x: 40, f: "happy", s: 0.8 }, { c: "bear", x: 360, f: "happy", flip: 1, s: 0.8 }],
+        lines: [["bunny", "[cheerful] 這是{ㄤ|骯}，糖果的糖：{ㄊ|特}、{ㄤ|骯}，糖！[playful] 這是{ㄥ|鞥}，電燈的燈：{ㄉ|得}、{ㄥ|鞥}，燈！", "happy", "nod"],
+          ["bear", "[warm] 最後一個是{ㄦ|兒}。{ㄦ|兒}、{ㄦ|兒}，耳朵的耳。[playful] 拉拉你的小耳朵！", "happy", "jump"]],
+        parent: "可以和寶寶一起拉拉耳朵，說「{ㄦ|兒}，耳朵」。" },
+      { bg: "meadow", o: { eve: 1 }, props: [{ p: "chart", x: 200, y: 22, items: ZY_ALL, cols: 10, cs: 28, split: 21 }], cast: [{ c: "bear", x: 70, f: "happy" }, { c: "bunny", x: 330, f: "happy", flip: 1 }],
+        lines: [["bear", "[excitement] 你看！藍色的是二十一個聲母，[cheerful] 粉紅色的是十六個韻母。", "happy", "look"],
+          ["bunny", "[proud] 三十七個注音朋友，全部到齊了！", "happy", "jump"]],
+        ask: { type: "do", ic: "👏", act: "jump", q: "[cheerful] 寶寶，你好厲害！我們一起拍拍手，[excitement] 慶祝注音朋友全部到齊！",
+          ok: "[excitement] 啪啪啪！你是注音小高手！" },
+        parent: "37 個注音不用一次記住，五集輪流看、每天唸幾個，自然就熟了。" }
+    ],
+    lesson: ["❤️ ㄞ（愛）、ㄟ（杯）、ㄠ（貓）、ㄡ（猴）。", "🍚 ㄢ（飯）、ㄣ（門）、ㄤ（糖）、ㄥ（燈）、ㄦ（耳朵）。", "🔵 聲母 21 個 ＋ 🩷 韻母 16 個 ＝ 注音 37 個。", "🧩 聲母 ＋ 韻母，合起來就是一個字：ㄇ＋ㄠ＝貓。"]
+  }
+);
+
 /* ================= 🐻 動畫故事：語音控制（每個角色不同聲音） ================= */
 function sayZhP(text, rate, pitch) {
   return new Promise(res => {
@@ -10548,11 +10730,13 @@ function sayZhP(text, rate, pitch) {
 /* 文字裡的 [happy]、[whispers] 這類英文標籤是給 AI 語音看的情緒指示，畫面上和手機語音都不顯示 */
 const stPlain = t => String(t || "").replace(/\{([^|}]*)\|[^}]*\}/g, "$1").replace(/\[[^\]]*\]\s?/g, "").trim();
 /* {顯示|唸法}：畫面顯示前面，語音念後面（例如 {ㄅ|玻}） */
-const stSpeak = t => String(t || "").replace(/\{[^|}]*\|([^}]*)\}/g, "$1");
+/* AI 語音：注音直接給 AI 自己唸（連在一起的注音中間加頓號，一個一個唸）；手機內建語音不一定會唸注音，才用代替字 */
+const stSpeak = t => String(t || "").replace(/\{([^|}]*)\|[^}]*\}/g, (m, a) => /^[\u3105-\u3129]{2,}$/.test(a) ? a.split("").join("、") : a);
+const stDevSay = t => String(t || "").replace(/\{[^|}]*\|([^}]*)\}/g, "$1");
 const stReadMs = t => Math.max(1500, stPlain(t).length * 260);
 /* 有 AI 語音就用角色自己的 AI 聲音；沒有就用瀏覽器語音（調音高分角色）；都沒有也會照字幕時間播完 */
 async function stVoice(who, text, tok, fk) {
-  const ch = ST_CHARS[who] || ST_CHARS.narr, t0 = Date.now(), min = stReadMs(text); text = stSpeak(text);
+  const ch = ST_CHARS[who] || ST_CHARS.narr, t0 = Date.now(), min = stReadMs(text), raw = text; text = stSpeak(text);
   if (state.stMute) { await waitMs(min); return; }
   if (fk && state.stFam !== false) { const recs = fvList(fk); if (recs.length) { const fu = await fvUrl(fk, recs[0].who); if (tok !== ST.tok) return; if (fu && await playUrl(fu, 1)) return; } }
   const u = await aivWait(ch.v, text, 3000);
@@ -10560,7 +10744,7 @@ async function stVoice(who, text, tok, fk) {
   let ok = false;
   if (u) ok = await playUrl(u, 1);
   if (tok !== ST.tok) return;
-  if (!ok) { if (AIV_ON()) aivQueue([[ch.v, text]]); await sayZhP(stPlain(text), ch.rate, ch.pitch); }
+  if (!ok) { if (AIV_ON()) aivQueue([[ch.v, text]]); await sayZhP(stPlain(stDevSay(raw)), ch.rate, ch.pitch); }
   const used = Date.now() - t0; if (used < min * 0.6) await waitMs(min - used);
 }
 function stStopAudio() { stopHuman(); if (TTS) speechSynthesis.cancel(); }
@@ -10708,7 +10892,7 @@ async function stRun(tok) {
 function stParentPause(S, P) {
   ST.playing = false; stPlayBtn();
   const b = $("stPar"); if (!b) return; b.hidden = false;
-  b.innerHTML = `<b>👨‍👩‍👧 陪讀時間</b><span>${esc(P.parent || "和寶寶聊聊這一頁看到了什麼。")}</span><button class="btn primary" id="stParNext">${ST.pg + 1 < S.pages.length ? "下一頁 ▶" : "看完了 ▶"}</button>`;
+  b.innerHTML = `<b>👨‍👩‍👧 陪讀時間</b><span>${esc(stPlain(P.parent || "和寶寶聊聊這一頁看到了什麼。"))}</span><button class="btn primary" id="stParNext">${ST.pg + 1 < S.pages.length ? "下一頁 ▶" : "看完了 ▶"}</button>`;
   $("stParNext").onclick = () => { b.hidden = true; ST.pg++; ST.ln = 0; stPlay(); };
 }
 function stPlay() { ST.playing = true; stPlayBtn(); const tok = ++ST.tok; stRun(tok).then(() => { if (tok === ST.tok && ST.mode === "anim" && !state.stParent) { ST.playing = false; stPlayBtn(); } }); }
@@ -10758,7 +10942,7 @@ function bookRender(S) {
   box.innerHTML = `<div class="stbook"><div id="stStage"></div><div class="stdots" id="stDots"></div>
     <div class="stbtext" id="stBText">${P.lines.map(([w, t], i) => w === "narr" ? `<p class="narr" data-li="${i}">${esc(stPlain(t))}</p>` : `<button class="stbub" data-li="${i}">${stAvatar(w)}<span class="bb"><small>${esc(ST_CHARS[w].n)}${stHasFam(ST.sid, ST.bp, i) ? " 🎙" : ""}</small>${esc(stPlain(t))}</span></button>`).join("")}</div>
     <div class="stask" id="stAsk" hidden></div><div id="stEn"></div>
-    ${P.parent ? `<div class="stparent"><span><b>👨‍👩‍👧 陪讀小提示：</b>${esc(P.parent)}</span></div>` : ""}
+    ${P.parent ? `<div class="stparent"><span><b>👨‍👩‍👧 陪讀小提示：</b>${esc(stPlain(P.parent))}</span></div>` : ""}
     <div class="row" style="gap:8px;flex-wrap:wrap;justify-content:center"><button class="btn" id="bkPrev"${ST.bp ? "" : " disabled"}>◀ 上一頁</button><button class="btn primary" id="bkRead">🔊 朗讀這頁</button><button class="btn" id="bkNext">下一頁 ▶</button></div>
     ${typeof isFam === "function" && (KEY_MODE() || isFam()) ? `<button class="btn small" id="bkDub" style="align-self:center">🎙 家人幫這頁配音</button>` : ""}</div>`;
   ST.pg = ST.bp; stDraw(S, ST.bp); ST.drawn = -1;
