@@ -935,7 +935,7 @@ let GUEST = false;
 let SPONSOR = "";
 let OWNER_WHO = "";
 const EQ_BUILD = "f8af2a";
-const EQ_WEB = "3347";
+const EQ_WEB = "3250";
 let BACKEND_BUILD = "";
 let SPONSOR_INFO = {}, SPONSORS = [];
 const HAS_SUPPORT = () => !!(SPONSOR || SPONSOR_INFO.account);
@@ -4126,8 +4126,11 @@ const SONGS = [{"id": "twinkle", "t": "Twinkle, Twinkle, Little Star", "zh": "�
 const BB_VIEWS = [["listen", "🎧", "聽單字"], ["point", "👆", "指指看"], ["song", "🎵", "兒歌"], ["day", "📺", "動畫故事"], ["tips", "📝", "爸媽小抄"], ["grow", "🌱", "成長紀錄"]];
 const bbView = () => BB && BB_VIEWS.some(v => v[0] === BB.view) ? BB.view : "listen";
 function bbTabs() { return `<nav class="bbviews" role="tablist" aria-label="寶寶聽力的功能">${BB_VIEWS.map(([k, ic, n]) => `<button class="vt${bbView() === k ? " on" : ""}" data-bview="${k}" role="tab" aria-selected="${bbView() === k}"><span aria-hidden="true">${ic}</span>${n}</button>`).join("")}</nav>`; }
+/* 進到寶寶聽力（聽單字）、打開動畫故事、寶寶的一天：直接開始播放，不用再按（設定可關） */
+const bbAutoGoOn = () => state.bbAutoGo !== false;
+function bbAutoStart() { if (bbAutoGoOn() && BB && !BB.auto) { BB.auto = true; BB.started = Date.now(); } }
 function bbStopAll(keepList) { if (BB) { BB.tok++; BB.auto = false; BB.dark = false; } PT.tok++; SG.tok++; TP.tok++; if (!keepList) { SG.ltok = (SG.ltok || 0) + 1; SG.listOn = false; } try { DY.tok++; DY.busy = ""; BR.tok++; clearInterval(BR.timer); dyWake(false); ST.tok++; ST.playing = false; } catch (e) { } mbStop(); stopHuman(); if (TTS) speechSynthesis.cancel(); }
-function bbBindTabs() { if ($("bbWho")) $("bbWho").onclick = () => { bbStopAll(); renderBaby(false); openBabies(); }; $("baby").querySelectorAll("[data-bview]").forEach(b => b.onclick = () => { bbStopAll(); BB.view = b.dataset.bview; renderBaby(false); try { window.scrollTo(0, 0); } catch (e) { } }); }
+function bbBindTabs() { if ($("bbWho")) $("bbWho").onclick = () => { bbStopAll(); renderBaby(false); openBabies(); }; $("baby").querySelectorAll("[data-bview]").forEach(b => b.onclick = () => { bbStopAll(); BB.view = b.dataset.bview; if (BB.view === "listen") bbAutoStart(); renderBaby(BB.view === "listen" && BB.auto); try { window.scrollTo(0, 0); } catch (e) { } }); }
 function renderBabyView() {
   $("baby").innerHTML = `<header class="top"><button class="icon-btn" id="bbBack" aria-label="離開">${ICON.x}</button><h2 style="font-size:22px;flex:1;min-width:0">寶寶聽力</h2>${bbWhoBtn()}</header>${bbTabs()}<div id="bbView" class="bbview"></div>`;
   $("bbBack").onclick = () => { bbStopAll(); show("home"); renderHome(); };
@@ -5246,6 +5249,7 @@ function openBaby(t) {
   famRefresh().then(() => { fvSync(); growSync(); capSync().then(() => { if (!$("baby").hidden && bbView() === "listen" && !BB.auto) renderBaby(false); }); });
   if (bpicCan()) gs("famAdmin").then(a => { FAMG.admin = a; FAMG.pending = a.pending.length; renderWishBar(); if (!$("baby").hidden && bbView() === "listen") renderBaby(false); }).catch(() => { });
   prefetchBaby();
+  if (bbView() === "listen") bbAutoStart();
   renderBaby(true);
 }
 function renderBaby(say) {
@@ -5269,6 +5273,7 @@ function renderBaby(say) {
         : `<div class="row bbctl" style="flex-wrap:wrap;gap:6px"><label class="btn small" style="cursor:pointer">📷 幫忙提供照片<input type="file" accept="image/*" id="bbUp" hidden></label><button class="btn small" id="famJoinBtn">${famSt().st === "pending" ? "👪 等作者確認中" : "👪 我是家人"}</button></div>`) : ""}
     <div class="bbsub" id="bbSub" aria-live="polite" ${state.babySub === false ? "hidden" : ""}><div class="bbsen">${esc(ph)}</div><div class="bbszh">${esc(zp)}</div></div>
     <div class="row bbctl"><button class="btn" id="bbPrev" aria-label="上一個">◀</button><button class="btn primary" id="bbAuto">${BB.auto ? "⏸ 暫停" : "▶ 自動播放"}</button><button class="btn" id="bbNext" aria-label="下一個">▶</button></div>
+    <label class="row bbctl" style="gap:6px;align-items:center;font-size:13px;justify-content:center"><input type="checkbox" id="bbAutoGo"${bbAutoGoOn() ? " checked" : ""}> 一進來就自動播放（聽單字、動畫故事、寶寶的一天）</label>
     <div class="row bbctl"><button class="btn small" id="bbDark">只放聲音（螢幕變暗）</button><button class="btn small${state.babySlow ? " primary" : ""}" id="bbSlow" aria-pressed="${state.babySlow ? "true" : "false"}">🐢 慢一點</button></div>
     <div class="row bbctl"><button class="btn small${state.babySub !== false ? " primary" : ""}" id="bbSubT" aria-pressed="${state.babySub !== false}">字幕（英＋中）</button><button class="btn small${state.babyPhoto !== false ? " primary" : ""}" id="bbPhoto" aria-pressed="${state.babyPhoto !== false}">真實照片</button>${fvAnyWord() ? `<button class="btn small${state.babyFam !== false ? " primary" : ""}" id="bbFam" aria-pressed="${state.babyFam !== false}">家人聲音</button>` : ""}</div>
     <div class="bbord"><span class="muted" style="font-size:13px">語言</span><div class="seg" id="bbOrder">${BB_ORDERS.map(([k, t]) => `<button data-bord="${k}" aria-pressed="${bbOrder() === k}">${t}</button>`).join("")}</div>
@@ -5291,19 +5296,20 @@ function renderBaby(say) {
   if ($("famAdminBtn")) $("famAdminBtn").onclick = openFamAdmin;
   if ($("gBabyRec")) $("gBabyRec").onclick = () => { bbStopAll(); renderBaby(false); openFamRec(bvKey(w), `${e} ${w}`, `錄下寶寶說「${w}」的聲音，以後可以回味`, 20, () => { if (bbView() === "listen") renderBaby(false); }, null, true); };
   if ($("bbFam")) $("bbFam").onclick = () => { state.babyFam = state.babyFam === false; Store.save(); renderBaby(false); };
-  $("baby").querySelectorAll("[data-bt]").forEach(b => b.onclick = () => { BB.t = Number(b.dataset.bt); BB.i = 0; prefetchBaby(); renderBaby(true); });
-  $("baby").querySelectorAll("[data-bl]").forEach(b => b.onclick = () => { BB.t = BB_LIST; BB.list = b.dataset.bl; BB.i = 0; BB.loop = 0; prefetchBaby(); renderBaby(true); });
+  $("baby").querySelectorAll("[data-bt]").forEach(b => b.onclick = () => { BB.tok++; BB.t = Number(b.dataset.bt); BB.i = 0; prefetchBaby(); bbAutoStart(); renderBaby(true); });
+  $("baby").querySelectorAll("[data-bl]").forEach(b => b.onclick = () => { BB.tok++; BB.t = BB_LIST; BB.list = b.dataset.bl; BB.i = 0; BB.loop = 0; prefetchBaby(); bbAutoStart(); renderBaby(true); });
   if ($("bbNewList")) $("bbNewList").onclick = () => { bbStopAll(); renderBaby(false); openListEdit(""); };
   if ($("bbNewList2")) $("bbNewList2").onclick = () => openListEdit("");
   if ($("listEdit")) $("listEdit").onclick = () => { bbStopAll(); renderBaby(false); openListEdit(BB.list); };
   if ($("listGo")) $("listGo").onclick = () => { BB.tok++; BB.i = 0; BB.loop = 0; BB.auto = true; BB.started = Date.now(); renderBaby(true); };
-  if ($("dailyNew")) $("dailyNew").onclick = () => { bbStopAll(); dailyPlan(true); BB.i = 0; prefetchBaby(); renderBaby(true); toast(`換好了：${BABY[state.babyDaily.th][1]} ${BABY[state.babyDaily.th][0]}`); };
+  if ($("dailyNew")) $("dailyNew").onclick = () => { bbStopAll(); dailyPlan(true); BB.i = 0; prefetchBaby(); bbAutoStart(); renderBaby(true); toast(`換好了：${BABY[state.babyDaily.th][1]} ${BABY[state.babyDaily.th][0]}`); };
   if ($("dailyGo")) $("dailyGo").onclick = () => { BB.tok++; BB.i = 0; BB.auto = true; BB.started = Date.now(); renderBaby(true); };
   $("bbCard").onclick = () => sayCard();
   $("bbPrev").onclick = () => { BB.i = (BB.i - 1 + items.length) % items.length; renderBaby(true); };
   $("bbNext").onclick = () => { BB.i = (BB.i + 1) % items.length; renderBaby(true); };
   $("bbAuto").onclick = () => { BB.auto = !BB.auto; if (BB.auto) BB.started = Date.now(); renderBaby(BB.auto); if (!BB.auto) { BB.tok++; stopHuman(); if (TTS) speechSynthesis.cancel(); } };
   $("bbDark").onclick = () => { BB.dark = true; if (!BB.auto) { BB.auto = true; BB.started = Date.now(); renderBaby(true); } else renderBaby(false); };
+  $("bbAutoGo").onchange = e => { state.bbAutoGo = !!e.target.checked; Store.save(); };
   $("bbSlow").onclick = () => { state.babySlow = !state.babySlow; Store.save(); renderBaby(true); };
   $("baby").querySelectorAll("[data-reps]").forEach(b => b.onclick = () => { state.babyReps = Number(b.dataset.reps); Store.save(); renderBaby(false); });
   $("baby").querySelectorAll("[data-zhn]").forEach(b => b.onclick = () => { state.babyZhN = Number(b.dataset.zhn); Store.save(); renderBaby(false); });
@@ -8244,6 +8250,7 @@ function renderDay() {
   $("bbView").querySelectorAll("[data-dysx]").forEach(b => b.onclick = () => { state.dySfx = b.dataset.dysx === "1"; Store.save(); renderDay(); });
   $("bbView").querySelectorAll("[data-dyak]").forEach(b => b.onclick = () => { state.dyAskAll = b.dataset.dyak === "1"; Store.save(); renderDay(); });
   $("dyFamOn").onchange = e => { state.dyFam = !!e.target.checked; Store.save(); };
+  if (ST.dyGo) { ST.dyGo = false; if (bbAutoGoOn()) setTimeout(() => { if (bbView() === "day" && ST.view === "diary" && !DY.busy) dyRun("all"); }, 300); }
   $("dyAll").onclick = () => dyRun("all"); $("dyOne").onclick = () => dyRun("one"); $("dyAsk").onclick = () => dyRun("ask"); $("dySong").onclick = () => dyRun("song");
   $("dyBrush").onclick = () => { dyStop(); openBrush(); };
   dyShow(DY.cur); dyBtns();
@@ -11080,13 +11087,13 @@ function stThemeView(tid) {
     <b style="font-size:15px;margin-top:4px">📚 生活小故事（有對話、有互動）</b>` : ""}
     <div class="stlist">${list.map(stCard).join("")}</div>`;
   $("stBack").onclick = () => { ST.view = "home"; renderStoryTab(); };
-  if ($("stDay12")) $("stDay12").onclick = () => { ST.view = "diary"; renderStoryTab(); };
+  if ($("stDay12")) $("stDay12").onclick = () => { ST.view = "diary"; ST.dyGo = true; renderStoryTab(); };
   $("bbView").querySelectorAll("[data-sto]").forEach(b => b.onclick = () => stOpen(b.dataset.sto));
 }
 function stOpen(id) {
   const S = stStory(id); if (!S) return;
   state.stRecent = [id].concat((state.stRecent || []).filter(x => x !== id)).slice(0, 5); Store.save();
-  ST.view = "story:" + id; ST.sid = id; ST.pg = 0; ST.ln = 0; ST.bp = 0; ST.drawn = -1; ST.mode = state.stMode === "book" ? "book" : "anim";
+  ST.view = "story:" + id; ST.sid = id; ST.pg = 0; ST.ln = 0; ST.bp = 0; ST.drawn = -1; ST.mode = state.stMode === "book" ? "book" : "anim"; ST.autoGo = true;
   renderStoryTab();
 }
 function stOpenView() {
@@ -11096,7 +11103,7 @@ function stOpenView() {
     <div class="seg" style="align-self:center"><button data-stm="anim" aria-pressed="${ST.mode === "anim"}">🎬 動畫</button><button data-stm="book" aria-pressed="${ST.mode === "book"}">📖 故事書</button></div>
     <div class="stparent" id="stAi" hidden></div>
     <div id="stBody" style="display:flex;flex-direction:column;gap:10px"></div>
-    <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><span class="muted" style="font-size:13px">聲音</span>${tog("stMute", !state.stMute, "🔊 開", "🔇 靜音")}${bbOrder() === "zh" ? `<span class="muted" style="font-size:12px">🌱 語言是「只有中文」，故事裡不出現英文句子</span>` : `<span class="muted" style="font-size:13px">學一句英文</span>${tog("stEn", state.stEn !== false, "要", "不要")}`}</div>
+    <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><span class="muted" style="font-size:13px">聲音</span>${tog("stMute", !state.stMute, "🔊 開", "🔇 靜音")}<span class="muted" style="font-size:13px">進來就播放</span>${tog("bbAutoGo", bbAutoGoOn(), "開", "關")}${bbOrder() === "zh" ? `<span class="muted" style="font-size:12px">🌱 語言是「只有中文」，故事裡不出現英文句子</span>` : `<span class="muted" style="font-size:13px">學一句英文</span>${tog("stEn", state.stEn !== false, "要", "不要")}`}</div>
     <div class="row bbctl" style="flex-wrap:wrap;gap:8px"><span class="muted" style="font-size:13px">${ST.mode === "book" ? "自動翻頁朗讀" : "家長陪讀（每頁停下來聊）"}</span>${ST.mode === "book" ? tog("stAuto", !!state.stAuto, "開", "關") : tog("stParent", !!state.stParent, "開", "關")}<span class="muted" style="font-size:13px">減少動態</span>${tog("stCalm", stCalm(), "開", "關")}</div>
     ${typeof isFam === "function" && (KEY_MODE() || isFam()) ? `<div class="row bbctl" style="flex-wrap:wrap;gap:8px"><span class="muted" style="font-size:13px">有家人配音就用家人的聲音</span>${tog("stFam", state.stFam !== false, "要", "不要")}</div>` : ""}
     <p class="muted" style="margin:0;font-size:12px">📍 ${esc(S.place)}・出場：${S.cast.map(k => ST_CHARS[k].n).join("、")}・學習：${S.tags.join("、")}。點畫面裡的角色，可以聽他說話。</p>`;
@@ -11110,7 +11117,7 @@ function stOpenView() {
     if (k === "stMute" && ST.playing && ST.mode === "anim") { stPause(); stPlay(); }
   });
   stAiCard(S);
-  if (ST.mode === "book") return bookRender(S);
+  if (ST.mode === "book") { const go = ST.autoGo; ST.autoGo = false; bookRender(S); if (go && bbAutoGoOn() && !state.stAuto && S.pages[ST.bp]) bookRead(S, S.pages[ST.bp]); return; }
   $("stBody").innerHTML = `<div id="stStage"></div><div class="stdots" id="stDots"></div><div class="stsub" id="stSub" aria-live="polite"></div>
     <div class="stask" id="stAsk" hidden></div><div id="stEn"></div><div class="stparent" id="stPar" hidden></div>
     <div class="stctl"><button class="btn" id="stPrev" aria-label="上一頁">⏮</button><button class="btn primary" id="stPlay" style="min-width:110px">▶ 播放</button><button class="btn" id="stRe" aria-label="重播這頁">🔁 這頁</button><button class="btn" id="stNext" aria-label="下一頁">⏭</button></div>`;
@@ -11120,6 +11127,7 @@ function stOpenView() {
   $("stPrev").onclick = () => stGo(Math.min(ST.pg, S.pages.length - 1) - 1);
   $("stNext").onclick = () => stGo(Math.min(ST.pg, S.pages.length - 1) + 1);
   stPlayBtn();
+  if (ST.autoGo) { ST.autoGo = false; if (bbAutoGoOn()) setTimeout(() => { if (ST.sid === S.id && ST.view === "story:" + S.id && !ST.playing) stPlay(); }, 400); }
 }
 
 /* 🎙 家人配音：一句一句錄，播放時優先用家人的聲音（只有作者和家人群組聽得到） */
